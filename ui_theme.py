@@ -133,6 +133,25 @@ footer{display:none !important;}
 .cta button{width:100% !important; padding:13px !important; font-size:15px !important;
   font-weight:600 !important;}
 
+/* Comparador antes/después (CSS puro, sin dependencias) */
+.ba-cmp{position:relative; width:100%; border-radius:14px; overflow:hidden;
+  border:1px solid var(--vb-border); background:#1f1e1c; line-height:0; user-select:none;
+  touch-action:none;}
+.ba-cmp img{display:block; width:100%;}
+.ba-cmp .ba-before{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
+.ba-cmp .ba-line{position:absolute; top:0; bottom:0; left:var(--pos,50%); width:2px;
+  background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.22); transform:translateX(-1px);
+  pointer-events:none;}
+.ba-cmp .ba-line::after{content:""; position:absolute; top:50%; left:50%; width:36px; height:36px;
+  transform:translate(-50%,-50%); border-radius:50%; background:#fff;
+  box-shadow:0 1px 5px rgba(0,0,0,.35);}
+.ba-cmp input[type=range]{position:absolute; inset:0; width:100%; height:100%; margin:0;
+  opacity:0; cursor:ew-resize; -webkit-appearance:none; appearance:none; background:transparent;}
+.ba-cmp .ba-tag{position:absolute; top:11px; padding:3px 9px; font-size:11px; line-height:1.45;
+  border-radius:7px; background:rgba(31,30,28,.72); color:#fff; pointer-events:none;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+.ba-cmp .ba-l{left:11px;} .ba-cmp .ba-r{right:11px;}
+
 /* Pestaña Sistema más legible */
 .sys-card{background:#fff; border:1px solid var(--vb-border); border-radius:14px; padding:6px 20px;}
 

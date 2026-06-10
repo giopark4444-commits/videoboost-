@@ -6,6 +6,8 @@ al arrancar y solo ofrece los motores que pueden funcionar en esta máquina
 Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 """
 
+import base64
+import io
 import traceback
 
 import gradio as gr
@@ -62,6 +64,44 @@ def motores_imagen():
     return m or ["realesrgan_img"]
 
 
+# ---------------------------------------------------------------- comparador
+
+def _data_uri(ruta, max_lado=1500):
+    """Carga una imagen, la reduce si es enorme y la devuelve como data URI JPEG."""
+    from PIL import Image
+
+    img = Image.open(ruta)
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    w, h = img.size
+    if max(w, h) > max_lado:
+        f = max_lado / max(w, h)
+        img = img.resize((round(w * f), round(h * f)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=88)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def comparador_html(antes, despues, lang):
+    """Slider antes/después en CSS puro (clip-path); sin dependencias ni JS externo."""
+    try:
+        a, d = _data_uri(antes), _data_uri(despues)
+    except Exception:
+        return ""  # si algo falla, no rompemos el flujo; el log ya tiene la ruta
+    return (
+        '<div class="ba-cmp" style="--pos:50%">'
+        f'<img class="ba-after" src="{d}">'
+        f'<img class="ba-before" src="{a}" '
+        'style="clip-path:inset(0 calc(100% - var(--pos)) 0 0)">'
+        '<div class="ba-line"></div>'
+        f'<span class="ba-tag ba-l">{t("antes", lang)}</span>'
+        f'<span class="ba-tag ba-r">{t("despues", lang)}</span>'
+        '<input type="range" min="0" max="100" value="50" '
+        "oninput=\"this.parentNode.style.setProperty('--pos', this.value+'%')\">"
+        '</div>'
+    )
+
+
 # ---------------------------------------------------------------- lógica
 
 def _consumir(gen, log):
@@ -112,7 +152,7 @@ def hacer_procesar_video(lang):
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad):
         if not imagen:
-            yield t("sube_imagen", lang), None
+            yield t("sube_imagen", lang), ""
             return
         log = [f"▶ {motor}"]
         try:
@@ -134,15 +174,15 @@ def hacer_procesar_imagen(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), None
+                    yield next(consumo), ""
                 except StopIteration as fin:
                     salida = fin.value
                     break
             log.append(f"{t('listo', lang)}: {salida}")
-            yield "\n".join(log[-400:]), salida
+            yield "\n".join(log[-400:]), comparador_html(imagen, salida, lang)
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None
+            yield "\n".join(log[-400:]), ""
 
     return procesar
 
@@ -295,7 +335,8 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                 with gr.Column():
                     log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14,
                                        elem_classes="console")
-                    img_out = gr.Image(label=t("resultado", lang))
+                    gr.Markdown(t("arrastra_comparar", lang), elem_classes="size-preview")
+                    img_out = gr.HTML()
 
             def controles_i(motor):
                 return (
