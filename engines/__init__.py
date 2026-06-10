@@ -38,12 +38,17 @@ def correr(cmd, cwd=None, env=None):
         cwd=str(cwd) if cwd else None,
         env=env,
     )
-    for linea in proc.stdout:
-        linea = linea.rstrip()
-        if linea:
-            yield linea
-    proc.wait()
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"El comando falló (código {proc.returncode}): {' '.join(cmd[:6])}…"
-        )
+    try:
+        for linea in proc.stdout:
+            linea = linea.rstrip()
+            if linea:
+                yield linea
+        proc.wait()
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"El comando falló (código {proc.returncode}): {' '.join(cmd[:6])}…"
+            )
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()

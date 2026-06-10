@@ -406,6 +406,120 @@ T = {
               "meilleur que DeOldify : couleurs riches et cohérentes. Le « colorize "
               "model » façon HitPaw. Apache 2.0. Sur Mac, tourne sur CPU (plus lent)."},
 
+    # ---- nuevos motores de filtro ----
+    "m_desentrelazar": {
+        "es": "Desentrelazar — yadif (FFmpeg)",
+        "en": "Deinterlace — yadif (FFmpeg)",
+        "fr": "Désentrelacer — yadif (FFmpeg)"},
+    "m_denoise": {
+        "es": "Reducir ruido — hqdn3d (FFmpeg)",
+        "en": "Denoise — hqdn3d (FFmpeg)",
+        "fr": "Débruiter — hqdn3d (FFmpeg)"},
+    "m_estabilizar": {
+        "es": "Estabilizar — vidstab (FFmpeg)",
+        "en": "Stabilize — vidstab (FFmpeg)",
+        "fr": "Stabiliser — vidstab (FFmpeg)"},
+    "n_desentrelazar": {
+        "es": "Elimina el entrelazado clásico de material de TV/cámara de vídeo usando "
+              "yadif (Yet Another DeInterlacing Filter). Sin GPU, funciona en cualquier "
+              "máquina. Rápido.",
+        "en": "Removes classic interlacing from TV/video-camera footage using yadif "
+              "(Yet Another DeInterlacing Filter). No GPU needed, runs anywhere. Fast.",
+        "fr": "Supprime l'entrelacement classique des vidéos TV/caméscope avec yadif "
+              "(Yet Another DeInterlacing Filter). Sans GPU, fonctionne partout. Rapide."},
+    "n_denoise": {
+        "es": "Reduce el ruido de video con el filtro hqdn3d de FFmpeg. Controla "
+              "la fuerza en luminancia y crominancia por separado. Sin GPU.",
+        "en": "Reduces video noise with FFmpeg's hqdn3d filter. Control luminance and "
+              "chrominance strength separately. No GPU needed.",
+        "fr": "Réduit le bruit vidéo avec le filtre hqdn3d de FFmpeg. Contrôlez "
+              "séparément la force en luminance et chrominance. Sans GPU."},
+    "n_estabilizar": {
+        "es": "Estabilización de cámara en 2 pasadas con libvidstab. El zoom oculta "
+              "los bordes negros. Requiere FFmpeg compilado con --enable-libvidstab. "
+              "Sin GPU.",
+        "en": "2-pass camera stabilization with libvidstab. Zoom hides black borders. "
+              "Requires FFmpeg compiled with --enable-libvidstab. No GPU needed.",
+        "fr": "Stabilisation caméra en 2 passes avec libvidstab. Le zoom masque les "
+              "bords noirs. Nécessite FFmpeg compilé avec --enable-libvidstab. Sans GPU."},
+    # denoise sliders
+    "den_luma": {
+        "es": "Fuerza luma (0–10)", "en": "Luma strength (0–10)",
+        "fr": "Force luma (0–10)"},
+    "den_chroma": {
+        "es": "Fuerza chroma (0–10)", "en": "Chroma strength (0–10)",
+        "fr": "Force chroma (0–10)"},
+    # stabilize sliders
+    "est_suavidad": {
+        "es": "Suavidad (1–30)", "en": "Smoothing (1–30)",
+        "fr": "Lissage (1–30)"},
+    "est_zoom": {
+        "es": "Zoom de entrada (0.0–1.0)", "en": "Input zoom (0.0–1.0)",
+        "fr": "Zoom d'entrée (0.0–1.0)"},
+    # ---- formato de salida ----
+    "formato_salida_v": {
+        "es": "Formato de salida de video", "en": "Video output format",
+        "fr": "Format de sortie vidéo"},
+    "formato_salida_i": {
+        "es": "Formato de salida de imagen", "en": "Image output format",
+        "fr": "Format de sortie de l'image"},
+    # ---- cancelar ----
+    "cancelar": {"es": "Cancelar", "en": "Cancel", "fr": "Annuler"},
+    "cancelado": {"es": "⛔ Cancelado", "en": "⛔ Cancelled", "fr": "⛔ Annulé"},
+    # ---- comparador de video ----
+    "comparador_video": {
+        "es": "Comparador antes/después (frame)", "en": "Before/after comparator (frame)",
+        "fr": "Comparateur avant/après (image)"},
+    # ---- presets de revelado ----
+    "preset_nombre": {
+        "es": "Nombre del preset", "en": "Preset name", "fr": "Nom du préréglage"},
+    "preset_guardar": {
+        "es": "Guardar preset", "en": "Save preset", "fr": "Enregistrer le préréglage"},
+    "preset_cargar": {
+        "es": "Cargar preset guardado", "en": "Load saved preset",
+        "fr": "Charger un préréglage"},
+    "preset_guardado": {
+        "es": "✅ Preset guardado", "en": "✅ Preset saved", "fr": "✅ Préréglage enregistré"},
+    "preset_sin_nombre": {
+        "es": "⚠️ Escribe un nombre para el preset", "en": "⚠️ Enter a preset name",
+        "fr": "⚠️ Entrez un nom pour le préréglage"},
+    # ---- galería ----
+    "tab_galeria": {"es": "Galería", "en": "Gallery", "fr": "Galerie"},
+    "galeria_imagenes": {
+        "es": "Imágenes guardadas", "en": "Saved images", "fr": "Images enregistrées"},
+    "galeria_videos": {
+        "es": "Videos guardados", "en": "Saved videos", "fr": "Vidéos enregistrées"},
+    "galeria_refrescar": {
+        "es": "Refrescar", "en": "Refresh", "fr": "Actualiser"},
+    "galeria_limpiar": {
+        "es": "Limpiar todo", "en": "Clear all", "fr": "Tout supprimer"},
+    "galeria_vacia": {
+        "es": "_No hay archivos en salidas/_", "en": "_No files in salidas/_",
+        "fr": "_Aucun fichier dans salidas/_"},
+    # ---- lote (batch) ----
+    "tab_lote": {"es": "Lote", "en": "Batch", "fr": "Lot"},
+    "lote_archivos": {
+        "es": "Archivos a procesar", "en": "Files to process",
+        "fr": "Fichiers à traiter"},
+    "lote_motor": {"es": "Motor", "en": "Engine", "fr": "Moteur"},
+    "lote_escala": {"es": "Escala", "en": "Scale", "fr": "Échelle"},
+    "lote_resolucion": {
+        "es": "Resolución objetivo", "en": "Target resolution",
+        "fr": "Résolution cible"},
+    "lote_procesar": {
+        "es": "Procesar lote", "en": "Process batch", "fr": "Traiter le lot"},
+    "lote_progreso": {
+        "es": "Progreso del lote", "en": "Batch progress", "fr": "Progression du lot"},
+    "lote_archivo_n": {
+        "es": "Archivo {n}/{total}: {nombre}", "en": "File {n}/{total}: {nombre}",
+        "fr": "Fichier {n}/{total} : {nombre}"},
+    # ---- estado de modelos ----
+    "s_modelos": {
+        "es": "Estado de modelos", "en": "Model status", "fr": "État des modèles"},
+    "s_pesos_ok": {"es": "✅ pesos encontrados", "en": "✅ weights found",
+                   "fr": "✅ poids trouvés"},
+    "s_pesos_no": {"es": "❌ pesos no encontrados", "en": "❌ weights not found",
+                   "fr": "❌ poids introuvables"},
     # ---- pestaña sistema ----
     "s_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
     "s_instalados": {"es": "✅ instalados", "en": "✅ installed", "fr": "✅ installés"},

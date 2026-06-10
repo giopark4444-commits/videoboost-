@@ -105,6 +105,30 @@ def info_video(ruta) -> dict:
     }
 
 
+def extraer_frame_preview(video, tiempo_rel: float = 0.3) -> str | None:
+    """Extrae un frame del video en la posición relativa `tiempo_rel` (0.0–1.0).
+
+    Devuelve la ruta a un JPEG temporal, o None si falla.
+    """
+    import tempfile
+
+    try:
+        info = info_video(video)
+        t = info["duracion"] * max(0.0, min(1.0, tiempo_rel))
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tf:
+            out = tf.name
+        r = subprocess.run(
+            [ffmpeg(), "-y", "-ss", f"{t:.3f}", "-i", str(video),
+             "-frames:v", "1", "-q:v", "3", out],
+            capture_output=True, timeout=30,
+        )
+        if r.returncode == 0 and Path(out).stat().st_size > 0:
+            return out
+    except Exception:
+        pass
+    return None
+
+
 def cmd_extraer_frames(video, dir_destino: Path):
     return [ffmpeg(), "-y", "-i", str(video), str(dir_destino / "frame_%08d.png")]
 
