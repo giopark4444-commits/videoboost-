@@ -23,6 +23,19 @@ La app detecta tu hardware al arrancar y solo muestra lo que puede funcionar.
 
 ## Instalación
 
+### La forma fácil — doble clic
+
+- **Mac (chip M):** doble clic en **`VideoBoost.command`**.
+  (Si macOS lo bloquea la primera vez: clic derecho › *Abrir*.)
+- **Windows + NVIDIA:** doble clic en **`VideoBoost.bat`**.
+  (Si SmartScreen avisa: *Más información* › *Ejecutar de todas formas*.)
+
+La **primera vez** instala todo y descarga los modelos (tarda, son varios GB).
+Las siguientes veces solo abre la app en el navegador. Único requisito previo:
+tener **Python 3** instalado una vez (el lanzador te lleva a la descarga si falta).
+
+### A mano (terminal)
+
 **Mac (chip M):**
 ```bash
 bash install/instalar_mac.sh     # ffmpeg + PyTorch (Metal) + SeedVR2 + Vulkan
