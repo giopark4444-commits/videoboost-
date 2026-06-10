@@ -49,6 +49,14 @@ bash install/instalar_mac.sh     # ffmpeg + PyTorch (Metal) + SeedVR2 + Vulkan
 bash install/instalar_nvidia.sh && ./iniciar.sh
 ```
 
+### Comprobar qué está listo
+
+```bash
+python check.py
+```
+Muestra una tabla con el hardware detectado y qué motores están listos, cuáles
+faltan y con qué comando instalarlos. Útil antes del primer uso.
+
 **Extras opcionales** (después de la base):
 - Motores de imágenes: `install/extras_imagenes.sh` (añade `--supir` para SUPIR) /
   `install\EXTRAS_IMAGENES.bat`
