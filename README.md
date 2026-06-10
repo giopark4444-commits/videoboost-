@@ -40,6 +40,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 - Motores de imágenes: `install/extras_imagenes.sh` (añade `--supir` para SUPIR) /
   `install\EXTRAS_IMAGENES.bat`
 - Restauración de caras (CodeFormer): `install/extras_caras.sh` / `install\EXTRAS_CARAS.bat`
+- InstantIR (imágenes, solo NVIDIA): `install/extras_instantir.sh` / `install\EXTRAS_INSTANTIR.bat`
 - FlashVSR (modo rápido, solo NVIDIA): `install/extras_flashvsr.sh` / `.bat`
 
 ## Los motores
@@ -60,6 +61,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 |---|---|---|
 | **HYPIR** (XPixel, SIGGRAPH 2025) | Restauración SOTA en 1 paso, controlable con prompt. | NVIDIA o Mac M |
 | **SUPIR** (XPixel) | Máximo detalle reconstruido (nivel poros de piel). Lento. | Ideal NVIDIA 16 GB+ |
+| **InstantIR** (instantX) | Restauración instantánea, calidad ≥ SUPIR, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
 | **CodeFormer** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. | NVIDIA o Mac M |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
 | **Real-ESRGAN** | Escalado instantáneo. | Cualquier GPU |
@@ -79,7 +81,7 @@ temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
 
 ## Licencias
 
-- SeedVR2 y FlashVSR: **Apache 2.0** (sin restricción de uso).
+- SeedVR2, FlashVSR e **InstantIR**: **Apache 2.0** (sin restricción de uso).
 - Real-ESRGAN, Real-CUGAN, waifu2x, RIFE, GFPGAN: BSD/MIT/Apache.
 - **HYPIR, SUPIR y CodeFormer: solo uso no comercial** sin permiso escrito de sus
   autores (HYPIR/SUPIR: jinjin.gu@suppixel.ai; CodeFormer: NTU S-Lab License).
@@ -108,6 +110,7 @@ videoboost/
 │   ├── seedvr2.py          # SeedVR2 vía CLI standalone (CUDA y MPS)
 │   ├── flashvsr.py         # FlashVSR (experimental, NVIDIA)
 │   ├── images.py           # HYPIR y SUPIR (venvs propios)
+│   ├── instantir.py        # InstantIR — restauración de imágenes (NVIDIA, venv propio)
 │   ├── faces.py            # CodeFormer — restauración de caras (venv propio)
 │   └── ffmpeg_utils.py     # Extraer/reensamblar frames, info de video
 ├── install/                # Instaladores por plataforma + descarga de binarios

@@ -12,7 +12,7 @@ import gradio as gr
 
 import hardware
 from engines import ffmpeg_utils as ff
-from engines import faces, flashvsr, images, seedvr2, vulkan
+from engines import faces, flashvsr, images, instantir, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -25,7 +25,10 @@ MOTORES_VIDEO_NOTAS = {
 MOTORES_IMG_NOTAS = {
     "hypir": "n_hypir", "supir": "n_supir", "seedvr2_img": "n_seedvr2_img",
     "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
+    "instantir": "n_instantir",
 }
+# Motores de imagen que aceptan un prompt opcional.
+IMG_CON_PROMPT = ("hypir", "instantir")
 
 
 def motores_video():
@@ -47,6 +50,8 @@ def motores_imagen():
         m.append("seedvr2_img")
     if images.supir_disponible():
         m.append("supir")
+    if instantir.disponible():
+        m.append("instantir")
     if faces.disponible():
         m.append("codeformer")
     if HW["vulkan"]:
@@ -116,6 +121,8 @@ def hacer_procesar_imagen(lang):
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "codeformer":
                 gen = faces.restaurar_caras(imagen, fidelidad=float(fidelidad), escala=int(escala))
+            elif motor == "instantir":
+                gen = instantir.mejorar(imagen, prompt=prompt or "")
             else:
                 gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
             consumo = _consumir(gen, log)
@@ -179,6 +186,7 @@ def texto_sistema(lang):
         f"- **SeedVR2:** {sv2}",
         f"- **HYPIR:** {'✅' if images.hypir_disponible() else t('s_opcional', lang)}",
         f"- **SUPIR:** {'✅' if images.supir_disponible() else t('s_opcional', lang)}",
+        f"- **InstantIR:** {'✅' if instantir.disponible() else t('s_opcional_nvidia', lang)}",
         f"- **CodeFormer (caras):** {'✅' if faces.disponible() else t('s_opcional', lang)}",
         f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
         "",
@@ -242,7 +250,7 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
             ids_i = motores_imagen()
             etiquetas_i = {"hypir": "i_hypir", "supir": "i_supir",
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
-                           "codeformer": "i_codeformer"}
+                           "codeformer": "i_codeformer", "instantir": "i_instantir"}
             with gr.Row():
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
@@ -250,9 +258,9 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                                        value=ids_i[0], label=t("motor", lang))
                     nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang))
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
-                                          visible=ids_i[0] == "hypir")
+                                          visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
-                                         visible=ids_i[0] != "seedvr2_img")
+                                         visible=ids_i[0] not in ("seedvr2_img", "instantir"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
@@ -267,8 +275,8 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
             def controles_i(motor):
                 return (
                     gr.update(value=t(MOTORES_IMG_NOTAS[motor], lang)),
-                    gr.update(visible=motor == "hypir"),
-                    gr.update(visible=motor != "seedvr2_img"),
+                    gr.update(visible=motor in IMG_CON_PROMPT),
+                    gr.update(visible=motor not in ("seedvr2_img", "instantir")),
                     gr.update(visible=motor == "seedvr2_img"),
                     gr.update(visible=motor == "codeformer"),
                 )

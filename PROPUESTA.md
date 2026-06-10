@@ -138,6 +138,29 @@ que era "lo único que no replicábamos". Ya no falta nada frente a Topaz.
 
 -----
 
+## Adiciones posteriores (junio 2026) y modelos a vigilar
+
+Tras revisar el estado del arte más reciente:
+
+- **InstantIR** (instantX-research) — **añadido**. Restauración de imágenes por
+  difusión con referencia generativa: calidad a la par o superior a SUPIR en métricas
+  (hasta +22% MANIQA), pero instantáneo (sin los 25-35 pasos de SUPIR) y con licencia
+  **Apache 2.0** — el único motor de imagen del stack apto para uso comercial. Solo
+  CUDA (SDXL + DINOv2), así que es exclusivo de la 4080; en Mac quedan HYPIR/SeedVR2.
+  Repo: https://github.com/instantX-research/InstantIR
+
+- **InfVSR** — **a vigilar, aún sin código**. Es el único trabajo que afirma superar a
+  SeedVR2 en video (≈5.48× más rápido con mejor calidad), reformulando VSR como
+  difusión autoregresiva de un paso para inferencia en streaming. El repo marca el
+  código como "TBC": es un paper, no algo usable. Cuando publiquen pesos, sería el
+  candidato natural a reemplazar/complementar a SeedVR2. Paper: arXiv:2510.00948
+
+- **CodeFormer++** — mejora marginal sobre CodeFormer en métricas perceptuales, pero
+  sin integración madura. No compensa cambiar por ahora.
+
+Conclusión: el stack de video (SeedVR2 + FlashVSR) sigue siendo lo mejor publicado;
+en imágenes, InstantIR añade una opción rápida y de licencia libre para la 4080.
+
 ## Fuentes
 
 - SeedVR2 para ComfyUI (GGUF, BlockSwap, CLI): https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler
@@ -145,3 +168,5 @@ que era "lo único que no replicábamos". Ya no falta nada frente a Topaz.
 - FlashVSR (CVPR 2026): https://github.com/OpenImagingLab/FlashVSR · paper: https://arxiv.org/abs/2510.12747
 - HYPIR (SIGGRAPH 2025): https://github.com/XPixelGroup/HYPIR
 - SUPIR: https://github.com/Fanghua-Yu/SUPIR
+- InstantIR (Apache 2.0): https://github.com/instantX-research/InstantIR
+- InfVSR (paper, código pendiente): https://arxiv.org/html/2510.00948v2

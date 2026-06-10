@@ -133,6 +133,10 @@ T = {
         "es": "CodeFormer — restaurar caras",
         "en": "CodeFormer — face restoration",
         "fr": "CodeFormer — restauration des visages"},
+    "i_instantir": {
+        "es": "InstantIR — restauración instantánea (NVIDIA)",
+        "en": "InstantIR — instant restoration (NVIDIA)",
+        "fr": "InstantIR — restauration instantanée (NVIDIA)"},
 
     # ---- control de fidelidad de caras ----
     "fidelidad": {
@@ -212,6 +216,16 @@ T = {
         "fr": "Entraîné uniquement sur les visages : récupère yeux, dents et peau là où "
               "les upscalers généraux échouent. Le « face model » façon HitPaw. La "
               "fidélité arbitre netteté vs. ressemblance. *Usage non commercial.*"},
+    "n_instantir": {
+        "es": "Restauración por difusión con referencia generativa. Calidad a la par o "
+              "superior a SUPIR pero más rápida, y con **licencia Apache 2.0** (uso "
+              "comercial libre). Solo NVIDIA. Acepta prompt opcional.",
+        "en": "Diffusion restoration with a generative reference. Quality on par with or "
+              "above SUPIR but faster, and **Apache 2.0 licensed** (commercial use OK). "
+              "NVIDIA only. Takes an optional prompt.",
+        "fr": "Restauration par diffusion avec référence générative. Qualité égale ou "
+              "supérieure à SUPIR mais plus rapide, et **licence Apache 2.0** (usage "
+              "commercial libre). NVIDIA uniquement. Accepte un prompt facultatif."},
 
     # ---- pestaña sistema ----
     "s_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
