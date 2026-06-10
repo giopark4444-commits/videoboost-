@@ -14,10 +14,10 @@ RTX 4080**. Lee PROPUESTA.md para el razonamiento del stack.
   de idioma. Los motores se identifican por ids estables ("seedvr2", "rife"…) y las
   etiquetas salen de `i18n.t()`.
 - Venvs separados para evitar choques de dependencias: `.venv` (app+SeedVR2),
-  `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-instantir`, `.venv-caras`
-  (CodeFormer), `.venv-color` (DDColor), `.venv-flashvsr`. `engines/images.py`,
-  `instantir.py`, `faces.py`, `color.py` y `flashvsr.py` invocan el python del venv
-  correspondiente por subprocess.
+  `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-faithdiff`, `.venv-instantir`,
+  `.venv-caras` (CodeFormer), `.venv-color` (DDColor), `.venv-flashvsr`.
+  `engines/images.py`, `faithdiff.py`, `instantir.py`, `faces.py`, `color.py` y
+  `flashvsr.py` invocan el python del venv correspondiente por subprocess.
 
 ## Puntos frágiles / NO probados en GPU real
 
@@ -52,10 +52,20 @@ en este orden:
    --input --output --input_size 512`. Pesos de HF piddnad/ddcolor_modelscope
    (pytorch_model.pt) a models/DDColor/. El script oficial usa cuda o **cpu** (no MPS):
    en Mac va lento pero funciona. Apache 2.0.
-8. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
+8. **FaithDiff** (`engines/faithdiff.py`): motor de imagen **recomendado por defecto**
+   (licencia MIT, supera a SUPIR en su paper). Usamos `test_wo_llava.py --img_dir
+   --json_dir --save_dir --upscale --guidance_scale --num_inference_steps [--use_fp8]`
+   para **evitar LLaVA-13B**: el caption se arma de un prompt opcional dentro de un JSON
+   `{stem}.json` con clave `caption`, y el script descarta sus 3 primeras palabras (por
+   eso prefijamos "the image shows "). Las rutas de pesos NO son flags: van en
+   `CKPT_PTH.py` (SDXL_PATH/FAITHDIFF_PATH/VAE_FP16_PATH), que el engine **regenera en
+   cada ejecución** apuntando a models/FaithDiff/. Instalador baja jychen9811/FaithDiff
+   + SG161222/RealVisXL_V4.0 + madebyollin/sdxl-vae-fp16-fix. Verificar en GPU real que
+   RealVisXL se carga en formato diffusers y el nombre del .bin. Solo CUDA.
+9. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
    nihui 20220728/20221029). RIFE usa el modelo `rife-v4.6` incluido en el zip; el
    código toma el `rife-v4*` más alto que encuentre.
-9. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
+10. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
 ## Reglas de memoria

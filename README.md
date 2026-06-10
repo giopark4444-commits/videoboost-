@@ -54,6 +54,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
   `install\EXTRAS_IMAGENES.bat`
 - Restauración de caras (CodeFormer): `install/extras_caras.sh` / `install\EXTRAS_CARAS.bat`
 - Colorización (DDColor): `install/extras_color.sh` / `install\EXTRAS_COLOR.bat`
+- FaithDiff (restauración premium, solo NVIDIA): `install/extras_faithdiff.sh` / `install\EXTRAS_FAITHDIFF.bat`
 - InstantIR (imágenes, solo NVIDIA): `install/extras_instantir.sh` / `install\EXTRAS_INSTANTIR.bat`
 - FlashVSR (modo rápido, solo NVIDIA): `install/extras_flashvsr.sh` / `.bat`
 
@@ -73,6 +74,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 
 | Motor | Qué hace | Hardware |
 |---|---|---|
+| **FaithDiff** (CVPR 2025) | Restauración fiel; supera a SUPIR y ~4× más rápido. **MIT (comercial).** | Solo NVIDIA |
 | **HYPIR** (XPixel, SIGGRAPH 2025) | Restauración SOTA en 1 paso, controlable con prompt. | NVIDIA o Mac M |
 | **SUPIR** (XPixel) | Máximo detalle reconstruido (nivel poros de piel). Lento. | Ideal NVIDIA 16 GB+ |
 | **InstantIR** (instantX) | Restauración instantánea, calidad ≥ SUPIR, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
@@ -97,6 +99,7 @@ temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
 ## Licencias
 
 - SeedVR2, FlashVSR e **InstantIR**: **Apache 2.0** (sin restricción de uso).
+- **FaithDiff**: **MIT** (uso comercial libre); el motor de imagen recomendado por defecto.
 - Real-ESRGAN, Real-CUGAN, waifu2x, RIFE, GFPGAN: BSD/MIT/Apache.
 - **HYPIR, SUPIR y CodeFormer: solo uso no comercial** sin permiso escrito de sus
   autores (HYPIR/SUPIR: jinjin.gu@suppixel.ai; CodeFormer: NTU S-Lab License).
@@ -125,6 +128,7 @@ videoboost/
 │   ├── seedvr2.py          # SeedVR2 vía CLI standalone (CUDA y MPS)
 │   ├── flashvsr.py         # FlashVSR (experimental, NVIDIA)
 │   ├── images.py           # HYPIR y SUPIR (venvs propios)
+│   ├── faithdiff.py        # FaithDiff — restauración premium MIT (NVIDIA, venv propio)
 │   ├── instantir.py        # InstantIR — restauración de imágenes (NVIDIA, venv propio)
 │   ├── faces.py            # CodeFormer — restauración de caras (venv propio)
 │   ├── color.py            # DDColor — colorización B/N → color (venv propio)

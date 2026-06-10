@@ -15,7 +15,7 @@ import gradio as gr
 import hardware
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import color, faces, flashvsr, images, instantir, seedvr2, vulkan
+from engines import color, faces, faithdiff, flashvsr, images, instantir, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -26,12 +26,12 @@ MOTORES_VIDEO_NOTAS = {
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
 }
 MOTORES_IMG_NOTAS = {
-    "hypir": "n_hypir", "supir": "n_supir", "seedvr2_img": "n_seedvr2_img",
-    "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
-    "instantir": "n_instantir", "ddcolor": "n_ddcolor",
+    "faithdiff": "n_faithdiff", "hypir": "n_hypir", "supir": "n_supir",
+    "seedvr2_img": "n_seedvr2_img", "realesrgan_img": "n_realesrgan_img",
+    "codeformer": "n_codeformer", "instantir": "n_instantir", "ddcolor": "n_ddcolor",
 }
 # Motores de imagen que aceptan un prompt opcional.
-IMG_CON_PROMPT = ("hypir", "instantir")
+IMG_CON_PROMPT = ("faithdiff", "hypir", "instantir")
 
 
 def motores_video():
@@ -47,6 +47,8 @@ def motores_video():
 
 def motores_imagen():
     m = []
+    if faithdiff.disponible():
+        m.append("faithdiff")  # recomendado por defecto (MIT, supera a SUPIR)
     if images.hypir_disponible():
         m.append("hypir")
     if HW["seedvr2"]:
@@ -157,7 +159,9 @@ def hacer_procesar_imagen(lang):
             return
         log = [f"▶ {motor}"]
         try:
-            if motor == "hypir":
+            if motor == "faithdiff":
+                gen = faithdiff.mejorar(imagen, prompt=prompt or "", escala=int(escala))
+            elif motor == "hypir":
                 gen = images.mejorar_hypir(imagen, prompt=prompt or "", escala=int(escala))
             elif motor == "supir":
                 gen = images.mejorar_supir(imagen, escala=int(escala))
@@ -310,7 +314,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
-            etiquetas_i = {"hypir": "i_hypir", "supir": "i_supir",
+            etiquetas_i = {"faithdiff": "i_faithdiff", "hypir": "i_hypir", "supir": "i_supir",
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
                            "ddcolor": "i_ddcolor"}

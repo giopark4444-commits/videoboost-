@@ -128,10 +128,14 @@ T = {
         "fr": "FlashVSR — mode rapide (expérimental, NVIDIA)"},
 
     # ---- nombres de motores (imagen) ----
+    "i_faithdiff": {
+        "es": "FaithDiff — restauración fiel (recomendado, NVIDIA)",
+        "en": "FaithDiff — faithful restoration (recommended, NVIDIA)",
+        "fr": "FaithDiff — restauration fidèle (recommandé, NVIDIA)"},
     "i_hypir": {
-        "es": "HYPIR — restauración SOTA (recomendado)",
-        "en": "HYPIR — SOTA restoration (recommended)",
-        "fr": "HYPIR — restauration SOTA (recommandé)"},
+        "es": "HYPIR — restauración SOTA",
+        "en": "HYPIR — SOTA restoration",
+        "fr": "HYPIR — restauration SOTA"},
     "i_supir": {
         "es": "SUPIR — máximo detalle (lento)",
         "en": "SUPIR — maximum detail (slow)",
@@ -200,6 +204,16 @@ T = {
               "Experimental: if it fails, use SeedVR2.",
         "fr": "Super-résolution quasi temps réel (CVPR 2026). Pour des heures de rushes. "
               "Expérimental : en cas d'échec, utilisez SeedVR2."},
+    "n_faithdiff": {
+        "es": "Restauración fiel por difusión (CVPR 2025). En su paper supera a SUPIR y es "
+              "~4× más rápido; pensado para fotos y películas antiguas. Acepta un prompt "
+              "opcional. **Licencia MIT — uso comercial libre.** Solo NVIDIA.",
+        "en": "Faithful diffusion restoration (CVPR 2025). Beats SUPIR in its paper and is "
+              "~4× faster; aimed at old photos and films. Takes an optional prompt. "
+              "**MIT license — free for commercial use.** NVIDIA only.",
+        "fr": "Restauration fidèle par diffusion (CVPR 2025). Surpasse SUPIR dans son article "
+              "et ~4× plus rapide ; pensé pour photos et films anciens. Prompt facultatif. "
+              "**Licence MIT — usage commercial libre.** NVIDIA uniquement."},
     "n_hypir": {
         "es": "Restauración en 1 paso (SIGGRAPH 2025). Acepta un prompt opcional que guía "
               "la textura. *Licencia: solo uso no comercial.*",
