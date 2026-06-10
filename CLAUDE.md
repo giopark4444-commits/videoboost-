@@ -61,7 +61,12 @@ en este orden:
 7. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
    nihui 20220728/20221029). RIFE usa el modelo `rife-v4.6` incluido en el zip; el
    código toma el `rife-v4*` más alto que encuentre.
-8. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
+8. **Grano analógico** (`engines/grano.py`): 100% FFmpeg/CPU, sin venv. Placa
+   `color=gray` + `noise` gaussiano (sin flag `u`) a baja resolución, reescalada
+   bicúbica y `blend=overlay` (da la respuesta de luminancia del film). Verificado
+   con ffmpeg 7 real: grano temporal en video, audio `-c:a copy`, σ en medios
+   tonos 2-3× la de sombras/luces. Único motor probado end-to-end sin GPU.
+9. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
 ## Reglas de memoria

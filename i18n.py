@@ -148,6 +148,59 @@ T = {
         "en": "DDColor — colorize (B&W → color)",
         "fr": "DDColor — coloriser (N&B → couleur)"},
 
+    # ---- grano analógico ----
+    "m_grano": {
+        "es": "Grano de película — efecto analógico",
+        "en": "Film grain — analog effect",
+        "fr": "Grain de pellicule — effet analogique"},
+    "n_grano": {
+        "es": "Emulación **orgánica** de grano de film (nada de ruido digital): placa "
+              "gaussiana con estructura, mezclada en overlay — el grano respira en los "
+              "medios tonos y desaparece en negros y blancos puros, como la película real. "
+              "En video el grano es temporal (cambia cada frame). Ajusta los parámetros "
+              "a tu gusto. CPU/FFmpeg: funciona en cualquier máquina.",
+        "en": "**Organic** film grain emulation (no digital noise): a structured gaussian "
+              "plate blended in overlay — grain breathes in the midtones and vanishes in "
+              "pure blacks and whites, like real film stock. In video the grain is temporal "
+              "(changes every frame). Tune the parameters freely. CPU/FFmpeg: runs anywhere.",
+        "fr": "Émulation **organique** du grain argentique (aucun bruit numérique) : plaque "
+              "gaussienne structurée fusionnée en overlay — le grain respire dans les tons "
+              "moyens et disparaît dans les noirs et blancs purs, comme la vraie pellicule. "
+              "En vidéo le grain est temporel (change à chaque image). Paramètres réglables. "
+              "CPU/FFmpeg : fonctionne partout."},
+    "g_preset": {
+        "es": "Tipo de película", "en": "Film stock", "fr": "Type de pellicule"},
+    "g_fino": {
+        "es": "Profesional fina (tipo Portra/Ektar)",
+        "en": "Fine professional (Portra/Ektar-like)",
+        "fr": "Professionnelle fine (façon Portra/Ektar)"},
+    "g_clasico": {
+        "es": "35mm clásica (tipo Kodak Gold)",
+        "en": "Classic 35mm (Kodak Gold-like)",
+        "fr": "35mm classique (façon Kodak Gold)"},
+    "g_alta_iso": {
+        "es": "Alta sensibilidad (tipo Portra 800/CineStill)",
+        "en": "High speed (Portra 800/CineStill-like)",
+        "fr": "Haute sensibilité (façon Portra 800/CineStill)"},
+    "g_super8": {
+        "es": "Super 8 / casera (grano grueso)",
+        "en": "Super 8 / home movie (coarse grain)",
+        "fr": "Super 8 / amateur (gros grain)"},
+    "g_bn_plata": {
+        "es": "B/N de plata (tipo Tri-X/HP5)",
+        "en": "Silver B&W (Tri-X/HP5-like)",
+        "fr": "N&B argentique (façon Tri-X/HP5)"},
+    "g_intensidad": {
+        "es": "Intensidad del grano", "en": "Grain intensity", "fr": "Intensité du grain"},
+    "g_tamano": {
+        "es": "Tamaño del grano (1 fino → 4 grueso)",
+        "en": "Grain size (1 fine → 4 coarse)",
+        "fr": "Taille du grain (1 fin → 4 gros)"},
+    "g_color": {
+        "es": "Grano de color (apagado = plata monocromo)",
+        "en": "Color grain (off = monochrome silver)",
+        "fr": "Grain couleur (désactivé = argent monochrome)"},
+
     # ---- control de fidelidad de caras ----
     "fidelidad": {
         "es": "Fidelidad (0 = más nítido, 1 = más fiel al original)",

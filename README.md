@@ -86,6 +86,7 @@ faltan y con qué comando instalarlos. Útil antes del primer uso.
 | **DDColor** | **Colorizar** fotos en blanco y negro. El "colorize model" tipo HitPaw. | NVIDIA (Mac: CPU) |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
 | **Real-ESRGAN** | Escalado instantáneo. | Cualquier GPU |
+| **Grano analógico** | Emulación orgánica de grano de film (video e imagen), con presets tipo Portra/Tri-X/Super 8 y parámetros ajustables. | Cualquier máquina (CPU/FFmpeg) |
 
 ### ¿Y los de pago (Topaz, Magnific, HitPaw)?
 

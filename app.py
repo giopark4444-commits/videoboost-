@@ -15,7 +15,7 @@ import gradio as gr
 import hardware
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import color, faces, faithdiff, flashvsr, instantir, seedvr2, vulkan
+from engines import color, faces, faithdiff, flashvsr, grano, instantir, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -24,12 +24,15 @@ HW = hardware.info_sistema()
 MOTORES_VIDEO_NOTAS = {
     "seedvr2": "n_seedvr2", "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
+    "grano": "n_grano",
 }
 MOTORES_IMG_NOTAS = {
     "faithdiff": "n_faithdiff", "seedvr2_img": "n_seedvr2_img",
     "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
-    "instantir": "n_instantir", "ddcolor": "n_ddcolor",
+    "instantir": "n_instantir", "ddcolor": "n_ddcolor", "grano": "n_grano",
 }
+# Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
+GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
 # Motores de imagen que aceptan un prompt opcional.
 IMG_CON_PROMPT = ("faithdiff", "instantir")
 
@@ -42,6 +45,8 @@ def motores_video():
         m += ["realesrgan", "realcugan", "waifu2x", "rife"]
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
+    if HW["ffmpeg"]:
+        m.append("grano")
     return m or ["realesrgan"]  # que la UI nunca quede vacía
 
 
@@ -59,6 +64,8 @@ def motores_imagen():
         m.append("ddcolor")
     if HW["vulkan"]:
         m.append("realesrgan_img")
+    if HW["ffmpeg"]:
+        m.append("grano")
     return m or ["realesrgan_img"]
 
 
@@ -117,7 +124,8 @@ def _consumir(gen, log):
 
 
 def hacer_procesar_video(lang):
-    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch):
+    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch,
+                 g_preset, g_int, g_tam, g_color):
         if not video:
             yield t("sube_video", lang), None
             return
@@ -130,6 +138,10 @@ def hacer_procesar_video(lang):
                 gen = vulkan.interpolar_video(video, mult=int(mult))
             elif motor == "flashvsr":
                 gen = flashvsr.mejorar(video)
+            elif motor == "grano":
+                gen = grano.aplicar(video, es_video=True, preset=g_preset,
+                                    intensidad=float(g_int), tamano=int(g_tam),
+                                    grano_color=bool(g_color))
             else:
                 gen = vulkan.mejorar_video(video, motor=motor, escala=int(escala),
                                            ruido=int(ruido))
@@ -151,7 +163,8 @@ def hacer_procesar_video(lang):
 
 
 def hacer_procesar_imagen(lang):
-    def procesar(imagen, motor, prompt, escala, resolucion, fidelidad):
+    def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
+                 g_preset, g_int, g_tam, g_color):
         oculto = gr.update(visible=False)
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
@@ -168,6 +181,10 @@ def hacer_procesar_imagen(lang):
                 gen = instantir.mejorar(imagen, prompt=prompt or "")
             elif motor == "ddcolor":
                 gen = color.colorizar(imagen)
+            elif motor == "grano":
+                gen = grano.aplicar(imagen, es_video=False, preset=g_preset,
+                                    intensidad=float(g_int), tamano=int(g_tam),
+                                    grano_color=bool(g_color))
             else:
                 gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
             consumo = _consumir(gen, log)
@@ -197,6 +214,8 @@ def hacer_vista_previa(lang):
         except Exception:
             return ""
         w, h = info["ancho"], info["alto"]
+        if motor == "grano":
+            return f"{w}×{h} {t('se_mantiene', lang)}"
         if motor == "rife":
             return (f"{w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
                     f"**{info['fps'] * int(mult):.0f} fps**")
@@ -260,6 +279,25 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
     def ui(lang):
         gr.HTML(header_html(lang))
 
+        def grupo_grano(visible):
+            """Controles del grano analógico (compartidos por video e imagen).
+            El preset fija valores de partida; los sliders siempre mandan."""
+            with gr.Group(visible=visible) as g:
+                preset = gr.Dropdown([(t("g_" + p, lang), p) for p in GRANO_PRESETS],
+                                     value="clasico", label=t("g_preset", lang))
+                i0, t0, c0 = grano.PRESETS["clasico"]
+                inten = gr.Slider(0.02, 1.0, value=i0, step=0.01,
+                                  label=t("g_intensidad", lang))
+                tam = gr.Slider(1, 4, value=t0, step=1, label=t("g_tamano", lang))
+                col = gr.Checkbox(value=c0, label=t("g_color", lang))
+
+            def sincronizar(p):
+                i, tm, c = grano.PRESETS[p]
+                return gr.update(value=i), gr.update(value=tm), gr.update(value=c)
+
+            preset.change(sincronizar, preset, [inten, tam, col])
+            return g, preset, inten, tam, col
+
         with gr.Tab(t("tab_video", lang)):
             ids_v = motores_video()
             with gr.Row():
@@ -281,6 +319,8 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                                                  label=t("modelo_auto", lang))
                         batch_sv2 = gr.Dropdown(seedvr2.BATCHES, value=HW["seedvr2_batch"],
                                                 label=t("batch", lang))
+                    grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(
+                        ids_v[0] == "grano")
                     preview = gr.Markdown(elem_classes="size-preview")
                     boton_v = gr.Button(t("boton_video", lang), variant="primary",
                                         elem_classes="cta")
@@ -296,14 +336,17 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
                     gr.update(visible=motor == "rife"),
                     gr.update(visible=motor == "seedvr2"),
+                    gr.update(visible=motor == "grano"),
                 )
 
-            motor_v.change(controles_v, motor_v, [nota_v, escala, ruido, mult, grupo_sv2])
+            motor_v.change(controles_v, motor_v,
+                           [nota_v, escala, ruido, mult, grupo_sv2, grupo_g_v])
             for comp in (video_in, motor_v, escala, mult, resolucion):
                 comp.change(hacer_vista_previa(lang),
                             [video_in, motor_v, escala, mult, resolucion], preview)
             boton_v.click(hacer_procesar_video(lang),
-                          [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2, batch_sv2],
+                          [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
+                           batch_sv2, gpre_v, gint_v, gtam_v, gcol_v],
                           [log_v, video_out])
 
         with gr.Tab(t("tab_imagenes", lang)):
@@ -311,7 +354,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
             etiquetas_i = {"faithdiff": "i_faithdiff",
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
-                           "ddcolor": "i_ddcolor"}
+                           "ddcolor": "i_ddcolor", "grano": "m_grano"}
             with gr.Row():
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
@@ -323,13 +366,16 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
-                                         visible=ids_i[0] not in ("seedvr2_img", "instantir", "ddcolor"))
+                                         visible=ids_i[0] not in ("seedvr2_img", "instantir",
+                                                                  "ddcolor", "grano"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
                     fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
                                             label=t("fidelidad", lang),
                                             visible=ids_i[0] == "codeformer")
+                    grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
+                        ids_i[0] == "grano")
                     boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
                                         elem_classes="cta")
                 with gr.Column():
@@ -344,15 +390,18 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                 return (
                     gr.update(value=t(MOTORES_IMG_NOTAS[motor], lang)),
                     gr.update(visible=motor in IMG_CON_PROMPT),
-                    gr.update(visible=motor not in ("seedvr2_img", "instantir", "ddcolor")),
+                    gr.update(visible=motor not in ("seedvr2_img", "instantir",
+                                                    "ddcolor", "grano")),
                     gr.update(visible=motor == "seedvr2_img"),
                     gr.update(visible=motor == "codeformer"),
+                    gr.update(visible=motor == "grano"),
                 )
 
             motor_i.change(controles_i, motor_i,
-                           [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i])
+                           [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i, grupo_g_i])
             boton_i.click(hacer_procesar_imagen(lang),
-                          [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i],
+                          [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
+                           gpre_i, gint_i, gtam_i, gcol_i],
                           [log_i, img_out, descarga_i])
 
         with gr.Tab(t("tab_sistema", lang)):
