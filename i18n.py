@@ -148,6 +148,16 @@ T = {
         "en": "DDColor — colorize (B&W → color)",
         "fr": "DDColor — coloriser (N&B → couleur)"},
 
+    # ---- apariencia / tema ----
+    "ap_titulo": {"es": "🎨 Apariencia", "en": "🎨 Appearance", "fr": "🎨 Apparence"},
+    "ap_modo": {"es": "Tema", "en": "Theme", "fr": "Thème"},
+    "ap_claro": {"es": "Claro", "en": "Light", "fr": "Clair"},
+    "ap_oscuro": {"es": "Oscuro", "en": "Dark", "fr": "Sombre"},
+    "ap_custom": {"es": "Personalizado", "en": "Custom", "fr": "Personnalisé"},
+    "ap_acento": {"es": "Color de acento", "en": "Accent color", "fr": "Couleur d'accent"},
+    "ap_fondo": {"es": "Color de fondo", "en": "Background color", "fr": "Couleur de fond"},
+    "ap_reset": {"es": "Restablecer", "en": "Reset", "fr": "Réinitialiser"},
+
     # ---- activación de licencia ----
     "lic_titulo": {
         "es": "Activar VideoBoost", "en": "Activate VideoBoost",

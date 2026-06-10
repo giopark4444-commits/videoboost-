@@ -273,6 +273,40 @@ def header_html(lang):
     )
 
 
+# --- Tema: JS de cliente (claro/oscuro/personalizado, persistente) -----------
+# Aplica acento y fondo escribiendo variables CSS propias y las de Gradio, y
+# guarda la elección en localStorage para recordarla entre sesiones.
+_JS_APLICAR = """
+window.vbAcento = (c) => { const s = document.body.style;
+  ['--vb-accent','--button-primary-background-fill','--button-primary-background-fill-hover',
+   '--color-accent','--primary-500','--primary-600'].forEach(v => s.setProperty(v, c));
+  s.setProperty('--vb-accent-soft', c + '22'); };
+window.vbFondo = (c) => { const s = document.body.style;
+  ['--vb-bg','--body-background-fill','--background-fill-secondary'].forEach(v => s.setProperty(v, c)); };
+window.vbModo = (m) => { document.body.classList.toggle('dark', m === 'oscuro');
+  localStorage.setItem('vb_modo', m); };
+"""
+
+_JS_CARGA = """() => {
+  %s
+  try {
+    const m = localStorage.getItem('vb_modo'); if (m) window.vbModo(m);
+    const a = localStorage.getItem('vb_acento'); if (a) window.vbAcento(a);
+    const f = localStorage.getItem('vb_fondo'); if (f) window.vbFondo(f);
+  } catch(e) {}
+}""" % _JS_APLICAR
+
+_JS_MODO = "(m) => { window.vbModo(m); }"
+_JS_ACENTO = "(c) => { window.vbAcento(c); localStorage.setItem('vb_acento', c); }"
+_JS_FONDO = "(c) => { window.vbFondo(c); localStorage.setItem('vb_fondo', c); }"
+_JS_RESET = ("() => { ['vb_modo','vb_acento','vb_fondo'].forEach(k => "
+             "localStorage.removeItem(k)); document.body.classList.remove('dark'); "
+             "['--vb-accent','--vb-accent-soft','--vb-bg','--button-primary-background-fill',"
+             "'--button-primary-background-fill-hover','--color-accent','--primary-500',"
+             "'--primary-600','--body-background-fill','--background-fill-secondary']"
+             ".forEach(v => document.body.style.removeProperty(v)); }")
+
+
 def texto_sistema(lang):
     sv2 = (f"{t('s_listo_modelo', lang)} `{HW['seedvr2_modelo']}`" if HW["seedvr2"]
            else t("s_no_instalado", lang))
@@ -298,7 +332,8 @@ def texto_sistema(lang):
 
 # ---------------------------------------------------------------- interfaz
 
-with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as demo:
+with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
+               js=_JS_CARGA) as demo:
     idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
                       container=False, elem_id="vb-lang", scale=0)
     # Cambia al activar la licencia para que la UI completa se re-renderice.
@@ -307,6 +342,30 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
     @gr.render(inputs=[idioma, lic_tick])
     def ui(lang, _tick):
         gr.HTML(header_html(lang))
+
+        # --- Apariencia: claro / oscuro / personalizado (persistente) ---
+        with gr.Accordion(t("ap_titulo", lang), open=False):
+            modo = gr.Radio(
+                [(t("ap_claro", lang), "claro"), (t("ap_oscuro", lang), "oscuro"),
+                 (t("ap_custom", lang), "custom")],
+                value="claro", label=t("ap_modo", lang))
+            with gr.Row():
+                acento = gr.ColorPicker(value="#c96442", label=t("ap_acento", lang),
+                                        visible=False)
+                fondo = gr.ColorPicker(value="#faf9f5", label=t("ap_fondo", lang),
+                                       visible=False)
+            reset = gr.Button(t("ap_reset", lang), size="sm")
+
+            def _mostrar_custom(m):
+                v = (m == "custom")
+                return gr.update(visible=v), gr.update(visible=v)
+
+            modo.change(_mostrar_custom, modo, [acento, fondo])
+            modo.change(None, modo, None, js=_JS_MODO)
+            acento.change(None, acento, None, js=_JS_ACENTO)
+            fondo.change(None, fondo, None, js=_JS_FONDO)
+            reset.click(lambda: ("claro", "#c96442", "#faf9f5"), None,
+                        [modo, acento, fondo]).then(None, None, None, js=_JS_RESET)
 
         # --- Activación (solo si la build exige licencia y no está activada) ---
         if licencias.requiere_licencia() and not licencias.activa():

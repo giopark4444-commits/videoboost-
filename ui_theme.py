@@ -68,6 +68,18 @@ CSS = """
   --vb-border-strong:#ddd5c7; --vb-text:#23211d; --vb-muted:#7c776d;
   --vb-accent:#c96442; --vb-accent-soft:#fbf2ee;
 }
+/* Modo oscuro: Gradio añade la clase .dark al body; las variables cascada
+   y todos los elementos propios se adaptan solos. */
+body.dark, .dark{
+  --vb-bg:#262624; --vb-surface:#30302e; --vb-border:#3c3b38;
+  --vb-border-strong:#4a4844; --vb-text:#ece9e1; --vb-muted:#a8a39a;
+  --vb-accent:#e08a63; --vb-accent-soft:#3a322c;
+}
+.dark .engine-picker label{background:var(--vb-surface) !important;}
+.dark .engine-picker label:hover{background:#363533 !important;}
+.dark .engine-note{background:#2b2b29 !important;}
+.dark #vb-header .vb-pill{background:var(--vb-surface);}
+.dark .sys-card{background:var(--vb-surface);}
 /* Lienzo centrado y bien proporcionado en todo dispositivo */
 .gradio-container{max-width:1140px !important; margin:0 auto !important;
   padding:0 20px 56px !important;}
