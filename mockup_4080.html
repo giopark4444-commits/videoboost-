@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VideoBoost · Mockup · Video (RTX 4080)</title>
+<style>
+  :root{
+    --bg:#f7f7f8; --panel:#ffffff; --border:#e5e7eb; --text:#1f2937;
+    --muted:#6b7280; --primary:#f97316; --primary-d:#ea580c; --accent:#eff6ff;
+    --accent-b:#bfdbfe; --radio-sel:#fff7ed; --radio-selb:#fdba74;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+  h1{font-size:28px;margin:0 0 4px;font-weight:700}
+  .hwline{margin:0 0 16px;font-size:15px}
+  .hwline b{font-weight:700}
+  .langbar{display:flex;gap:8px;align-items:center;margin:0 0 18px}
+  .langbar .lbl{color:var(--muted);font-size:13px;margin-right:4px}
+  .chip{padding:5px 12px;border:1px solid var(--border);border-radius:18px;background:#fff;font-size:13px}
+  .chip.on{background:var(--radio-sel);border-color:var(--radio-selb);font-weight:600}
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:18px}
+  .tab{padding:10px 18px;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--text);border-bottom-color:var(--primary)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .label{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .drop{border:2px dashed var(--border);border-radius:10px;padding:28px 16px;text-align:center;
+    color:var(--muted);background:#fafafa;margin-bottom:16px}
+  .drop .ic{font-size:30px;display:block;margin-bottom:6px;opacity:.6}
+  .radios{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+  .radio{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--border);
+    border-radius:9px;background:#fff}
+  .radio.on{background:var(--radio-sel);border-color:var(--radio-selb)}
+  .radio .dot{width:15px;height:15px;border-radius:50%;border:2px solid #cbd5e1;flex:none}
+  .radio.on .dot{border-color:var(--primary);box-shadow:inset 0 0 0 3px var(--primary)}
+  .radio small{color:var(--muted);font-weight:400}
+  .note{background:var(--accent);border:1px solid var(--accent-b);border-radius:9px;
+    padding:11px 13px;font-size:13px;margin-bottom:16px;color:#1e3a5f}
+  .field{margin-bottom:14px}
+  .fakeinput{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+    background:#fff;font-size:13px;color:var(--text)}
+  .selwrap{position:relative}
+  .selwrap::after{content:"▾";position:absolute;right:12px;top:9px;color:var(--muted)}
+  .group{border:1px solid var(--accent-b);border-radius:10px;padding:13px;margin-bottom:14px;background:#fafcff}
+  .group .gh{font-size:11px;color:var(--primary-d);font-weight:700;text-transform:uppercase;
+    letter-spacing:.04em;margin-bottom:10px}
+  .preview{font-size:14px;margin:4px 0 16px}
+  .preview b{font-weight:700}
+  .warn{color:#92400e}
+  .btn{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:9px;
+    font-size:15px;font-weight:600}
+  .log{background:#0f172a;color:#cbd5e1;border-radius:9px;padding:14px;font-size:12.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.7;height:262px;
+    overflow:hidden;white-space:pre-wrap}
+  .log .ok{color:#4ade80}.log .info{color:#7dd3fc}.log .run{color:#fbbf24}
+  .result{margin-top:16px;border:1px solid var(--border);border-radius:10px;height:200px;
+    background:repeating-conic-gradient(#f3f4f6 0% 25%,#fff 0% 50%) 50%/22px 22px;
+    display:flex;align-items:center;justify-content:center;color:var(--muted);position:relative;overflow:hidden}
+  .result .badge{position:absolute;bottom:10px;right:10px;background:rgba(15,23,42,.78);color:#fff;
+    padding:4px 10px;border-radius:6px;font-size:11px}
+  .nv{background:#76b900;color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🚀 VideoBoost</h1>
+  <p class="hwline"><b>NVIDIA GeForce RTX 4080 · 16.0 GB VRAM (CUDA)</b> — Nivel <b>3 · Máximo</b></p>
+
+  <div class="langbar">
+    <span class="lbl">🌐</span>
+    <span class="chip on">Español</span>
+    <span class="chip">English</span>
+    <span class="chip">Français</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on">🎬 Video</div>
+    <div class="tab">🖼️ Imágenes</div>
+    <div class="tab">⚙️ Sistema</div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="label">Video de entrada</div>
+      <div class="drop"><span class="ic">⬆️</span>boda_2011.mp4 · 1920×1080 · 02:30</div>
+
+      <div class="label">Motor</div>
+      <div class="radios">
+        <div class="radio on"><span class="dot"></span>
+          <span>SeedVR2 — restauración IA <small>(recomendado)</small></span></div>
+        <div class="radio"><span class="dot"></span>
+          <span>Real-ESRGAN — video real <small>(Vulkan)</small></span></div>
+        <div class="radio"><span class="dot"></span>
+          <span>Real-CUGAN — anime con ruido <small>(Vulkan)</small></span></div>
+        <div class="radio"><span class="dot"></span>
+          <span>waifu2x — anime limpio <small>(Vulkan)</small></span></div>
+        <div class="radio"><span class="dot"></span>
+          <span>RIFE — más fps, interpolación <small>(Vulkan)</small></span></div>
+        <div class="radio"><span class="dot"></span>
+          <span>FlashVSR — modo rápido <small>(experimental, NVIDIA)</small></span></div>
+      </div>
+
+      <div class="note">Difusión en 1 paso con <b>consistencia temporal nativa</b> (cero
+        parpadeo). Reconstruye detalle real en video degradado. Nivel Topaz.</div>
+
+      <div class="group">
+        <div class="gh">Opciones de SeedVR2</div>
+        <div class="field">
+          <div class="label">Resolución objetivo (lado corto)</div>
+          <div class="selwrap"><div class="fakeinput">2160</div></div>
+        </div>
+        <div class="field">
+          <div class="label">Modelo (auto-recomendado para tu hardware)</div>
+          <div class="selwrap"><div class="fakeinput">seedvr2_ema_7b_fp8_e4m3fn.safetensors</div></div>
+        </div>
+        <div class="field">
+          <div class="label">Frames por lote (más = mejor consistencia, más memoria)</div>
+          <div class="selwrap"><div class="fakeinput">13</div></div>
+        </div>
+      </div>
+
+      <div class="preview">🎬 1920×1080 → <b>3840×2160</b></div>
+      <button class="btn">✨ Mejorar video</button>
+    </div>
+
+    <div class="panel">
+      <div class="label">Progreso</div>
+      <div class="log">▶ SeedVR2 — restauración IA (recomendado)
+<span class="run">🚀 SeedVR2 · modelo 7b_fp8 · resolución 2160p · batch 13</span>
+[SeedVR2] device: cuda:0 · RTX 4080 · 16 GB
+[SeedVR2] fp8 e4m3fn · sin block-swap · attention: sdpa
+[SeedVR2] frames: 4500 · fps 30.0 · lotes de 13
+[SeedVR2] lote 88/346 ███░░░░░░░░░ 25% · 1.4 s/lote
+[SeedVR2] vae decode tiled · color_correction: lab
+[SeedVR2] reensamblando con audio original (libx264 crf17)…
+<span class="ok">✅ Listo: salidas/boda_2011_seedvr2_2160p.mp4</span></div>
+
+      <div class="label" style="margin-top:16px">Resultado</div>
+      <div class="result">
+        <span>▶ boda_2011_seedvr2_2160p.mp4</span>
+        <span class="badge">3840×2160 · 4K · 30 fps</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Mockup estático · pestaña Video en <span class="nv">RTX 4080</span> (Nivel
+    Máximo): aparece <b>FlashVSR</b> y SeedVR2 usa el 7B fp8 a 4K. En el Mac se ve igual pero
+    sin FlashVSR y con el modelo fp16.</p>
+</div>
+</body>
+</html>
