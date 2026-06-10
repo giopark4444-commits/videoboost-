@@ -12,13 +12,24 @@ salen de tu máquina, sin suscripciones ni internet (salvo la instalación).
 
 ## Instalación (una sola vez)
 
+Hay **dos formas**, elige una:
+
+**A) Rápida — solo lo esencial** (video + SeedVR2 + Vulkan):
 1. Descomprime VideoBoost donde quieras.
 2. Doble clic en **`VideoBoost.bat`** (Windows) o **`VideoBoost.command`** (Mac).
-   - *Windows:* si aparece el aviso azul de SmartScreen → "Más información" → "Ejecutar de todas formas".
-   - *Mac:* si dice "no se puede abrir" → clic derecho sobre el archivo → "Abrir".
-3. La primera vez instala todo y **descarga los modelos de IA** (tarda un buen
-   rato, son varios GB — déjalo trabajar tranquilo).
-4. Al terminar, la app se abre sola en tu navegador.
+   La primera vez instala el núcleo y al terminar abre la app sola.
+
+**B) Completa — TODOS los motores** (restauración de imagen, caras, color…):
+1. Doble clic en **`INSTALAR_TODO.bat`** (Windows) o **`INSTALAR_TODO.command`** (Mac).
+2. Instala la base y todos los motores compatibles con tu máquina, uno tras otro.
+   Si alguno falla, avisa y sigue con los demás (terminas con todo lo que sí pudo).
+3. Después arranca normal con `VideoBoost.bat` / `VideoBoost.command`.
+
+En ambos casos:
+- *Windows:* si aparece el aviso azul de SmartScreen → "Más información" → "Ejecutar de todas formas".
+- *Mac:* si dice "no se puede abrir" → clic derecho sobre el archivo → "Abrir".
+- **Descarga modelos de IA** (varios GB; la opción completa, decenas de GB) —
+  déjalo trabajar tranquilo. Solo pasa una vez.
 
 ## Activación
 
@@ -37,6 +48,10 @@ Doble clic en `VideoBoost.bat` / `VideoBoost.command` → se abre en el navegado
 - **Revelado de color:** hasta 3 looks de película (Portra, Velvia, Tri-X…) +
   ajustes profesionales (exposición, contraste, blancos, negros, viñeta…).
 - **Grano de película:** el toque analógico final, con presets ajustables.
+- **Pestaña Lote:** procesa muchos archivos seguidos con la misma configuración.
+- **Pestaña Galería:** mira todos tus resultados y descárgalos sin salir de la app.
+- Botón **Cancelar** para detener un proceso a medias, y elección de **formato de
+  salida** (H.264/H.265/ProRes/WebM en video; PNG/JPEG/TIFF/WebP en imagen).
 - Los resultados quedan también en la carpeta **`salidas/`**.
 
 Flujo recomendado: **Restaurar → Revelado → Grano.**
