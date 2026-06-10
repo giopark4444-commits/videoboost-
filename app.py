@@ -8,7 +8,12 @@ Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 
 import base64
 import io
+import json
+import shutil
+import subprocess
+import time
 import traceback
+from pathlib import Path
 
 import gradio as gr
 
@@ -16,17 +21,21 @@ import hardware
 import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import (color, faces, faithdiff, flashvsr, grano, instantir, luts,
-                     seedvr2, vulkan)
+from engines import (color, faces, faithdiff, filtros, flashvsr, grano,
+                     instantir, luts, seedvr2, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
+
+# ---------------------------------------------------------------- constantes
 
 # ids internos estables; las etiquetas visibles salen de i18n
 MOTORES_VIDEO_NOTAS = {
     "seedvr2": "n_seedvr2", "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
     "grano": "n_grano", "lut": "n_lut",
+    "desentrelazar": "n_desentrelazar", "denoise": "n_denoise",
+    "estabilizar": "n_estabilizar",
 }
 MOTORES_IMG_NOTAS = {
     "faithdiff": "n_faithdiff", "seedvr2_img": "n_seedvr2_img",
@@ -39,37 +48,130 @@ GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
 # Motores de imagen que aceptan un prompt opcional.
 IMG_CON_PROMPT = ("faithdiff", "instantir")
 
+# Formatos de salida
+_FORMATOS_VIDEO = [
+    ("H.264 MP4", "h264"),
+    ("H.265 HEVC", "h265"),
+    ("ProRes 422", "prores"),
+    ("WebM VP9", "webm"),
+]
+_FORMATOS_IMG = [
+    ("PNG", "png"),
+    ("JPEG 95%", "jpeg"),
+    ("TIFF", "tiff"),
+    ("WebP", "webp"),
+]
 
-def motores_video():
-    m = []
-    if HW["seedvr2"]:
-        m.append("seedvr2")
-    if HW["vulkan"]:
-        m += ["realesrgan", "realcugan", "waifu2x", "rife"]
-    if HW["flashvsr"] and flashvsr.disponible():
-        m.append("flashvsr")
-    if HW["ffmpeg"]:
-        m += ["lut", "grano"]
-    return m or ["realesrgan"]  # que la UI nunca quede vacía
+# Directorio de presets de revelado
+_PRESET_DIR = Path(__file__).parent / "presets"
+_PRESET_DIR.mkdir(exist_ok=True)
+
+# Orden plano del panel de revelado (debe coincidir con grupo_revelado).
+_CLAVES_REVELADO = (
+    "exposicion", "contraste", "altas", "sombras", "blancos", "negros",
+    "temperatura", "tinte", "saturacion",
+    "vibranza", "matiz", "desvaido", "tinte_sombras", "tinte_altas",
+    "nitidez", "claridad", "ruido", "vineta",
+)
+
+# Preset keys: lut1,mix1,lut2,mix2,lut3,mix3 + 18 Lumetri params
+_PRESET_KEYS = (
+    "lut1", "mix1", "lut2", "mix2", "lut3", "mix3",
+) + _CLAVES_REVELADO
+
+_PRESET_DEFAULTS = (
+    "portra400", 1.0, "ninguno", 1.0, "ninguno", 1.0,
+    0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 6500, 0.0, 1.0,
+    0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+)
+
+# Disponibilidad de vidstab (cacheado al arrancar)
+_VIDSTAB_OK: bool = filtros.VIDSTAB_OK
+
+from engines import SALIDAS, MODELS
 
 
-def motores_imagen():
-    m = []
-    if faithdiff.disponible():
-        m.append("faithdiff")  # recomendado por defecto (MIT, supera a SUPIR)
-    if HW["seedvr2"]:
-        m.append("seedvr2_img")
-    if instantir.disponible():
-        m.append("instantir")
-    if faces.disponible():
-        m.append("codeformer")
-    if color.disponible():
-        m.append("ddcolor")
-    if HW["vulkan"]:
-        m.append("realesrgan_img")
-    if HW["ffmpeg"]:
-        m += ["lut", "grano"]
-    return m or ["realesrgan_img"]
+# ---------------------------------------------------------------- helpers
+
+def _transcodificar_video(entrada: str, formato: str, log: list) -> str:
+    """Post-procesa el video de salida del motor al formato elegido con FFmpeg.
+
+    Devuelve la ruta final (puede ser distinta de `entrada` si hay conversión).
+    """
+    entrada = Path(entrada)
+    codecs = {
+        "h264":   (["-c:v", "libx264", "-crf", "17", "-preset", "medium",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"], ".mp4"),
+        "h265":   (["-c:v", "libx265", "-crf", "20", "-preset", "medium",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"], ".mp4"),
+        "prores": (["-c:v", "prores_ks", "-profile:v", "3",
+                    "-c:a", "pcm_s16le"], ".mov"),
+        "webm":   (["-c:v", "libvpx-vp9", "-crf", "32", "-b:v", "0",
+                    "-c:a", "libopus", "-b:a", "128k"], ".webm"),
+    }
+    if formato not in codecs or formato == "h264":
+        return str(entrada)  # h264 ya es el formato nativo de los motores
+    flags, ext = codecs[formato]
+    salida = entrada.with_suffix(ext)
+    if salida == entrada:
+        salida = entrada.with_name(entrada.stem + "_fmt" + ext)
+    cmd = [ff.ffmpeg(), "-y", "-i", str(entrada)] + flags + [str(salida)]
+    log.append(f"▶ transcodificar → {ext}")
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        log.append(f"⚠️ transcodificación falló: {r.stderr[-200:]}")
+        return str(entrada)
+    return str(salida)
+
+
+def _convertir_imagen(entrada: str, formato: str) -> str:
+    """Convierte la imagen de salida al formato elegido con PIL.
+
+    Devuelve la ruta final.
+    """
+    from PIL import Image
+
+    entrada = Path(entrada)
+    ext_map = {"png": ".png", "jpeg": ".jpg", "tiff": ".tif", "webp": ".webp"}
+    save_kwargs = {
+        "png": {},
+        "jpeg": {"quality": 95},
+        "tiff": {},
+        "webp": {"quality": 92, "method": 4},
+    }
+    if formato not in ext_map or entrada.suffix.lower() in (".png",) and formato == "png":
+        return str(entrada)
+    ext = ext_map[formato]
+    salida = entrada.with_suffix(ext)
+    if salida == entrada:
+        salida = entrada.with_name(entrada.stem + "_fmt" + ext)
+    img = Image.open(entrada)
+    if img.mode not in ("RGB", "RGBA", "L"):
+        img = img.convert("RGB")
+    if formato == "jpeg" and img.mode in ("RGBA",):
+        img = img.convert("RGB")
+    img.save(salida, **save_kwargs.get(formato, {}))
+    return str(salida)
+
+
+def _listar_presets_revelado() -> list[str]:
+    return sorted(p.stem for p in _PRESET_DIR.glob("*.json"))
+
+
+def _estado_modelos() -> dict:
+    """Devuelve un dict {nombre: bool} indicando si los pesos están presentes."""
+    sv2_dir = MODELS / "SEEDVR2"
+    sv2_ok = sv2_dir.is_dir() and any(
+        sv2_dir.glob("*.safetensors")) or any(sv2_dir.glob("*.gguf")) if sv2_dir.is_dir() else False
+    fd_ok = (MODELS / "FaithDiff" / "Real_4_SDXL").is_dir()
+    ir_ok = (MODELS / "InstantIR").is_dir() and any((MODELS / "InstantIR").iterdir())
+    dd_ok = (MODELS / "DDColor" / "pytorch_model.pt").exists()
+    return {
+        "SeedVR2": sv2_ok,
+        "FaithDiff": fd_ok,
+        "InstantIR": ir_ok,
+        "DDColor": dd_ok,
+    }
 
 
 # ---------------------------------------------------------------- comparador
@@ -95,8 +197,6 @@ def comparador_html(antes, despues, lang):
     try:
         a, d = _data_uri(antes), _data_uri(despues)
     except Exception:
-        # No rompemos el flujo: el archivo ya está en salidas/ y el botón de
-        # descarga funciona; avisamos en vez de dejar el panel en blanco.
         return (f'<p style="color:var(--vb-muted,#7c776d)">{t("listo", lang)} — '
                 f'{despues}</p>')
     return (
@@ -115,15 +215,6 @@ def comparador_html(antes, despues, lang):
 
 # ---------------------------------------------------------------- lógica
 
-# Orden plano del panel de revelado (debe coincidir con grupo_revelado).
-_CLAVES_REVELADO = (
-    "exposicion", "contraste", "altas", "sombras", "blancos", "negros",
-    "temperatura", "tinte", "saturacion",
-    "vibranza", "matiz", "desvaido", "tinte_sombras", "tinte_altas",
-    "nitidez", "claridad", "ruido", "vineta",
-)
-
-
 def _revelar(entrada, es_video, rev):
     """Convierte los valores planos del panel (3 LUTs + ajustes) en etalonar()."""
     l1, m1, l2, m2, l3, m3, *ajustes = rev
@@ -132,22 +223,34 @@ def _revelar(entrada, es_video, rev):
         **{k: float(v) for k, v in zip(_CLAVES_REVELADO, ajustes)},
     )
 
+
 def _consumir(gen, log):
-    """Consume el generador del motor cediendo el log acumulado; captura su retorno."""
-    while True:
-        try:
-            linea = next(gen)
-        except StopIteration as fin:
-            return fin.value
-        log.append(linea)
-        yield "\n".join(log[-400:])
+    """Consume el generador del motor cediendo el log acumulado; captura su retorno.
+
+    Añade prefijo de tiempo transcurrido (⏱ MM:SS) después de 3 segundos.
+    """
+    inicio = time.time()
+    try:
+        while True:
+            try:
+                linea = next(gen)
+            except StopIteration as fin:
+                return fin.value
+            log.append(linea)
+            t_elapsed = time.time() - inicio
+            prefix = f"⏱ {int(t_elapsed // 60):02d}:{int(t_elapsed % 60):02d}  " if t_elapsed > 3 else ""
+            yield prefix + "\n".join(log[-400:])
+    finally:
+        gen.close()
 
 
 def hacer_procesar_video(lang):
     def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch,
-                 g_preset, g_int, g_tam, g_color, *rev):
+                 g_preset, g_int, g_tam, g_color,
+                 formato, den_luma, den_croma, est_suav, est_zoom,
+                 *rev):
         if not video:
-            yield t("sube_video", lang), None
+            yield t("sube_video", lang), None, ""
             return
         log = [f"▶ {motor}"]
         try:
@@ -164,6 +267,12 @@ def hacer_procesar_video(lang):
                                     grano_color=bool(g_color))
             elif motor == "lut":
                 gen = _revelar(video, es_video=True, rev=rev)
+            elif motor == "desentrelazar":
+                gen = filtros.desentrelazar(video)
+            elif motor == "denoise":
+                gen = filtros.denoise(video, luma=float(den_luma), chroma=float(den_croma))
+            elif motor == "estabilizar":
+                gen = filtros.estabilizar(video, suavidad=int(est_suav), zoom=float(est_zoom))
             else:
                 gen = vulkan.mejorar_video(video, motor=motor, escala=int(escala),
                                            ruido=int(ruido))
@@ -171,22 +280,39 @@ def hacer_procesar_video(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), None
+                    yield next(consumo), None, ""
                 except StopIteration as fin:
                     salida = fin.value
                     break
+
+            # Post-proceso: transcodificación de formato
+            if salida and formato:
+                salida = _transcodificar_video(salida, formato, log)
+
             log.append(f"{t('listo', lang)}: {salida}")
-            yield "\n".join(log[-400:]), salida
+
+            # Comparador antes/después (frames)
+            cmp_html = ""
+            if salida:
+                try:
+                    frame_antes = ff.extraer_frame_preview(video, 0.3)
+                    frame_despues = ff.extraer_frame_preview(salida, 0.3)
+                    if frame_antes and frame_despues:
+                        cmp_html = comparador_html(frame_antes, frame_despues, lang)
+                except Exception:
+                    pass
+
+            yield "\n".join(log[-400:]), salida, cmp_html
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None
+            yield "\n".join(log[-400:]), None, ""
 
     return procesar
 
 
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
-                 g_preset, g_int, g_tam, g_color, *rev):
+                 g_preset, g_int, g_tam, g_color, formato_img, *rev):
         oculto = gr.update(visible=False)
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
@@ -219,12 +345,67 @@ def hacer_procesar_imagen(lang):
                 except StopIteration as fin:
                     salida = fin.value
                     break
+
+            # Post-proceso: conversión de formato de imagen
+            if salida and formato_img:
+                salida = _convertir_imagen(salida, formato_img)
+
             log.append(f"{t('listo', lang)}: {salida}")
             yield ("\n".join(log[-400:]), comparador_html(imagen, salida, lang),
                    gr.update(value=salida, visible=True))
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
             yield "\n".join(log[-400:]), "", oculto
+
+    return procesar
+
+
+def hacer_procesar_lote(lang):
+    def procesar(archivos, motor, escala, resolucion, formato):
+        if not archivos:
+            yield "⚠️ No hay archivos seleccionados."
+            return
+        total = len(archivos)
+        log = [f"▶ Lote: {total} archivos · motor {motor}"]
+        for n, f_obj in enumerate(archivos, 1):
+            ruta = f_obj if isinstance(f_obj, str) else f_obj.name
+            nombre = Path(ruta).name
+            log.append(t("lote_archivo_n", lang).format(n=n, total=total, nombre=nombre))
+            yield "\n".join(log[-400:])
+            try:
+                if motor == "seedvr2":
+                    gen = seedvr2.mejorar(ruta, resolucion=int(resolucion), es_video=True)
+                elif motor == "rife":
+                    gen = vulkan.interpolar_video(ruta, mult=2)
+                elif motor == "flashvsr":
+                    gen = flashvsr.mejorar(ruta)
+                elif motor == "desentrelazar":
+                    gen = filtros.desentrelazar(ruta)
+                elif motor == "denoise":
+                    gen = filtros.denoise(ruta)
+                elif motor in ("realesrgan", "realcugan", "waifu2x"):
+                    gen = vulkan.mejorar_video(ruta, motor=motor, escala=int(escala), ruido=0)
+                else:
+                    gen = vulkan.mejorar_imagen(ruta, escala=int(escala))
+
+                consumo = _consumir(gen, log)
+                salida = None
+                while True:
+                    try:
+                        yield next(consumo)
+                    except StopIteration as fin:
+                        salida = fin.value
+                        break
+
+                if salida and formato:
+                    salida = _transcodificar_video(salida, formato, log)
+
+                log.append(f"  ✅ {n}/{total}: {Path(salida).name if salida else '?'}")
+            except Exception as e:
+                log.append(f"  ❌ {n}/{total}: {e}")
+            yield "\n".join(log[-400:])
+        log.append(f"✅ Lote completado: {total} archivos.")
+        yield "\n".join(log[-400:])
 
     return procesar
 
@@ -238,7 +419,7 @@ def hacer_vista_previa(lang):
         except Exception:
             return ""
         w, h = info["ancho"], info["alto"]
-        if motor in ("grano", "lut"):
+        if motor in ("grano", "lut", "desentrelazar", "denoise", "estabilizar"):
             return f"{w}×{h} {t('se_mantiene', lang)}"
         if motor == "rife":
             return (f"{w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
@@ -283,8 +464,6 @@ def header_html(lang):
 
 
 # --- Tema: JS de cliente (claro/oscuro/personalizado, persistente) -----------
-# Aplica acento y fondo escribiendo variables CSS propias y las de Gradio, y
-# guarda la elección en localStorage para recordarla entre sesiones.
 _JS_APLICAR = """
 window.vbAcento = (c) => { const s = document.body.style;
   ['--vb-accent','--button-primary-background-fill','--button-primary-background-fill-hover',
@@ -331,12 +510,53 @@ def texto_sistema(lang):
         f"- **DDColor (color):** {'✅' if color.disponible() else t('s_opcional', lang)}",
         f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
         "",
+        f"### {t('s_modelos', lang)}",
+    ]
+    for nombre, ok in _estado_modelos().items():
+        estado = t("s_pesos_ok", lang) if ok else t("s_pesos_no", lang)
+        filas.append(f"- **{nombre}:** {estado}")
+    filas += [
+        "",
         t("combo", lang),
     ]
     lic = licencias.activa()
     if licencias.requiere_licencia() and lic:
         filas.append(f"\n🔑 {t('lic_activada', lang)} **{lic.get('cliente', '?')}**")
     return "\n".join(filas)
+
+
+def motores_video():
+    m = []
+    if HW["seedvr2"]:
+        m.append("seedvr2")
+    if HW["vulkan"]:
+        m += ["realesrgan", "realcugan", "waifu2x", "rife"]
+    if HW["flashvsr"] and flashvsr.disponible():
+        m.append("flashvsr")
+    if HW["ffmpeg"]:
+        m += ["lut", "grano", "desentrelazar", "denoise"]
+        if _VIDSTAB_OK:
+            m.append("estabilizar")
+    return m or ["realesrgan"]  # que la UI nunca quede vacía
+
+
+def motores_imagen():
+    m = []
+    if faithdiff.disponible():
+        m.append("faithdiff")  # recomendado por defecto (MIT, supera a SUPIR)
+    if HW["seedvr2"]:
+        m.append("seedvr2_img")
+    if instantir.disponible():
+        m.append("instantir")
+    if faces.disponible():
+        m.append("codeformer")
+    if color.disponible():
+        m.append("ddcolor")
+    if HW["vulkan"]:
+        m.append("realesrgan_img")
+    if HW["ffmpeg"]:
+        m += ["lut", "grano"]
+    return m or ["realesrgan_img"]
 
 
 # ---------------------------------------------------------------- interfaz
@@ -388,7 +608,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
             def intentar_activar(clave, tick):
                 try:
                     licencias.activar(clave or "")
-                    return "", tick + 1  # re-render → entra a la app
+                    return "", tick + 1
                 except ValueError:
                     return t("lic_error", lang), tick
 
@@ -397,8 +617,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
             return  # no se construye el resto de la app sin licencia
 
         def grupo_grano(visible):
-            """Controles del grano analógico (compartidos por video e imagen).
-            El preset fija valores de partida; los sliders siempre mandan."""
+            """Controles del grano analógico (compartidos por video e imagen)."""
             with gr.Group(visible=visible) as g:
                 preset = gr.Dropdown([(t("g_" + p, lang), p) for p in GRANO_PRESETS],
                                      value="clasico", label=t("g_preset", lang))
@@ -416,13 +635,30 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
             return g, preset, inten, tam, col
 
         def grupo_revelado(visible):
-            """Panel de revelado estilo Lumetri: 3 capas de LUT + corrección básica.
-            Devuelve el grupo y la lista plana de 16 componentes (orden fijo que
-            espera el despachador: l1,m1,l2,m2,l3,m3 + 10 ajustes)."""
+            """Panel de revelado estilo Lumetri con presets save/load.
+
+            Devuelve el grupo y la lista plana de 24 componentes
+            (orden: lut1,mix1,lut2,mix2,lut3,mix3 + 18 ajustes Lumetri).
+            """
             opciones = [(t("l_ninguno", lang), "ninguno")] + \
                        [(n, k) for k, n in luts.NOMBRES.items()]
-            comps = []
+            comps = []  # 24 componentes en orden plano (_PRESET_KEYS)
             with gr.Group(visible=visible) as g:
+                # ---- fila de presets ----
+                with gr.Row():
+                    preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
+                                               scale=2, container=True)
+                    preset_guardar_btn = gr.Button(t("preset_guardar", lang),
+                                                   scale=1, size="sm")
+                preset_selector = gr.Dropdown(
+                    _listar_presets_revelado(),
+                    label=t("preset_cargar", lang),
+                    value=None,
+                    interactive=True,
+                )
+                preset_msg = gr.Markdown("")
+
+                # ---- looks ----
                 with gr.Accordion(t("l_sec_looks", lang), open=True):
                     for n in range(3):
                         with gr.Row():
@@ -431,8 +667,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                             mz = gr.Slider(0.0, 1.0, value=1.0, step=0.05, scale=1,
                                            label=t("l_mezcla", lang))
                         comps += [lk, mz]
-                # Orden Lumetri. El despachador (_revelar) desempaqueta esta
-                # lista plana: mantener orden y cantidad sincronizados.
+
                 def sl(lo, hi, v, paso, clave):
                     comps.append(gr.Slider(lo, hi, value=v, step=paso,
                                            label=t(clave, lang)))
@@ -458,6 +693,33 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     sl(0.0, 1.5, 0.0, 0.05, "l_claridad")
                     sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
                     sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
+
+            # ---- lógica presets ----
+            def _guardar(nombre, *vals):
+                if not nombre or not nombre.strip():
+                    return gr.update(), t("preset_sin_nombre", lang)
+                d = dict(zip(_PRESET_KEYS, vals))
+                (_PRESET_DIR / f"{nombre.strip()}.json").write_text(
+                    json.dumps(d, indent=2, ensure_ascii=False))
+                return gr.update(choices=_listar_presets_revelado(),
+                                 value=nombre.strip()), t("preset_guardado", lang)
+
+            def _cargar(nombre):
+                if not nombre:
+                    return [gr.update()] * 24
+                p = _PRESET_DIR / f"{nombre}.json"
+                if not p.exists():
+                    return [gr.update()] * 24
+                d = json.loads(p.read_text())
+                return [gr.update(value=d.get(k, _PRESET_DEFAULTS[i]))
+                        for i, k in enumerate(_PRESET_KEYS)]
+
+            preset_guardar_btn.click(
+                _guardar, [preset_nombre] + comps,
+                [preset_selector, preset_msg])
+            preset_selector.change(
+                _cargar, preset_selector, comps)
+
             return g, comps
 
         with gr.Tab(t("tab_video", lang)):
@@ -483,14 +745,37 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                                                 label=t("batch", lang))
                     grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(
                         ids_v[0] == "grano")
+
+                    # Denoise sliders
+                    with gr.Group(visible=ids_v[0] == "denoise") as grupo_den:
+                        den_luma = gr.Slider(0.0, 10.0, value=3.0, step=0.5,
+                                             label=t("den_luma", lang))
+                        den_croma = gr.Slider(0.0, 10.0, value=2.0, step=0.5,
+                                              label=t("den_chroma", lang))
+
+                    # Stabilize sliders
+                    with gr.Group(visible=ids_v[0] == "estabilizar") as grupo_est:
+                        est_suav = gr.Slider(1, 30, value=10, step=1,
+                                             label=t("est_suavidad", lang))
+                        est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05,
+                                             label=t("est_zoom", lang))
+
                     grupo_l_v, rev_v = grupo_revelado(ids_v[0] == "lut")
+                    formato_v = gr.Dropdown(
+                        [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
+                        value="h264",
+                        label=t("formato_salida_v", lang))
                     preview = gr.Markdown(elem_classes="size-preview")
-                    boton_v = gr.Button(t("boton_video", lang), variant="primary",
-                                        elem_classes="cta")
+                    with gr.Row():
+                        boton_v = gr.Button(t("boton_video", lang), variant="primary",
+                                            elem_classes="cta")
+                        cancelar_v = gr.Button(t("cancelar", lang), variant="stop",
+                                               size="sm")
                 with gr.Column():
                     log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18,
                                        elem_classes="console")
                     video_out = gr.Video(label=t("resultado", lang))
+                    comparador_v = gr.HTML(label=t("comparador_video", lang))
 
             def controles_v(motor):
                 return (
@@ -500,18 +785,25 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     gr.update(visible=motor == "rife"),
                     gr.update(visible=motor == "seedvr2"),
                     gr.update(visible=motor == "grano"),
+                    gr.update(visible=motor == "denoise"),
+                    gr.update(visible=motor == "estabilizar"),
                     gr.update(visible=motor == "lut"),
                 )
 
             motor_v.change(controles_v, motor_v,
-                           [nota_v, escala, ruido, mult, grupo_sv2, grupo_g_v, grupo_l_v])
+                           [nota_v, escala, ruido, mult, grupo_sv2,
+                            grupo_g_v, grupo_den, grupo_est, grupo_l_v])
             for comp in (video_in, motor_v, escala, mult, resolucion):
                 comp.change(hacer_vista_previa(lang),
                             [video_in, motor_v, escala, mult, resolucion], preview)
-            boton_v.click(hacer_procesar_video(lang),
-                          [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
-                           batch_sv2, gpre_v, gint_v, gtam_v, gcol_v, *rev_v],
-                          [log_v, video_out])
+            ev_v = boton_v.click(
+                hacer_procesar_video(lang),
+                [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
+                 batch_sv2, gpre_v, gint_v, gtam_v, gcol_v,
+                 formato_v, den_luma, den_croma, est_suav, est_zoom,
+                 *rev_v],
+                [log_v, video_out, comparador_v])
+            cancelar_v.click(fn=None, cancels=[ev_v])
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
@@ -541,9 +833,16 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
                     grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
+                    formato_i = gr.Dropdown(
+                        [(lbl, val) for lbl, val in _FORMATOS_IMG],
+                        value="png",
+                        label=t("formato_salida_i", lang))
                     preview_i = gr.Markdown(elem_classes="size-preview")
-                    boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
-                                        elem_classes="cta")
+                    with gr.Row():
+                        boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
+                                            elem_classes="cta")
+                        cancelar_i = gr.Button(t("cancelar", lang), variant="stop",
+                                               size="sm")
                 with gr.Column():
                     log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14,
                                        elem_classes="console")
@@ -583,10 +882,93 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
             motor_i.change(_preview_imagen, [motor_i, resolucion_i], preview_i)
             resolucion_i.change(_preview_imagen, [motor_i, resolucion_i], preview_i)
 
-            boton_i.click(hacer_procesar_imagen(lang),
-                          [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                           gpre_i, gint_i, gtam_i, gcol_i, *rev_i],
-                          [log_i, img_out, descarga_i])
+            ev_i = boton_i.click(
+                hacer_procesar_imagen(lang),
+                [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
+                 gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
+                [log_i, img_out, descarga_i])
+            cancelar_i.click(fn=None, cancels=[ev_i])
+
+        # ---------------------------------------------------------------- Galería
+        with gr.Tab(t("tab_galeria", lang)):
+            def _listar_salidas():
+                if not SALIDAS.exists():
+                    return [], []
+                archivos = sorted(SALIDAS.iterdir(), key=lambda p: p.stat().st_mtime,
+                                  reverse=True)
+                imgs = [str(p) for p in archivos
+                        if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".tif",
+                                                ".tiff", ".webp", ".bmp")]
+                vids = [p.name for p in archivos
+                        if p.suffix.lower() in (".mp4", ".mov", ".webm", ".mkv", ".avi")]
+                return imgs, vids
+
+            def _refrescar_galeria():
+                imgs, vids = _listar_salidas()
+                md = ""
+                if vids:
+                    md = f"### {t('galeria_videos', lang)}\n" + "\n".join(f"- {v}" for v in vids)
+                elif not imgs:
+                    md = t("galeria_vacia", lang)
+                return imgs or [], md
+
+            def _limpiar_galeria():
+                if SALIDAS.exists():
+                    for f in SALIDAS.iterdir():
+                        try:
+                            f.unlink()
+                        except Exception:
+                            pass
+                return [], t("galeria_vacia", lang)
+
+            imgs0, md0 = _refrescar_galeria()
+            galeria = gr.Gallery(value=imgs0, label=t("galeria_imagenes", lang),
+                                 columns=4, height="auto")
+            galeria_md = gr.Markdown(md0)
+            with gr.Row():
+                btn_refrescar = gr.Button(t("galeria_refrescar", lang), size="sm")
+                btn_limpiar = gr.Button(t("galeria_limpiar", lang), variant="stop",
+                                        size="sm")
+            btn_refrescar.click(_refrescar_galeria, None, [galeria, galeria_md])
+            btn_limpiar.click(_limpiar_galeria, None, [galeria, galeria_md])
+
+        # ---------------------------------------------------------------- Lote
+        with gr.Tab(t("tab_lote", lang)):
+            _MOTORES_LOTE = [m for m in (
+                "seedvr2", "realesrgan", "realcugan", "waifu2x", "rife",
+                "flashvsr", "desentrelazar", "denoise"
+            ) if m in motores_video() + ["seedvr2"]]
+            with gr.Row():
+                with gr.Column():
+                    lote_files = gr.File(file_count="multiple",
+                                         label=t("lote_archivos", lang))
+                    lote_motor = gr.Dropdown(
+                        _MOTORES_LOTE,
+                        value=_MOTORES_LOTE[0] if _MOTORES_LOTE else "realesrgan",
+                        label=t("lote_motor", lang))
+                    lote_escala = gr.Slider(2, 4, value=2, step=1,
+                                            label=t("lote_escala", lang))
+                    lote_res = gr.Dropdown([720, 1080, 1440, 2160], value=1080,
+                                           label=t("lote_resolucion", lang))
+                    lote_fmt = gr.Dropdown(
+                        [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
+                        value="h264",
+                        label=t("formato_salida_v", lang))
+                    with gr.Row():
+                        lote_btn = gr.Button(t("lote_procesar", lang),
+                                             variant="primary", elem_classes="cta")
+                        lote_cancelar = gr.Button(t("cancelar", lang),
+                                                   variant="stop", size="sm")
+                with gr.Column():
+                    lote_log = gr.Textbox(label=t("lote_progreso", lang),
+                                          lines=20, max_lines=20,
+                                          elem_classes="console")
+
+            ev_lote = lote_btn.click(
+                hacer_procesar_lote(lang),
+                [lote_files, lote_motor, lote_escala, lote_res, lote_fmt],
+                lote_log)
+            lote_cancelar.click(fn=None, cancels=[ev_lote])
 
         with gr.Tab(t("tab_sistema", lang)):
             gr.Markdown(texto_sistema(lang), elem_classes="sys-card")
