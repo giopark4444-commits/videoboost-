@@ -250,7 +250,29 @@ T = {
         "fr": "Vibrance (sature en protégeant les peaux)"},
     "l_sombras": {"es": "Sombras", "en": "Shadows", "fr": "Ombres"},
     "l_altas": {"es": "Altas luces", "en": "Highlights", "fr": "Hautes lumières"},
+    "l_blancos": {"es": "Blancos", "en": "Whites", "fr": "Blancs"},
+    "l_negros": {"es": "Negros", "en": "Blacks", "fr": "Noirs"},
+    "l_sec_creativo": {"es": "Creativo", "en": "Creative", "fr": "Créatif"},
+    "l_matiz": {
+        "es": "Matiz / Hue (rotación, °)", "en": "Hue (rotation, °)",
+        "fr": "Teinte / Hue (rotation, °)"},
+    "l_desvaido": {
+        "es": "Película desvaída (faded film)", "en": "Faded film",
+        "fr": "Pellicule délavée (faded film)"},
+    "l_tinte_sombras": {
+        "es": "Tinte de sombras (frío ← → cálido)",
+        "en": "Shadow tint (cool ← → warm)",
+        "fr": "Teinte des ombres (froid ← → chaud)"},
+    "l_tinte_altas": {
+        "es": "Tinte de altas luces (frío ← → cálido)",
+        "en": "Highlight tint (cool ← → warm)",
+        "fr": "Teinte des hautes lumières (froid ← → chaud)"},
     "l_nitidez": {"es": "Nitidez", "en": "Sharpen", "fr": "Netteté"},
+    "l_claridad": {
+        "es": "Claridad (contraste local)", "en": "Clarity (local contrast)",
+        "fr": "Clarté (contraste local)"},
+    "l_ruido_red": {
+        "es": "Reducción de ruido", "en": "Noise reduction", "fr": "Réduction du bruit"},
     "l_vineta": {"es": "Viñeta", "en": "Vignette", "fr": "Vignettage"},
 
     # ---- control de fidelidad de caras ----

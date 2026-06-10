@@ -114,14 +114,21 @@ def comparador_html(antes, despues, lang):
 
 # ---------------------------------------------------------------- lógica
 
+# Orden plano del panel de revelado (debe coincidir con grupo_revelado).
+_CLAVES_REVELADO = (
+    "exposicion", "contraste", "altas", "sombras", "blancos", "negros",
+    "temperatura", "tinte", "saturacion",
+    "vibranza", "matiz", "desvaido", "tinte_sombras", "tinte_altas",
+    "nitidez", "claridad", "ruido", "vineta",
+)
+
+
 def _revelar(entrada, es_video, rev):
-    """Convierte los 16 valores planos del panel de revelado en luts.etalonar()."""
-    l1, m1, l2, m2, l3, m3, expo, temp, tinte, contr, satur, vibr, som, alt, nit, vin = rev
+    """Convierte los valores planos del panel (3 LUTs + ajustes) en etalonar()."""
+    l1, m1, l2, m2, l3, m3, *ajustes = rev
     return luts.etalonar(
         entrada, es_video=es_video, looks=[(l1, m1), (l2, m2), (l3, m3)],
-        exposicion=float(expo), temperatura=float(temp), tinte=float(tinte),
-        contraste=float(contr), saturacion=float(satur), vibranza=float(vibr),
-        sombras=float(som), altas=float(alt), nitidez=float(nit), vineta=float(vin),
+        **{k: float(v) for k, v in zip(_CLAVES_REVELADO, ajustes)},
     )
 
 def _consumir(gen, log):
@@ -330,28 +337,33 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                             mz = gr.Slider(0.0, 1.0, value=1.0, step=0.05, scale=1,
                                            label=t("l_mezcla", lang))
                         comps += [lk, mz]
+                # Orden Lumetri. El despachador (_revelar) desempaqueta esta
+                # lista plana: mantener orden y cantidad sincronizados.
+                def sl(lo, hi, v, paso, clave):
+                    comps.append(gr.Slider(lo, hi, value=v, step=paso,
+                                           label=t(clave, lang)))
+
                 with gr.Accordion(t("l_sec_basica", lang), open=True):
-                    comps.append(gr.Slider(-3.0, 3.0, value=0.0, step=0.1,
-                                           label=t("l_exposicion", lang)))
-                    comps.append(gr.Slider(3000, 10000, value=6500, step=100,
-                                           label=t("l_temperatura", lang)))
-                    comps.append(gr.Slider(-0.3, 0.3, value=0.0, step=0.01,
-                                           label=t("l_tinte", lang)))
-                    comps.append(gr.Slider(0.5, 1.6, value=1.0, step=0.02,
-                                           label=t("l_contraste", lang)))
-                    comps.append(gr.Slider(0.0, 2.0, value=1.0, step=0.05,
-                                           label=t("l_saturacion", lang)))
-                    comps.append(gr.Slider(-2.0, 2.0, value=0.0, step=0.1,
-                                           label=t("l_vibranza", lang)))
-                    comps.append(gr.Slider(-0.15, 0.15, value=0.0, step=0.01,
-                                           label=t("l_sombras", lang)))
-                    comps.append(gr.Slider(-0.15, 0.15, value=0.0, step=0.01,
-                                           label=t("l_altas", lang)))
+                    sl(-3.0, 3.0, 0.0, 0.1, "l_exposicion")
+                    sl(0.5, 1.6, 1.0, 0.02, "l_contraste")
+                    sl(-0.15, 0.15, 0.0, 0.01, "l_altas")
+                    sl(-0.15, 0.15, 0.0, 0.01, "l_sombras")
+                    sl(-0.15, 0.15, 0.0, 0.01, "l_blancos")
+                    sl(-0.15, 0.15, 0.0, 0.01, "l_negros")
+                    sl(3000, 10000, 6500, 100, "l_temperatura")
+                    sl(-0.3, 0.3, 0.0, 0.01, "l_tinte")
+                    sl(0.0, 2.0, 1.0, 0.05, "l_saturacion")
+                with gr.Accordion(t("l_sec_creativo", lang), open=False):
+                    sl(-2.0, 2.0, 0.0, 0.1, "l_vibranza")
+                    sl(-45, 45, 0, 1, "l_matiz")
+                    sl(0.0, 1.0, 0.0, 0.05, "l_desvaido")
+                    sl(-0.3, 0.3, 0.0, 0.01, "l_tinte_sombras")
+                    sl(-0.3, 0.3, 0.0, 0.01, "l_tinte_altas")
                 with gr.Accordion(t("l_sec_detalle", lang), open=False):
-                    comps.append(gr.Slider(0.0, 3.0, value=0.0, step=0.1,
-                                           label=t("l_nitidez", lang)))
-                    comps.append(gr.Slider(0.0, 1.0, value=0.0, step=0.05,
-                                           label=t("l_vineta", lang)))
+                    sl(0.0, 3.0, 0.0, 0.1, "l_nitidez")
+                    sl(0.0, 1.5, 0.0, 0.05, "l_claridad")
+                    sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
+                    sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
             return g, comps
 
         with gr.Tab(t("tab_video", lang)):

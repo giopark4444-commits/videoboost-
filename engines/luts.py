@@ -140,23 +140,58 @@ def generar_lut(look: str) -> Path:
     return ruta
 
 
-# Ajustes neutros del panel de revelado (estilo Lumetri). Cualquier valor en
-# neutro se omite de la cadena de filtros (cero coste).
-NEUTRO = dict(exposicion=0.0, temperatura=6500, tinte=0.0, contraste=1.0,
-              saturacion=1.0, vibranza=0.0, sombras=0.0, altas=0.0,
-              nitidez=0.0, vineta=0.0)
+# Ajustes neutros del panel de revelado (set Lumetri completo). Cualquier valor
+# en neutro se omite de la cadena de filtros (cero coste).
+NEUTRO = dict(
+    # corrección básica
+    exposicion=0.0, contraste=1.0, altas=0.0, sombras=0.0, blancos=0.0,
+    negros=0.0, temperatura=6500, tinte=0.0, saturacion=1.0,
+    # creativo
+    vibranza=0.0, matiz=0.0, desvaido=0.0, tinte_sombras=0.0, tinte_altas=0.0,
+    # detalle y viñeta
+    nitidez=0.0, claridad=0.0, ruido=0.0, vineta=0.0,
+)
+
+
+def _r(x, lim):
+    return max(-lim, min(lim, float(x)))
 
 
 def _cadena_basica(a):
-    """Filtros de corrección básica (solo los que se apartan del neutro)."""
+    """Filtros de corrección (solo los que se apartan del neutro)."""
     f = []
     if abs(a["exposicion"]) > 1e-3:
         f.append(f"exposure=exposure={a['exposicion']:.2f}")        # en EV
     if int(a["temperatura"]) != 6500:
         f.append(f"colortemperature=temperature={int(a['temperatura'])}")
-    if abs(a["tinte"]) > 1e-3:
-        # + = magenta, − = verde (sobre medios y altas luces)
-        f.append(f"colorbalance=gm={-a['tinte']:.3f}:gh={-a['tinte']/2:.3f}")
+    if abs(a["matiz"]) > 1e-2:
+        f.append(f"hue=h={_r(a['matiz'], 45):.1f}")                  # rotación en grados
+
+    # Blancos / negros / película desvaída → niveles (lineal, siempre monótono).
+    b, w, fd = _r(a["negros"], 0.15), _r(a["blancos"], 0.15), max(0.0, min(1.0, a["desvaido"]))
+    if abs(b) > 1e-3 or abs(w) > 1e-3 or fd > 1e-3:
+        imin = max(0.0, -b)                  # negros − : hunde el punto negro
+        omin = max(0.0, b) + fd * 0.10       # negros + / desvaído: lo levanta
+        imax = 1.0 - max(0.0, w)             # blancos + : empuja el punto blanco
+        omax = 1.0 + min(0.0, w) - fd * 0.05  # blancos − / desvaído: lo retrae
+        f.append(f"colorlevels=rimin={imin:.3f}:gimin={imin:.3f}:bimin={imin:.3f}"
+                 f":romin={omin:.3f}:gomin={omin:.3f}:bomin={omin:.3f}"
+                 f":rimax={imax:.3f}:gimax={imax:.3f}:bimax={imax:.3f}"
+                 f":romax={omax:.3f}:gomax={omax:.3f}:bomax={omax:.3f}")
+
+    s, h = _r(a["sombras"], 0.18), _r(a["altas"], 0.18)
+    if abs(s) > 1e-3 or abs(h) > 1e-3:
+        # curva maestra: sombras en 0.25, altas luces en 0.75
+        f.append(f"curves=all='0/0 0.25/{0.25 + s:.3f} 0.75/{0.75 + h:.3f} 1/1'")
+
+    # Tinte global (verde↔magenta) + split toning (frío↔cálido por rango),
+    # todo en una sola pasada de colorbalance.
+    ti, ts, ta = _r(a["tinte"], 0.3), _r(a["tinte_sombras"], 0.3), _r(a["tinte_altas"], 0.3)
+    if abs(ti) > 1e-3 or abs(ts) > 1e-3 or abs(ta) > 1e-3:
+        f.append(f"colorbalance=rs={ts:.3f}:bs={-ts:.3f}"
+                 f":rh={ta:.3f}:bh={-ta:.3f}"
+                 f":gm={-ti:.3f}:gh={-ti / 2:.3f}")
+
     eq = []
     if abs(a["contraste"] - 1) > 1e-3:
         eq.append(f"contrast={a['contraste']:.3f}")
@@ -164,11 +199,6 @@ def _cadena_basica(a):
         eq.append(f"saturation={a['saturacion']:.3f}")
     if eq:
         f.append("eq=" + ":".join(eq))
-    s = max(-0.18, min(0.18, a["sombras"]))
-    h = max(-0.18, min(0.18, a["altas"]))
-    if abs(s) > 1e-3 or abs(h) > 1e-3:
-        # curva maestra monótona: sombras en 0.25, altas luces en 0.75
-        f.append(f"curves=all='0/0 0.25/{0.25 + s:.3f} 0.75/{0.75 + h:.3f} 1/1'")
     if abs(a["vibranza"]) > 1e-3:
         f.append(f"vibrance=intensity={a['vibranza']:.2f}")          # protege pieles
     return f
@@ -176,6 +206,11 @@ def _cadena_basica(a):
 
 def _cadena_detalle(a):
     f = []
+    if a["ruido"] > 1e-2:
+        f.append(f"hqdn3d={min(10.0, a['ruido']):.1f}")              # antes de afilar
+    if a["claridad"] > 1e-3:
+        # contraste local: máscara de enfoque ancha y suave
+        f.append(f"unsharp=lx=13:ly=13:la={min(1.5, a['claridad']):.2f}")
     if a["nitidez"] > 1e-3:
         f.append(f"unsharp=5:5:{min(3.0, a['nitidez']):.2f}")
     if a["vineta"] > 1e-3:
