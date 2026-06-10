@@ -1,0 +1,28 @@
+# Entornos virtuales (uno por grupo de motores para evitar choques de dependencias)
+.venv/
+.venv-imagenes/
+.venv-supir/
+.venv-flashvsr/
+
+# Binarios y modelos descargados por los instaladores
+bin/
+vendor/
+models/
+
+# Resultados
+salidas/
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de video/imagen de prueba
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm

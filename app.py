@@ -1,0 +1,276 @@
+"""VideoBoost — mejora de videos e imágenes con IA, 100% local.
+
+Interfaz Gradio multilingüe (español / English / français). Detecta el hardware
+al arrancar y solo ofrece los motores que pueden funcionar en esta máquina
+(Mac con chip M o PC con NVIDIA; cualquier otra GPU se queda con los motores
+Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
+"""
+
+import traceback
+
+import gradio as gr
+
+import hardware
+from engines import ffmpeg_utils as ff
+from engines import flashvsr, images, seedvr2, vulkan
+from i18n import IDIOMAS, idioma_por_defecto, t
+
+HW = hardware.info_sistema()
+
+# ids internos estables; las etiquetas visibles salen de i18n
+MOTORES_VIDEO_NOTAS = {
+    "seedvr2": "n_seedvr2", "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
+    "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
+}
+MOTORES_IMG_NOTAS = {
+    "hypir": "n_hypir", "supir": "n_supir", "seedvr2_img": "n_seedvr2_img",
+    "realesrgan_img": "n_realesrgan_img",
+}
+
+
+def motores_video():
+    m = []
+    if HW["seedvr2"]:
+        m.append("seedvr2")
+    if HW["vulkan"]:
+        m += ["realesrgan", "realcugan", "waifu2x", "rife"]
+    if HW["flashvsr"] and flashvsr.disponible():
+        m.append("flashvsr")
+    return m or ["realesrgan"]  # que la UI nunca quede vacía
+
+
+def motores_imagen():
+    m = []
+    if images.hypir_disponible():
+        m.append("hypir")
+    if HW["seedvr2"]:
+        m.append("seedvr2_img")
+    if images.supir_disponible():
+        m.append("supir")
+    if HW["vulkan"]:
+        m.append("realesrgan_img")
+    return m or ["realesrgan_img"]
+
+
+# ---------------------------------------------------------------- lógica
+
+def _consumir(gen, log):
+    """Consume el generador del motor cediendo el log acumulado; captura su retorno."""
+    while True:
+        try:
+            linea = next(gen)
+        except StopIteration as fin:
+            return fin.value
+        log.append(linea)
+        yield "\n".join(log[-400:])
+
+
+def hacer_procesar_video(lang):
+    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch):
+        if not video:
+            yield t("sube_video", lang), None
+            return
+        log = [f"▶ {motor}"]
+        try:
+            if motor == "seedvr2":
+                gen = seedvr2.mejorar(video, resolucion=int(resolucion), modelo=modelo,
+                                      batch_size=int(batch), es_video=True)
+            elif motor == "rife":
+                gen = vulkan.interpolar_video(video, mult=int(mult))
+            elif motor == "flashvsr":
+                gen = flashvsr.mejorar(video)
+            else:
+                gen = vulkan.mejorar_video(video, motor=motor, escala=int(escala),
+                                           ruido=int(ruido))
+            consumo = _consumir(gen, log)
+            salida = None
+            while True:
+                try:
+                    yield next(consumo), None
+                except StopIteration as fin:
+                    salida = fin.value
+                    break
+            log.append(f"{t('listo', lang)}: {salida}")
+            yield "\n".join(log[-400:]), salida
+        except Exception as e:
+            log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
+            yield "\n".join(log[-400:]), None
+
+    return procesar
+
+
+def hacer_procesar_imagen(lang):
+    def procesar(imagen, motor, prompt, escala, resolucion):
+        if not imagen:
+            yield t("sube_imagen", lang), None
+            return
+        log = [f"▶ {motor}"]
+        try:
+            if motor == "hypir":
+                gen = images.mejorar_hypir(imagen, prompt=prompt or "", escala=int(escala))
+            elif motor == "supir":
+                gen = images.mejorar_supir(imagen, escala=int(escala))
+            elif motor == "seedvr2_img":
+                gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
+            else:
+                gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
+            consumo = _consumir(gen, log)
+            salida = None
+            while True:
+                try:
+                    yield next(consumo), None
+                except StopIteration as fin:
+                    salida = fin.value
+                    break
+            log.append(f"{t('listo', lang)}: {salida}")
+            yield "\n".join(log[-400:]), salida
+        except Exception as e:
+            log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
+            yield "\n".join(log[-400:]), None
+
+    return procesar
+
+
+def hacer_vista_previa(lang):
+    def vista_previa(video, motor, escala, mult, resolucion):
+        if not video:
+            return ""
+        try:
+            info = ff.info_video(video)
+        except Exception:
+            return ""
+        w, h = info["ancho"], info["alto"]
+        if motor == "rife":
+            return (f"🎬 {w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
+                    f"**{info['fps'] * int(mult):.0f} fps**")
+        if motor in ("seedvr2", "flashvsr"):
+            factor = int(resolucion) / min(w, h)
+            nw, nh = round(w * factor / 2) * 2, round(h * factor / 2) * 2
+        else:
+            nw, nh = w * int(escala), h * int(escala)
+        aviso = t("supera_4k", lang) if max(nw, nh) > 4096 else ""
+        return f"🎬 {w}×{h} → **{nw}×{nh}**{aviso}"
+
+    return vista_previa
+
+
+def resumen_hw(lang):
+    if HW["cuda"]:
+        gpu = f"NVIDIA {HW['gpu']} · {HW['vram_gb']} GB VRAM (CUDA)"
+    elif HW["mps"]:
+        gpu = f"Apple Silicon · {HW['ram_gb']} {t('mem_unificada', lang)}"
+    else:
+        gpu = t("gpu_generica", lang)
+    return f"**{gpu}** — {t('nivel', lang)} **{HW['nivel']} · {t('nivel_' + str(HW['nivel']), lang)}**"
+
+
+def texto_sistema(lang):
+    sv2 = (f"{t('s_listo_modelo', lang)} `{HW['seedvr2_modelo']}`" if HW["seedvr2"]
+           else t("s_no_instalado", lang))
+    filas = [
+        f"- **{t('s_sistema', lang)}:** {HW['so']}" + (" (Apple Silicon)" if HW["apple_silicon"] else ""),
+        f"- **GPU:** {HW['gpu'] or ('Apple Silicon / Metal' if HW['mps'] else t('s_sin_gpu', lang))}",
+        f"- **VRAM:** {HW['vram_gb']} GB" if HW["cuda"] else f"- **RAM:** {HW['ram_gb']} GB",
+        f"- **Vulkan:** {t('s_instalados', lang) if HW['vulkan'] else t('s_corre_inst', lang)}",
+        f"- **SeedVR2:** {sv2}",
+        f"- **HYPIR:** {'✅' if images.hypir_disponible() else t('s_opcional', lang)}",
+        f"- **SUPIR:** {'✅' if images.supir_disponible() else t('s_opcional', lang)}",
+        f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
+        "",
+        t("combo", lang),
+    ]
+    return "\n".join(filas)
+
+
+# ---------------------------------------------------------------- interfaz
+
+with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
+    idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), label="🌐", scale=0)
+
+    @gr.render(inputs=idioma)
+    def ui(lang):
+        gr.Markdown(f"{t('titulo', lang)}\n{resumen_hw(lang)}")
+
+        with gr.Tab(t("tab_video", lang)):
+            ids_v = motores_video()
+            with gr.Row():
+                with gr.Column():
+                    video_in = gr.Video(label=t("video_entrada", lang))
+                    motor_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_v],
+                                       value=ids_v[0], label=t("motor", lang))
+                    nota_v = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_v[0]], lang))
+                    escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
+                                       visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x"))
+                    ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
+                    mult = gr.Slider(2, 4, value=2, step=1, label=t("mult_fps", lang), visible=False)
+                    with gr.Group(visible=ids_v[0] == "seedvr2") as grupo_sv2:
+                        resolucion = gr.Dropdown([720, 1080, 1440, 2160], value=1080,
+                                                 label=t("resolucion_obj", lang))
+                        modelo_sv2 = gr.Dropdown(seedvr2.MODELOS, value=HW["seedvr2_modelo"],
+                                                 label=t("modelo_auto", lang))
+                        batch_sv2 = gr.Dropdown(seedvr2.BATCHES, value=HW["seedvr2_batch"],
+                                                label=t("batch", lang))
+                    preview = gr.Markdown()
+                    boton_v = gr.Button(t("boton_video", lang), variant="primary")
+                with gr.Column():
+                    log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18)
+                    video_out = gr.Video(label=t("resultado", lang))
+
+            def controles_v(motor):
+                return (
+                    gr.update(value=t(MOTORES_VIDEO_NOTAS[motor], lang)),
+                    gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x")),
+                    gr.update(visible=motor in ("realcugan", "waifu2x")),
+                    gr.update(visible=motor == "rife"),
+                    gr.update(visible=motor == "seedvr2"),
+                )
+
+            motor_v.change(controles_v, motor_v, [nota_v, escala, ruido, mult, grupo_sv2])
+            for comp in (video_in, motor_v, escala, mult, resolucion):
+                comp.change(hacer_vista_previa(lang),
+                            [video_in, motor_v, escala, mult, resolucion], preview)
+            boton_v.click(hacer_procesar_video(lang),
+                          [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2, batch_sv2],
+                          [log_v, video_out])
+
+        with gr.Tab(t("tab_imagenes", lang)):
+            ids_i = motores_imagen()
+            etiquetas_i = {"hypir": "i_hypir", "supir": "i_supir",
+                           "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan"}
+            with gr.Row():
+                with gr.Column():
+                    img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
+                    motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
+                                       value=ids_i[0], label=t("motor", lang))
+                    nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang))
+                    prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
+                                          visible=ids_i[0] == "hypir")
+                    escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
+                                         visible=ids_i[0] != "seedvr2_img")
+                    resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
+                                               label=t("resolucion_obj", lang),
+                                               visible=ids_i[0] == "seedvr2_img")
+                    boton_i = gr.Button(t("boton_imagen", lang), variant="primary")
+                with gr.Column():
+                    log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14)
+                    img_out = gr.Image(label=t("resultado", lang))
+
+            def controles_i(motor):
+                return (
+                    gr.update(value=t(MOTORES_IMG_NOTAS[motor], lang)),
+                    gr.update(visible=motor == "hypir"),
+                    gr.update(visible=motor != "seedvr2_img"),
+                    gr.update(visible=motor == "seedvr2_img"),
+                )
+
+            motor_i.change(controles_i, motor_i, [nota_i, prompt_i, escala_i, resolucion_i])
+            boton_i.click(hacer_procesar_imagen(lang),
+                          [img_in, motor_i, prompt_i, escala_i, resolucion_i],
+                          [log_i, img_out])
+
+        with gr.Tab(t("tab_sistema", lang)):
+            gr.Markdown(texto_sistema(lang))
+
+
+if __name__ == "__main__":
+    demo.launch(inbrowser=True)
