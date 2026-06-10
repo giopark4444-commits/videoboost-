@@ -151,8 +151,9 @@ def hacer_procesar_video(lang):
 
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad):
+        oculto = gr.update(visible=False)
         if not imagen:
-            yield t("sube_imagen", lang), ""
+            yield t("sube_imagen", lang), "", oculto
             return
         log = [f"▶ {motor}"]
         try:
@@ -174,15 +175,16 @@ def hacer_procesar_imagen(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), ""
+                    yield next(consumo), "", oculto
                 except StopIteration as fin:
                     salida = fin.value
                     break
             log.append(f"{t('listo', lang)}: {salida}")
-            yield "\n".join(log[-400:]), comparador_html(imagen, salida, lang)
+            yield ("\n".join(log[-400:]), comparador_html(imagen, salida, lang),
+                   gr.update(value=salida, visible=True))
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), ""
+            yield "\n".join(log[-400:]), "", oculto
 
     return procesar
 
@@ -337,6 +339,8 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                                        elem_classes="console")
                     gr.Markdown(t("arrastra_comparar", lang), elem_classes="size-preview")
                     img_out = gr.HTML()
+                    descarga_i = gr.DownloadButton(t("descargar", lang), visible=False,
+                                                   elem_classes="cta")
 
             def controles_i(motor):
                 return (
@@ -351,7 +355,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                            [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i])
             boton_i.click(hacer_procesar_imagen(lang),
                           [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i],
-                          [log_i, img_out])
+                          [log_i, img_out, descarga_i])
 
         with gr.Tab(t("tab_sistema", lang)):
             gr.Markdown(texto_sistema(lang), elem_classes="sys-card")

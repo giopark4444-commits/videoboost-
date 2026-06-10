@@ -67,6 +67,8 @@ T = {
     "resultado": {"es": "Resultado", "en": "Result", "fr": "Résultat"},
     "antes": {"es": "Antes", "en": "Before", "fr": "Avant"},
     "despues": {"es": "Después", "en": "After", "fr": "Après"},
+    "descargar": {"es": "Descargar resultado", "en": "Download result",
+                  "fr": "Télécharger le résultat"},
     "arrastra_comparar": {
         "es": "Arrastra para comparar · el archivo se guardó en salidas/",
         "en": "Drag to compare · file saved to salidas/",
