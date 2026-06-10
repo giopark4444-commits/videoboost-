@@ -129,6 +129,16 @@ T = {
         "es": "Real-ESRGAN — rápido (Vulkan)",
         "en": "Real-ESRGAN — fast (Vulkan)",
         "fr": "Real-ESRGAN — rapide (Vulkan)"},
+    "i_codeformer": {
+        "es": "CodeFormer — restaurar caras",
+        "en": "CodeFormer — face restoration",
+        "fr": "CodeFormer — restauration des visages"},
+
+    # ---- control de fidelidad de caras ----
+    "fidelidad": {
+        "es": "Fidelidad (0 = más nítido, 1 = más fiel al original)",
+        "en": "Fidelity (0 = sharper, 1 = truer to original)",
+        "fr": "Fidélité (0 = plus net, 1 = plus fidèle à l'original)"},
 
     # ---- notas por motor ----
     "n_seedvr2": {
@@ -192,6 +202,16 @@ T = {
         "es": "Escalado clásico instantáneo. Para cuando la velocidad importa más.",
         "en": "Instant classic upscaling. For when speed matters most.",
         "fr": "Upscaling classique instantané. Quand la vitesse prime."},
+    "n_codeformer": {
+        "es": "Entrenado solo en rostros: recupera ojos, dientes y piel donde los "
+              "upscalers generales fallan. La pieza «face model» tipo HitPaw. La "
+              "fidelidad ajusta nitidez vs. parecido al original. *Uso no comercial.*",
+        "en": "Trained only on faces: recovers eyes, teeth and skin where general "
+              "upscalers fail. The HitPaw-style “face model”. Fidelity trades sharpness "
+              "for resemblance to the original. *Non-commercial use.*",
+        "fr": "Entraîné uniquement sur les visages : récupère yeux, dents et peau là où "
+              "les upscalers généraux échouent. Le « face model » façon HitPaw. La "
+              "fidélité arbitre netteté vs. ressemblance. *Usage non commercial.*"},
 
     # ---- pestaña sistema ----
     "s_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},

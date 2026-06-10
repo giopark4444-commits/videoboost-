@@ -12,7 +12,7 @@ import gradio as gr
 
 import hardware
 from engines import ffmpeg_utils as ff
-from engines import flashvsr, images, seedvr2, vulkan
+from engines import faces, flashvsr, images, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -24,7 +24,7 @@ MOTORES_VIDEO_NOTAS = {
 }
 MOTORES_IMG_NOTAS = {
     "hypir": "n_hypir", "supir": "n_supir", "seedvr2_img": "n_seedvr2_img",
-    "realesrgan_img": "n_realesrgan_img",
+    "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
 }
 
 
@@ -47,6 +47,8 @@ def motores_imagen():
         m.append("seedvr2_img")
     if images.supir_disponible():
         m.append("supir")
+    if faces.disponible():
+        m.append("codeformer")
     if HW["vulkan"]:
         m.append("realesrgan_img")
     return m or ["realesrgan_img"]
@@ -100,7 +102,7 @@ def hacer_procesar_video(lang):
 
 
 def hacer_procesar_imagen(lang):
-    def procesar(imagen, motor, prompt, escala, resolucion):
+    def procesar(imagen, motor, prompt, escala, resolucion, fidelidad):
         if not imagen:
             yield t("sube_imagen", lang), None
             return
@@ -112,6 +114,8 @@ def hacer_procesar_imagen(lang):
                 gen = images.mejorar_supir(imagen, escala=int(escala))
             elif motor == "seedvr2_img":
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
+            elif motor == "codeformer":
+                gen = faces.restaurar_caras(imagen, fidelidad=float(fidelidad), escala=int(escala))
             else:
                 gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
             consumo = _consumir(gen, log)
@@ -175,6 +179,7 @@ def texto_sistema(lang):
         f"- **SeedVR2:** {sv2}",
         f"- **HYPIR:** {'✅' if images.hypir_disponible() else t('s_opcional', lang)}",
         f"- **SUPIR:** {'✅' if images.supir_disponible() else t('s_opcional', lang)}",
+        f"- **CodeFormer (caras):** {'✅' if faces.disponible() else t('s_opcional', lang)}",
         f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
         "",
         t("combo", lang),
@@ -236,7 +241,8 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
             etiquetas_i = {"hypir": "i_hypir", "supir": "i_supir",
-                           "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan"}
+                           "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
+                           "codeformer": "i_codeformer"}
             with gr.Row():
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
@@ -250,6 +256,9 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
+                    fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
+                                            label=t("fidelidad", lang),
+                                            visible=ids_i[0] == "codeformer")
                     boton_i = gr.Button(t("boton_imagen", lang), variant="primary")
                 with gr.Column():
                     log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14)
@@ -261,11 +270,13 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                     gr.update(visible=motor == "hypir"),
                     gr.update(visible=motor != "seedvr2_img"),
                     gr.update(visible=motor == "seedvr2_img"),
+                    gr.update(visible=motor == "codeformer"),
                 )
 
-            motor_i.change(controles_i, motor_i, [nota_i, prompt_i, escala_i, resolucion_i])
+            motor_i.change(controles_i, motor_i,
+                           [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i])
             boton_i.click(hacer_procesar_imagen(lang),
-                          [img_in, motor_i, prompt_i, escala_i, resolucion_i],
+                          [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i],
                           [log_i, img_out])
 
         with gr.Tab(t("tab_sistema", lang)):

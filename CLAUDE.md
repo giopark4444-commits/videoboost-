@@ -14,8 +14,9 @@ RTX 4080**. Lee PROPUESTA.md para el razonamiento del stack.
   de idioma. Los motores se identifican por ids estables ("seedvr2", "rife"…) y las
   etiquetas salen de `i18n.t()`.
 - Venvs separados para evitar choques de dependencias: `.venv` (app+SeedVR2),
-  `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-flashvsr`. `engines/images.py` y
-  `flashvsr.py` invocan el python del venv correspondiente por subprocess.
+  `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-caras` (CodeFormer), `.venv-flashvsr`.
+  `engines/images.py`, `faces.py` y `flashvsr.py` invocan el python del venv
+  correspondiente por subprocess.
 
 ## Puntos frágiles / NO probados en GPU real
 
@@ -37,10 +38,15 @@ en este orden:
 4. **SUPIR**: `test.py --img_dir --save_dir --SUPIR_sign Q --upscale N` según su README,
    pero los pesos (SUPIR-v0Q + SDXL + CLIPs) se configuran a mano en sus yaml de
    opciones. Es el motor más quisquilloso; está marcado como "experto" en la doc.
-5. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
+5. **CodeFormer** (`engines/faces.py`): `inference_codeformer.py -w <fidelidad>
+   --input_path --output_path --upscale N --face_upsample --bg_upsampler realesrgan`.
+   El resultado final queda en `output_path/final_results/`. basicsr va en modo
+   `develop` (lo hace el instalador). En Mac auto-detecta MPS; si una versión vieja
+   fuerza CUDA, parchear o probar CPU. Pesos auto-descargados a la primera.
+6. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
    nihui 20220728/20221029). RIFE usa el modelo `rife-v4.6` incluido en el zip; el
    código toma el `rife-v4*` más alto que encuentre.
-6. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
+7. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
 ## Reglas de memoria

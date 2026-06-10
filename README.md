@@ -39,6 +39,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 **Extras opcionales** (después de la base):
 - Motores de imágenes: `install/extras_imagenes.sh` (añade `--supir` para SUPIR) /
   `install\EXTRAS_IMAGENES.bat`
+- Restauración de caras (CodeFormer): `install/extras_caras.sh` / `install\EXTRAS_CARAS.bat`
 - FlashVSR (modo rápido, solo NVIDIA): `install/extras_flashvsr.sh` / `.bat`
 
 ## Los motores
@@ -59,8 +60,19 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 |---|---|---|
 | **HYPIR** (XPixel, SIGGRAPH 2025) | Restauración SOTA en 1 paso, controlable con prompt. | NVIDIA o Mac M |
 | **SUPIR** (XPixel) | Máximo detalle reconstruido (nivel poros de piel). Lento. | Ideal NVIDIA 16 GB+ |
+| **CodeFormer** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. | NVIDIA o Mac M |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
 | **Real-ESRGAN** | Escalado instantáneo. | Cualquier GPU |
+
+### ¿Y los de pago (Topaz, Magnific, HitPaw)?
+
+Son productos cerrados, pero la técnica detrás es conocida — y aquí la tienes gratis:
+
+| Producto de pago | Lo que hace por dentro | Tu equivalente en VideoBoost |
+|---|---|---|
+| **HitPaw** | GANs clásicos: Real-ESRGAN, GFPGAN/CodeFormer, RIFE | Nivel Compatible + **CodeFormer** |
+| **Magnific AI** | Difusión Stable Diffusion por mosaicos (tile) | **SUPIR / HYPIR** |
+| **Topaz Video AI** | Modelos propios de video con consistencia temporal | **SeedVR2** (igual o mejor) |
 
 **El combo «Topaz completo»:** primero SeedVR2 (restaura + escala con consistencia
 temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
@@ -68,9 +80,10 @@ temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
 ## Licencias
 
 - SeedVR2 y FlashVSR: **Apache 2.0** (sin restricción de uso).
-- Real-ESRGAN, Real-CUGAN, waifu2x, RIFE: BSD/MIT.
-- **HYPIR y SUPIR: solo uso no comercial** sin permiso escrito de sus autores
-  (contacto: jinjin.gu@suppixel.ai). Para uso personal no hay restricción.
+- Real-ESRGAN, Real-CUGAN, waifu2x, RIFE, GFPGAN: BSD/MIT/Apache.
+- **HYPIR, SUPIR y CodeFormer: solo uso no comercial** sin permiso escrito de sus
+  autores (HYPIR/SUPIR: jinjin.gu@suppixel.ai; CodeFormer: NTU S-Lab License).
+  Para uso personal no hay restricción.
 
 ## Problemas frecuentes
 
@@ -95,6 +108,7 @@ videoboost/
 │   ├── seedvr2.py          # SeedVR2 vía CLI standalone (CUDA y MPS)
 │   ├── flashvsr.py         # FlashVSR (experimental, NVIDIA)
 │   ├── images.py           # HYPIR y SUPIR (venvs propios)
+│   ├── faces.py            # CodeFormer — restauración de caras (venv propio)
 │   └── ffmpeg_utils.py     # Extraer/reensamblar frames, info de video
 ├── install/                # Instaladores por plataforma + descarga de binarios
 ├── bin/, vendor/, models/  # Descargados por los instaladores (no versionados)
