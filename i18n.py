@@ -201,6 +201,33 @@ T = {
         "en": "Color grain (off = monochrome silver)",
         "fr": "Grain couleur (désactivé = argent monochrome)"},
 
+    # ---- looks de película (LUTs) ----
+    "m_lut": {
+        "es": "Look de película — LUT analógico",
+        "en": "Film look — analog LUT",
+        "fr": "Look pellicule — LUT analogique"},
+    "n_lut": {
+        "es": "20 looks de carretes icónicos (Portra, Velvia, Tri-X…) como **LUTs .cube** "
+              "generados localmente, inspirados en el carácter documentado de cada película "
+              "(no son escaneos del fabricante). La mezcla regula cuánto look aplicas "
+              "(0% = original). Combínalo con el grano: primero LUT, luego grano. "
+              "CPU/FFmpeg: funciona en cualquier máquina.",
+        "en": "20 iconic film stock looks (Portra, Velvia, Tri-X…) as locally generated "
+              "**.cube LUTs**, inspired by each stock's documented character (not "
+              "manufacturer scans). Mix controls how much look you apply (0% = original). "
+              "Pair with grain: LUT first, then grain. CPU/FFmpeg: runs anywhere.",
+        "fr": "20 looks de pellicules iconiques (Portra, Velvia, Tri-X…) en **LUTs .cube** "
+              "générés localement, inspirés du caractère documenté de chaque pellicule "
+              "(pas des scans du fabricant). Le mélange règle la quantité de look "
+              "(0 % = original). À combiner avec le grain : LUT d'abord, puis grain. "
+              "CPU/FFmpeg : fonctionne partout."},
+    "l_look": {
+        "es": "Carrete", "en": "Film stock", "fr": "Pellicule"},
+    "l_mezcla": {
+        "es": "Mezcla del look (0% original → 100% look completo)",
+        "en": "Look mix (0% original → 100% full look)",
+        "fr": "Mélange du look (0 % original → 100 % look complet)"},
+
     # ---- control de fidelidad de caras ----
     "fidelidad": {
         "es": "Fidelidad (0 = más nítido, 1 = más fiel al original)",
