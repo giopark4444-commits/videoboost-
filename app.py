@@ -114,6 +114,16 @@ def comparador_html(antes, despues, lang):
 
 # ---------------------------------------------------------------- lógica
 
+def _revelar(entrada, es_video, rev):
+    """Convierte los 16 valores planos del panel de revelado en luts.etalonar()."""
+    l1, m1, l2, m2, l3, m3, expo, temp, tinte, contr, satur, vibr, som, alt, nit, vin = rev
+    return luts.etalonar(
+        entrada, es_video=es_video, looks=[(l1, m1), (l2, m2), (l3, m3)],
+        exposicion=float(expo), temperatura=float(temp), tinte=float(tinte),
+        contraste=float(contr), saturacion=float(satur), vibranza=float(vibr),
+        sombras=float(som), altas=float(alt), nitidez=float(nit), vineta=float(vin),
+    )
+
 def _consumir(gen, log):
     """Consume el generador del motor cediendo el log acumulado; captura su retorno."""
     while True:
@@ -127,7 +137,7 @@ def _consumir(gen, log):
 
 def hacer_procesar_video(lang):
     def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch,
-                 g_preset, g_int, g_tam, g_color, l_look, l_mezcla):
+                 g_preset, g_int, g_tam, g_color, *rev):
         if not video:
             yield t("sube_video", lang), None
             return
@@ -145,8 +155,7 @@ def hacer_procesar_video(lang):
                                     intensidad=float(g_int), tamano=int(g_tam),
                                     grano_color=bool(g_color))
             elif motor == "lut":
-                gen = luts.aplicar(video, es_video=True, look=l_look,
-                                   mezcla=float(l_mezcla))
+                gen = _revelar(video, es_video=True, rev=rev)
             else:
                 gen = vulkan.mejorar_video(video, motor=motor, escala=int(escala),
                                            ruido=int(ruido))
@@ -169,7 +178,7 @@ def hacer_procesar_video(lang):
 
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
-                 g_preset, g_int, g_tam, g_color, l_look, l_mezcla):
+                 g_preset, g_int, g_tam, g_color, *rev):
         oculto = gr.update(visible=False)
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
@@ -191,8 +200,7 @@ def hacer_procesar_imagen(lang):
                                     intensidad=float(g_int), tamano=int(g_tam),
                                     grano_color=bool(g_color))
             elif motor == "lut":
-                gen = luts.aplicar(imagen, es_video=False, look=l_look,
-                                   mezcla=float(l_mezcla))
+                gen = _revelar(imagen, es_video=False, rev=rev)
             else:
                 gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
             consumo = _consumir(gen, log)
@@ -306,14 +314,45 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
             preset.change(sincronizar, preset, [inten, tam, col])
             return g, preset, inten, tam, col
 
-        def grupo_lut(visible):
-            """Controles del look de película: carrete + cuánto look aplicar."""
+        def grupo_revelado(visible):
+            """Panel de revelado estilo Lumetri: 3 capas de LUT + corrección básica.
+            Devuelve el grupo y la lista plana de 16 componentes (orden fijo que
+            espera el despachador: l1,m1,l2,m2,l3,m3 + 10 ajustes)."""
+            opciones = [(t("l_ninguno", lang), "ninguno")] + \
+                       [(n, k) for k, n in luts.NOMBRES.items()]
+            comps = []
             with gr.Group(visible=visible) as g:
-                look = gr.Dropdown([(n, k) for k, n in luts.NOMBRES.items()],
-                                   value="portra400", label=t("l_look", lang))
-                mezcla = gr.Slider(0.0, 1.0, value=1.0, step=0.05,
-                                   label=t("l_mezcla", lang))
-            return g, look, mezcla
+                with gr.Accordion(t("l_sec_looks", lang), open=True):
+                    for n in range(3):
+                        with gr.Row():
+                            lk = gr.Dropdown(opciones, scale=2, label=f"LUT {n + 1}",
+                                             value="portra400" if n == 0 else "ninguno")
+                            mz = gr.Slider(0.0, 1.0, value=1.0, step=0.05, scale=1,
+                                           label=t("l_mezcla", lang))
+                        comps += [lk, mz]
+                with gr.Accordion(t("l_sec_basica", lang), open=True):
+                    comps.append(gr.Slider(-3.0, 3.0, value=0.0, step=0.1,
+                                           label=t("l_exposicion", lang)))
+                    comps.append(gr.Slider(3000, 10000, value=6500, step=100,
+                                           label=t("l_temperatura", lang)))
+                    comps.append(gr.Slider(-0.3, 0.3, value=0.0, step=0.01,
+                                           label=t("l_tinte", lang)))
+                    comps.append(gr.Slider(0.5, 1.6, value=1.0, step=0.02,
+                                           label=t("l_contraste", lang)))
+                    comps.append(gr.Slider(0.0, 2.0, value=1.0, step=0.05,
+                                           label=t("l_saturacion", lang)))
+                    comps.append(gr.Slider(-2.0, 2.0, value=0.0, step=0.1,
+                                           label=t("l_vibranza", lang)))
+                    comps.append(gr.Slider(-0.15, 0.15, value=0.0, step=0.01,
+                                           label=t("l_sombras", lang)))
+                    comps.append(gr.Slider(-0.15, 0.15, value=0.0, step=0.01,
+                                           label=t("l_altas", lang)))
+                with gr.Accordion(t("l_sec_detalle", lang), open=False):
+                    comps.append(gr.Slider(0.0, 3.0, value=0.0, step=0.1,
+                                           label=t("l_nitidez", lang)))
+                    comps.append(gr.Slider(0.0, 1.0, value=0.0, step=0.05,
+                                           label=t("l_vineta", lang)))
+            return g, comps
 
         with gr.Tab(t("tab_video", lang)):
             ids_v = motores_video()
@@ -338,7 +377,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                                                 label=t("batch", lang))
                     grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(
                         ids_v[0] == "grano")
-                    grupo_l_v, llook_v, lmez_v = grupo_lut(ids_v[0] == "lut")
+                    grupo_l_v, rev_v = grupo_revelado(ids_v[0] == "lut")
                     preview = gr.Markdown(elem_classes="size-preview")
                     boton_v = gr.Button(t("boton_video", lang), variant="primary",
                                         elem_classes="cta")
@@ -365,7 +404,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                             [video_in, motor_v, escala, mult, resolucion], preview)
             boton_v.click(hacer_procesar_video(lang),
                           [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
-                           batch_sv2, gpre_v, gint_v, gtam_v, gcol_v, llook_v, lmez_v],
+                           batch_sv2, gpre_v, gint_v, gtam_v, gcol_v, *rev_v],
                           [log_v, video_out])
 
         with gr.Tab(t("tab_imagenes", lang)):
@@ -395,7 +434,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                                             visible=ids_i[0] == "codeformer")
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
-                    grupo_l_i, llook_i, lmez_i = grupo_lut(ids_i[0] == "lut")
+                    grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
                     boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
                                         elem_classes="cta")
                 with gr.Column():
@@ -423,7 +462,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as dem
                             grupo_g_i, grupo_l_i])
             boton_i.click(hacer_procesar_imagen(lang),
                           [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                           gpre_i, gint_i, gtam_i, gcol_i, llook_i, lmez_i],
+                           gpre_i, gint_i, gtam_i, gcol_i, *rev_i],
                           [log_i, img_out, descarga_i])
 
         with gr.Tab(t("tab_sistema", lang)):

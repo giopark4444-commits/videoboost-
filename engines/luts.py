@@ -140,33 +140,97 @@ def generar_lut(look: str) -> Path:
     return ruta
 
 
-def aplicar(entrada, es_video, look="portra400", mezcla=1.0):
-    """Generador: aplica el LUT del carrete con mezcla 0-1 y devuelve la salida."""
-    entrada = Path(entrada)
-    if look not in LOOKS:
-        raise RuntimeError(f"Look desconocido: {look}")
-    mezcla = max(0.0, min(1.0, float(mezcla)))
-    lut = generar_lut(look)
-    # lut3d necesita la ruta escapada en el grafo de filtros
-    lut_esc = str(lut).replace("\\", "/").replace(":", "\\:")
+# Ajustes neutros del panel de revelado (estilo Lumetri). Cualquier valor en
+# neutro se omite de la cadena de filtros (cero coste).
+NEUTRO = dict(exposicion=0.0, temperatura=6500, tinte=0.0, contraste=1.0,
+              saturacion=1.0, vibranza=0.0, sombras=0.0, altas=0.0,
+              nitidez=0.0, vineta=0.0)
 
-    # En modo `normal`, blend pondera la PRIMERA entrada con all_opacity:
-    # out = primera*opacidad + segunda*(1-opacidad). Ponemos el LUT primero
-    # para que `mezcla` sea literalmente "cuánto LUT" (0 = original, 1 = look).
-    filtro = (
-        f"[0:v]format=rgb24,split[a][b];"
-        f"[b]lut3d='{lut_esc}'[l];"
-        f"[l][a]blend=all_mode=normal:all_opacity={mezcla:.3f},format=yuv420p[v]"
-    )
+
+def _cadena_basica(a):
+    """Filtros de corrección básica (solo los que se apartan del neutro)."""
+    f = []
+    if abs(a["exposicion"]) > 1e-3:
+        f.append(f"exposure=exposure={a['exposicion']:.2f}")        # en EV
+    if int(a["temperatura"]) != 6500:
+        f.append(f"colortemperature=temperature={int(a['temperatura'])}")
+    if abs(a["tinte"]) > 1e-3:
+        # + = magenta, − = verde (sobre medios y altas luces)
+        f.append(f"colorbalance=gm={-a['tinte']:.3f}:gh={-a['tinte']/2:.3f}")
+    eq = []
+    if abs(a["contraste"] - 1) > 1e-3:
+        eq.append(f"contrast={a['contraste']:.3f}")
+    if abs(a["saturacion"] - 1) > 1e-3:
+        eq.append(f"saturation={a['saturacion']:.3f}")
+    if eq:
+        f.append("eq=" + ":".join(eq))
+    s = max(-0.18, min(0.18, a["sombras"]))
+    h = max(-0.18, min(0.18, a["altas"]))
+    if abs(s) > 1e-3 or abs(h) > 1e-3:
+        # curva maestra monótona: sombras en 0.25, altas luces en 0.75
+        f.append(f"curves=all='0/0 0.25/{0.25 + s:.3f} 0.75/{0.75 + h:.3f} 1/1'")
+    if abs(a["vibranza"]) > 1e-3:
+        f.append(f"vibrance=intensity={a['vibranza']:.2f}")          # protege pieles
+    return f
+
+
+def _cadena_detalle(a):
+    f = []
+    if a["nitidez"] > 1e-3:
+        f.append(f"unsharp=5:5:{min(3.0, a['nitidez']):.2f}")
+    if a["vineta"] > 1e-3:
+        f.append(f"vignette=angle={min(1.0, a['vineta']) * 0.628:.3f}")  # hasta ~PI/5
+    return f
+
+
+def etalonar(entrada, es_video, looks=(), **ajustes):
+    """Generador: revelado completo — hasta 3 LUTs apilados + corrección básica.
+
+    looks: lista de (look, mezcla) que se aplican EN ORDEN, cada uno fundido
+    con el resultado anterior según su mezcla. Los ajustes en neutro no cuestan.
+    Orden de la cadena (como Lumetri): corrección básica → LUTs → detalle/viñeta.
+    """
+    entrada = Path(entrada)
+    a = {**NEUTRO, **{k: v for k, v in ajustes.items() if v is not None}}
+    capas = [(lk, max(0.0, min(1.0, float(m)))) for lk, m in looks
+             if lk and lk != "ninguno" and float(m) > 0]
+    for lk, _ in capas:
+        if lk not in LOOKS:
+            raise RuntimeError(f"Look desconocido: {lk}")
+
+    partes, cur = [], "[0:v]"
+    basica = _cadena_basica(a)
+    if basica:
+        partes.append(f"{cur}{','.join(basica)}[c0]")
+        cur = "[c0]"
+
+    # Capas de LUT apiladas. En modo `normal`, blend pondera la PRIMERA entrada
+    # con all_opacity: ponemos el LUT primero para que mezcla = "cuánto LUT".
+    for n, (lk, m) in enumerate(capas):
+        lut_esc = str(generar_lut(lk)).replace("\\", "/").replace(":", "\\:")
+        partes.append(
+            f"{cur}format=rgb24,split[a{n}][b{n}];"
+            f"[b{n}]lut3d='{lut_esc}'[l{n}];"
+            f"[l{n}][a{n}]blend=all_mode=normal:all_opacity={m:.3f}[c{n + 1}]"
+        )
+        cur = f"[c{n + 1}]"
+
+    detalle = _cadena_detalle(a)
+    cola = (detalle + ["format=yuv420p"])
+    partes.append(f"{cur}{','.join(cola)}[v]")
+    filtro = ";".join(partes)
+
     if es_video:
-        salida = SALIDAS / f"{entrada.stem}_{look}.mp4"
+        salida = SALIDAS / f"{entrada.stem}_revelado.mp4"
         extra = ["-map", "[v]", "-map", "0:a?", "-c:a", "copy",
                  "-c:v", "libx264", "-crf", "17", "-preset", "medium"]
     else:
-        salida = SALIDAS / f"{entrada.stem}_{look}.png"
+        salida = SALIDAS / f"{entrada.stem}_revelado.png"
         extra = ["-map", "[v]", "-frames:v", "1", "-update", "1"]
 
     cmd = [ff.ffmpeg(), "-y", "-i", entrada, "-filter_complex", filtro, *extra, salida]
-    yield f"🎞️ Look {NOMBRES[look]} · mezcla {mezcla:.0%}"
+    resumen = " + ".join(f"{NOMBRES[lk]} {m:.0%}" for lk, m in capas) or "sin LUT"
+    tocados = [k for k in NEUTRO if abs(a[k] - NEUTRO[k]) > 1e-3]
+    yield f"🎛️ Revelado · {resumen}" + (f" · ajustes: {', '.join(tocados)}" if tocados else "")
     yield from correr(cmd)
     return str(salida)

@@ -201,32 +201,57 @@ T = {
         "en": "Color grain (off = monochrome silver)",
         "fr": "Grain couleur (désactivé = argent monochrome)"},
 
-    # ---- looks de película (LUTs) ----
+    # ---- revelado de color (LUTs + ajustes estilo Lumetri) ----
     "m_lut": {
-        "es": "Look de película — LUT analógico",
-        "en": "Film look — analog LUT",
-        "fr": "Look pellicule — LUT analogique"},
+        "es": "Revelado de color — LUTs y ajustes",
+        "en": "Color grading — LUTs & adjustments",
+        "fr": "Étalonnage — LUTs et réglages"},
     "n_lut": {
-        "es": "20 looks de carretes icónicos (Portra, Velvia, Tri-X…) como **LUTs .cube** "
-              "generados localmente, inspirados en el carácter documentado de cada película "
-              "(no son escaneos del fabricante). La mezcla regula cuánto look aplicas "
-              "(0% = original). Combínalo con el grano: primero LUT, luego grano. "
+        "es": "Panel de revelado estilo Lumetri: hasta **3 LUTs apilados** (20 carretes "
+              "icónicos como .cube generados localmente, cada capa con su mezcla) más "
+              "corrección básica: exposición, temperatura, tinte, contraste, saturación, "
+              "vibranza, sombras, altas luces, nitidez y viñeta. Los looks están inspirados "
+              "en el carácter documentado de cada película. Remata con el motor de grano. "
               "CPU/FFmpeg: funciona en cualquier máquina.",
-        "en": "20 iconic film stock looks (Portra, Velvia, Tri-X…) as locally generated "
-              "**.cube LUTs**, inspired by each stock's documented character (not "
-              "manufacturer scans). Mix controls how much look you apply (0% = original). "
-              "Pair with grain: LUT first, then grain. CPU/FFmpeg: runs anywhere.",
-        "fr": "20 looks de pellicules iconiques (Portra, Velvia, Tri-X…) en **LUTs .cube** "
-              "générés localement, inspirés du caractère documenté de chaque pellicule "
-              "(pas des scans du fabricant). Le mélange règle la quantité de look "
-              "(0 % = original). À combiner avec le grain : LUT d'abord, puis grain. "
-              "CPU/FFmpeg : fonctionne partout."},
-    "l_look": {
-        "es": "Carrete", "en": "Film stock", "fr": "Pellicule"},
-    "l_mezcla": {
-        "es": "Mezcla del look (0% original → 100% look completo)",
-        "en": "Look mix (0% original → 100% full look)",
-        "fr": "Mélange du look (0 % original → 100 % look complet)"},
+        "en": "Lumetri-style grading panel: up to **3 stacked LUTs** (20 iconic film "
+              "stocks as locally generated .cube, each layer with its own mix) plus basic "
+              "correction: exposure, temperature, tint, contrast, saturation, vibrance, "
+              "shadows, highlights, sharpen and vignette. Looks are inspired by each "
+              "stock's documented character. Finish with the grain engine. CPU/FFmpeg.",
+        "fr": "Panneau d'étalonnage façon Lumetri : jusqu'à **3 LUTs empilés** (20 "
+              "pellicules iconiques en .cube générés localement, chaque couche avec son "
+              "mélange) plus correction de base : exposition, température, teinte, "
+              "contraste, saturation, vibrance, ombres, hautes lumières, netteté et "
+              "vignettage. Looks inspirés du caractère documenté de chaque pellicule. "
+              "Finissez avec le moteur de grain. CPU/FFmpeg."},
+    "l_ninguno": {"es": "— Ninguno —", "en": "— None —", "fr": "— Aucun —"},
+    "l_mezcla": {"es": "Mezcla", "en": "Mix", "fr": "Mélange"},
+    "l_sec_looks": {
+        "es": "Looks de película (hasta 3 capas)",
+        "en": "Film looks (up to 3 layers)",
+        "fr": "Looks pellicule (jusqu'à 3 couches)"},
+    "l_sec_basica": {
+        "es": "Corrección básica", "en": "Basic correction", "fr": "Correction de base"},
+    "l_sec_detalle": {
+        "es": "Detalle y viñeta", "en": "Detail & vignette", "fr": "Détail et vignettage"},
+    "l_exposicion": {
+        "es": "Exposición (EV)", "en": "Exposure (EV)", "fr": "Exposition (EV)"},
+    "l_temperatura": {
+        "es": "Temperatura de color (K)", "en": "Color temperature (K)",
+        "fr": "Température de couleur (K)"},
+    "l_tinte": {
+        "es": "Tinte (verde ← → magenta)", "en": "Tint (green ← → magenta)",
+        "fr": "Teinte (vert ← → magenta)"},
+    "l_contraste": {"es": "Contraste", "en": "Contrast", "fr": "Contraste"},
+    "l_saturacion": {"es": "Saturación", "en": "Saturation", "fr": "Saturation"},
+    "l_vibranza": {
+        "es": "Vibranza (satura protegiendo pieles)",
+        "en": "Vibrance (saturates while protecting skin)",
+        "fr": "Vibrance (sature en protégeant les peaux)"},
+    "l_sombras": {"es": "Sombras", "en": "Shadows", "fr": "Ombres"},
+    "l_altas": {"es": "Altas luces", "en": "Highlights", "fr": "Hautes lumières"},
+    "l_nitidez": {"es": "Nitidez", "en": "Sharpen", "fr": "Netteté"},
+    "l_vineta": {"es": "Viñeta", "en": "Vignette", "fr": "Vignettage"},
 
     # ---- control de fidelidad de caras ----
     "fidelidad": {
