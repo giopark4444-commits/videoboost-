@@ -13,6 +13,7 @@ import traceback
 import gradio as gr
 
 import hardware
+import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import (color, faces, faithdiff, flashvsr, grano, instantir, luts,
@@ -289,6 +290,9 @@ def texto_sistema(lang):
         "",
         t("combo", lang),
     ]
+    lic = licencias.activa()
+    if licencias.requiere_licencia() and lic:
+        filas.append(f"\n🔑 {t('lic_activada', lang)} **{lic.get('cliente', '?')}**")
     return "\n".join(filas)
 
 
@@ -297,10 +301,32 @@ def texto_sistema(lang):
 with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as demo:
     idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
                       container=False, elem_id="vb-lang", scale=0)
+    # Cambia al activar la licencia para que la UI completa se re-renderice.
+    lic_tick = gr.State(0)
 
-    @gr.render(inputs=idioma)
-    def ui(lang):
+    @gr.render(inputs=[idioma, lic_tick])
+    def ui(lang, _tick):
         gr.HTML(header_html(lang))
+
+        # --- Activación (solo si la build exige licencia y no está activada) ---
+        if licencias.requiere_licencia() and not licencias.activa():
+            with gr.Column():
+                gr.Markdown(f"## {t('lic_titulo', lang)}\n{t('lic_texto', lang)}")
+                clave_in = gr.Textbox(label=t("lic_clave", lang), lines=2)
+                lic_msg = gr.Markdown()
+                boton_lic = gr.Button(t("lic_boton", lang), variant="primary",
+                                      elem_classes="cta")
+
+            def intentar_activar(clave, tick):
+                try:
+                    licencias.activar(clave or "")
+                    return "", tick + 1  # re-render → entra a la app
+                except ValueError:
+                    return t("lic_error", lang), tick
+
+            boton_lic.click(intentar_activar, [clave_in, lic_tick],
+                            [lic_msg, lic_tick])
+            return  # no se construye el resto de la app sin licencia
 
         def grupo_grano(visible):
             """Controles del grano analógico (compartidos por video e imagen).

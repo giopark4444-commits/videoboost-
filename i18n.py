@@ -148,6 +148,28 @@ T = {
         "en": "DDColor — colorize (B&W → color)",
         "fr": "DDColor — coloriser (N&B → couleur)"},
 
+    # ---- activación de licencia ----
+    "lic_titulo": {
+        "es": "Activar VideoBoost", "en": "Activate VideoBoost",
+        "fr": "Activer VideoBoost"},
+    "lic_texto": {
+        "es": "Pega tu clave de licencia para activar la app en esta máquina. "
+              "Solo hace falta una vez y no necesita internet.",
+        "en": "Paste your license key to activate the app on this machine. "
+              "One time only, no internet needed.",
+        "fr": "Collez votre clé de licence pour activer l'application sur cette "
+              "machine. Une seule fois, sans internet."},
+    "lic_clave": {
+        "es": "Clave de licencia (VB1-…)", "en": "License key (VB1-…)",
+        "fr": "Clé de licence (VB1-…)"},
+    "lic_boton": {"es": "Activar", "en": "Activate", "fr": "Activer"},
+    "lic_error": {
+        "es": "❌ La clave no es válida. Revisa que esté copiada completa.",
+        "en": "❌ Invalid key. Make sure it was copied in full.",
+        "fr": "❌ Clé non valide. Vérifiez qu'elle est copiée en entier."},
+    "lic_activada": {
+        "es": "Licencia de", "en": "Licensed to", "fr": "Licence de"},
+
     # ---- grano analógico ----
     "m_grano": {
         "es": "Grano de película — efecto analógico",

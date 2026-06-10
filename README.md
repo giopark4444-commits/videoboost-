@@ -113,6 +113,25 @@ Todos los motores incluidos permiten **uso comercial**:
 > Los motores no comerciales (HYPIR, SUPIR) se retiraron deliberadamente para evitar
 > restricciones de licencia. Sus reemplazos de licencia libre son FaithDiff e InstantIR.
 
+## Venta con licencias (opcional)
+
+La app trae un sistema de licencias **offline** (claves firmadas Ed25519, sin
+servidor — modelo Topaz). Por defecto está apagado: la app corre libre.
+
+Para activarlo como vendedor:
+```bash
+python licencias.py init                       # crea tu par de claves (una vez)
+python licencias.py generar --cliente "correo" # emite la clave de un cliente
+```
+`init` embebe la clave pública en `licencia_publica.py` (se versiona) y deja tu
+`clave_privada.pem` **fuera del repo** (gitignored — guárdala con backup: quien
+la tenga puede emitir licencias). Desde entonces la app pide activación al
+arrancar; el cliente pega su clave una vez (pantalla trilingüe) y queda activada
+en esa máquina. Manual para clientes: `MANUAL_USUARIO.md`.
+
+Sin servidor no hay revocación: una clave emitida vale para siempre. Si algún
+día hace falta, se añade un servidor de licencias sin cambiar el formato.
+
 ## Problemas frecuentes
 
 - **Memoria insuficiente con SeedVR2:** baja la resolución objetivo, usa un modelo

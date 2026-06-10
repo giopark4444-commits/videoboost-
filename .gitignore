@@ -10,6 +10,10 @@ models/
 # Resultados
 salidas/
 
+# Licencias: la privada JAMÁS se versiona; la activación es por máquina
+clave_privada.pem
+licencia.json
+
 # Python
 __pycache__/
 *.pyc

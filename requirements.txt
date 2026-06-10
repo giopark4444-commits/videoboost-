@@ -1,3 +1,4 @@
 # Dependencias de la app (los motores pesados se instalan con los scripts de install/)
 gradio>=4.44
 huggingface_hub>=0.24
+cryptography>=41   # licencias firmadas Ed25519 (verificación offline)

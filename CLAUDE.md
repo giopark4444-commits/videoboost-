@@ -69,6 +69,14 @@ en este orden:
 9. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
+## Licencias de venta (licencias.py)
+
+Modelo C "Topaz": claves Ed25519 verificadas offline. Si `licencia_publica.py`
+define CLAVE_PUBLICA, la app exige activación (pantalla en app.py antes de los
+tabs); sin ese archivo corre libre (modo dev). `clave_privada.pem` y
+`licencia.json` están gitignored — la privada JAMÁS se versiona. CLI: init /
+generar --cliente / verificar. Sin revocación (decisión consciente, documentada).
+
 ## Reglas de memoria
 
 - SeedVR2 batch_size sigue la regla **4n+1** (1, 5, 9, 13, 21, 33). Más batch = mejor
