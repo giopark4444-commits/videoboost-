@@ -65,7 +65,7 @@ def main():
     # Importa los motores con tolerancia a fallos de import.
     import importlib
     mods = {}
-    for nombre in ("images", "faithdiff", "instantir", "faces", "color", "flashvsr"):
+    for nombre in ("faithdiff", "instantir", "faces", "color", "flashvsr"):
         try:
             mods[nombre] = importlib.import_module(f"engines.{nombre}")
         except Exception as e:
@@ -93,10 +93,6 @@ def main():
          lambda: disp("faithdiff", "disponible"), "install/extras_faithdiff", True),
         ("Imagen", "InstantIR", ".venv-instantir", lambda: disp("instantir", "disponible"),
          "install/extras_instantir", True),
-        ("Imagen", "HYPIR", ".venv-imagenes", lambda: disp("images", "hypir_disponible"),
-         "install/extras_imagenes", False),
-        ("Imagen", "SUPIR", ".venv-supir", lambda: disp("images", "supir_disponible"),
-         "install/extras_imagenes --supir", True),
         ("Imagen", "CodeFormer (caras)", ".venv-caras", lambda: disp("faces", "disponible"),
          "install/extras_caras", False),
         ("Imagen", "DDColor (color)", ".venv-color", lambda: disp("color", "disponible"),

@@ -142,11 +142,23 @@ que era "lo único que no replicábamos". Ya no falta nada frente a Topaz.
 
 Tras revisar el estado del arte más reciente:
 
+- **FaithDiff** (CVPR 2025) — **añadido como motor de imagen recomendado por defecto**.
+  Restauración fiel por difusión sobre SDXL; en su paper supera a SUPIR y es ~4× más
+  rápido, pensado para fotos y películas antiguas. **Licencia MIT** (uso comercial
+  libre). Solo CUDA. Evitamos LLaVA-13B usando `test_wo_llava.py` con un caption a
+  partir de prompt. Repo: https://github.com/JyChen9811/FaithDiff
+
+- **HYPIR y SUPIR — RETIRADOS.** Eran de uso **no comercial** (permiso a
+  jinjin.gu@suppixel.ai). Para evitar problemas de licencia se sacaron del producto y
+  se reemplazaron por **FaithDiff** (MIT) e **InstantIR** (Apache 2.0), que cubren la
+  misma función con licencia libre. En Mac, la restauración por difusión queda sin
+  reemplazo directo (FaithDiff/InstantIR son CUDA): allí se usa SeedVR2 (imagen).
+
 - **InstantIR** (instantX-research) — **añadido**. Restauración de imágenes por
   difusión con referencia generativa: calidad a la par o superior a SUPIR en métricas
   (hasta +22% MANIQA), pero instantáneo (sin los 25-35 pasos de SUPIR) y con licencia
   **Apache 2.0** — el único motor de imagen del stack apto para uso comercial. Solo
-  CUDA (SDXL + DINOv2), así que es exclusivo de la 4080; en Mac quedan HYPIR/SeedVR2.
+  CUDA (SDXL + DINOv2), así que es exclusivo de la 4080; en Mac queda SeedVR2.
   Repo: https://github.com/instantX-research/InstantIR
 
 - **InfVSR** — **a vigilar, aún sin código**. Es el único trabajo que afirma superar a

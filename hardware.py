@@ -138,8 +138,6 @@ def info_sistema() -> dict:
         "vulkan": vulkan_disponible(),
         "ffmpeg": shutil.which("ffmpeg") is not None or any(BIN.rglob("ffmpeg*")) if BIN.exists() else shutil.which("ffmpeg") is not None,
         "seedvr2": seedvr2_instalado and (cuda or mps),
-        "hypir": (VENDOR / "HYPIR" / "test.py").exists(),
-        "supir": (VENDOR / "SUPIR" / "test.py").exists(),
         "flashvsr": (VENDOR / "FlashVSR").exists() and cuda,
         "nivel": nivel,
         "seedvr2_modelo": modelo,

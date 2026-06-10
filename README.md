@@ -14,9 +14,9 @@ in English, Spanish and French.* · *Application d'amélioration vidéo/image pa
 
 | Plataforma | Nivel máximo | Motores |
 |---|---|---|
-| **Mac con chip M** (M1–M4, ideal Max/Pro con 32 GB+) | Pro | SeedVR2 (Metal/MPS), HYPIR, motores Vulkan |
-| **PC con NVIDIA 16 GB+** (ej. RTX 4080) | Máximo | SeedVR2 7B, FlashVSR, HYPIR, SUPIR, Vulkan |
-| **PC con NVIDIA 8–12 GB** | Pro | SeedVR2 (GGUF), HYPIR, Vulkan |
+| **Mac con chip M** (M1–M4, ideal Max/Pro con 32 GB+) | Pro | SeedVR2 (Metal/MPS), DDColor, motores Vulkan |
+| **PC con NVIDIA 16 GB+** (ej. RTX 4080) | Máximo | SeedVR2 7B, FlashVSR, FaithDiff, InstantIR, Vulkan |
+| **PC con NVIDIA 8–12 GB** | Pro | SeedVR2 (GGUF), FaithDiff, Vulkan |
 | **Cualquier otra GPU** (GTX 1660, AMD, Intel) | Compatible | Real-ESRGAN, Real-CUGAN, waifu2x, RIFE |
 
 La app detecta tu hardware al arrancar y solo muestra lo que puede funcionar.
@@ -58,12 +58,10 @@ Muestra una tabla con el hardware detectado y qué motores están listos, cuále
 faltan y con qué comando instalarlos. Útil antes del primer uso.
 
 **Extras opcionales** (después de la base):
-- Motores de imágenes: `install/extras_imagenes.sh` (añade `--supir` para SUPIR) /
-  `install\EXTRAS_IMAGENES.bat`
+- FaithDiff (restauración premium, recomendado, solo NVIDIA): `install/extras_faithdiff.sh` / `install\EXTRAS_FAITHDIFF.bat`
+- InstantIR (restauración instantánea, solo NVIDIA): `install/extras_instantir.sh` / `install\EXTRAS_INSTANTIR.bat`
 - Restauración de caras (CodeFormer): `install/extras_caras.sh` / `install\EXTRAS_CARAS.bat`
 - Colorización (DDColor): `install/extras_color.sh` / `install\EXTRAS_COLOR.bat`
-- FaithDiff (restauración premium, solo NVIDIA): `install/extras_faithdiff.sh` / `install\EXTRAS_FAITHDIFF.bat`
-- InstantIR (imágenes, solo NVIDIA): `install/extras_instantir.sh` / `install\EXTRAS_INSTANTIR.bat`
 - FlashVSR (modo rápido, solo NVIDIA): `install/extras_flashvsr.sh` / `.bat`
 
 ## Los motores
@@ -83,9 +81,7 @@ faltan y con qué comando instalarlos. Útil antes del primer uso.
 | Motor | Qué hace | Hardware |
 |---|---|---|
 | **FaithDiff** (CVPR 2025) | Restauración fiel; supera a SUPIR y ~4× más rápido. **MIT (comercial).** | Solo NVIDIA |
-| **HYPIR** (XPixel, SIGGRAPH 2025) | Restauración SOTA en 1 paso, controlable con prompt. | NVIDIA o Mac M |
-| **SUPIR** (XPixel) | Máximo detalle reconstruido (nivel poros de piel). Lento. | Ideal NVIDIA 16 GB+ |
-| **InstantIR** (instantX) | Restauración instantánea, calidad ≥ SUPIR, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
+| **InstantIR** (instantX) | Restauración instantánea, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
 | **CodeFormer** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. | NVIDIA o Mac M |
 | **DDColor** | **Colorizar** fotos en blanco y negro. El "colorize model" tipo HitPaw. | NVIDIA (Mac: CPU) |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
@@ -98,7 +94,7 @@ Son productos cerrados, pero la técnica detrás es conocida — y aquí la tien
 | Producto de pago | Lo que hace por dentro | Tu equivalente en VideoBoost |
 |---|---|---|
 | **HitPaw** | GANs clásicos: upscale, caras, interpolación, colorizado | Vulkan + **CodeFormer** + **DDColor** + RIFE |
-| **Magnific AI** | Difusión Stable Diffusion por mosaicos (tile) | **SUPIR / HYPIR** |
+| **Magnific AI** | Difusión Stable Diffusion por mosaicos (tile) | **FaithDiff / InstantIR** |
 | **Topaz Video AI** | Modelos propios de video con consistencia temporal | **SeedVR2** (igual o mejor) |
 
 **El combo «Topaz completo»:** primero SeedVR2 (restaura + escala con consistencia
@@ -106,12 +102,14 @@ temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
 
 ## Licencias
 
-- SeedVR2, FlashVSR e **InstantIR**: **Apache 2.0** (sin restricción de uso).
-- **FaithDiff**: **MIT** (uso comercial libre); el motor de imagen recomendado por defecto.
-- Real-ESRGAN, Real-CUGAN, waifu2x, RIFE, GFPGAN: BSD/MIT/Apache.
-- **HYPIR, SUPIR y CodeFormer: solo uso no comercial** sin permiso escrito de sus
-  autores (HYPIR/SUPIR: jinjin.gu@suppixel.ai; CodeFormer: NTU S-Lab License).
-  Para uso personal no hay restricción.
+Todos los motores incluidos permiten **uso comercial**:
+- **FaithDiff**: **MIT** — el motor de imagen recomendado por defecto.
+- SeedVR2, FlashVSR e **InstantIR** y **DDColor**: **Apache 2.0** (sin restricción de uso).
+- Real-ESRGAN, Real-CUGAN, waifu2x, RIFE: BSD/MIT/Apache.
+- **CodeFormer** (caras): NTU S-Lab License — revisa sus términos para uso comercial.
+
+> Los motores no comerciales (HYPIR, SUPIR) se retiraron deliberadamente para evitar
+> restricciones de licencia. Sus reemplazos de licencia libre son FaithDiff e InstantIR.
 
 ## Problemas frecuentes
 
@@ -135,7 +133,6 @@ videoboost/
 │   ├── vulkan.py           # Real-ESRGAN, Real-CUGAN, waifu2x, RIFE (ncnn-Vulkan)
 │   ├── seedvr2.py          # SeedVR2 vía CLI standalone (CUDA y MPS)
 │   ├── flashvsr.py         # FlashVSR (experimental, NVIDIA)
-│   ├── images.py           # HYPIR y SUPIR (venvs propios)
 │   ├── faithdiff.py        # FaithDiff — restauración premium MIT (NVIDIA, venv propio)
 │   ├── instantir.py        # InstantIR — restauración de imágenes (NVIDIA, venv propio)
 │   ├── faces.py            # CodeFormer — restauración de caras (venv propio)

@@ -1,16 +1,16 @@
 """InstantIR (instantX-research) — restauración de imágenes por difusión con
 referencia generativa instantánea.
 
-Alternativa a SUPIR para la pestaña de imágenes: calidad comparable o superior,
+Alternativa comercial (Apache 2.0) para la pestaña de imágenes: calidad comparable o superior,
 pero más rápida (no necesita los 25-35 pasos lentos de SUPIR) y con licencia
-**Apache 2.0** (uso comercial libre, a diferencia de SUPIR/HYPIR).
+**Apache 2.0**.
 
 SOLO NVIDIA/CUDA: está construido sobre SDXL + DINOv2 y los autores no dan
-soporte para Apple Silicon. En Mac usar HYPIR o SeedVR2.
+soporte para Apple Silicon. En Mac usa SeedVR2.
 
 Vive en .venv-instantir (SDXL/diffusers chocan con el resto). Se instala con
 install/extras_instantir.(sh|bat). Permite un prompt opcional que guía la
-restauración, igual que HYPIR/SUPIR.
+restauración, como FaithDiff.
 """
 
 import shutil
@@ -46,7 +46,7 @@ def mejorar(entrada, prompt="", pasos=30, cfg=7.0, ancho=None, alto=None):
     import hardware
 
     if not hardware.info_sistema()["cuda"]:
-        raise RuntimeError("InstantIR requiere GPU NVIDIA/CUDA. En Mac usa HYPIR o SeedVR2.")
+        raise RuntimeError("InstantIR requiere GPU NVIDIA/CUDA. En Mac usa SeedVR2.")
     if not disponible():
         raise RuntimeError(
             "InstantIR no está instalado. Corre install/extras_instantir.sh (o .bat)."

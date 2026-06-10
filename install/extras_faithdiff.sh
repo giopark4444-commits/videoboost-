@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if ! command -v nvidia-smi >/dev/null 2>&1; then
-  echo "❌ FaithDiff requiere GPU NVIDIA/CUDA. En Mac usa HYPIR o SeedVR2."
+  echo "❌ FaithDiff requiere GPU NVIDIA/CUDA. En Mac usa SeedVR2."
   exit 1
 fi
 

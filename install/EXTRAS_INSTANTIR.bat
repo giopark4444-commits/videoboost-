@@ -5,7 +5,7 @@ cd /d "%~dp0\.."
 
 where nvidia-smi >nul 2>nul
 if errorlevel 1 (
-  echo ERROR: InstantIR requiere GPU NVIDIA/CUDA. En Mac usa HYPIR o SeedVR2.
+  echo ERROR: InstantIR requiere GPU NVIDIA/CUDA. En Mac usa SeedVR2.
   pause
   exit /b 1
 )

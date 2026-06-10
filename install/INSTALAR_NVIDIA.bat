@@ -32,6 +32,6 @@ python install\descargar_vulkan.py
 
 echo.
 echo Instalacion base completa. Ejecuta INICIAR.bat
-echo Para los motores de imagenes (HYPIR/SUPIR): install\EXTRAS_IMAGENES.bat
+echo Para los motores de imagenes: install\EXTRAS_FAITHDIFF.bat (recomendado) o EXTRAS_INSTANTIR.bat
 echo Para FlashVSR (modo rapido experimental):   install\EXTRAS_FLASHVSR.bat
 pause

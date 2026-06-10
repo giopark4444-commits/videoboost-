@@ -1,14 +1,14 @@
 """FaithDiff (CVPR 2025) — restauración fiel de imágenes por difusión sobre SDXL.
 
-Alternativa de **licencia libre (MIT)** a HYPIR/SUPIR: en los benchmarks de su
+Alternativa de **licencia libre (MIT)** a los motores no comerciales: en los benchmarks de su
 paper supera a SUPIR y es ~4× más rápido, y está pensado justo para rejuvenecer
 fotos y películas antiguas. Apto para uso comercial.
 
-SOLO NVIDIA/CUDA (construido sobre SDXL). En Mac usar HYPIR o SeedVR2.
+SOLO NVIDIA/CUDA (construido sobre SDXL). En Mac usa SeedVR2.
 
 Para no descargar LLaVA-13B (~26 GB) solo para autogenerar un caption, saltamos
 ese paso (usamos test_wo_llava.py) y construimos el caption a partir de un prompt
-opcional del usuario, como HYPIR/InstantIR. Vive en .venv-faithdiff y se instala
+opcional del usuario, como InstantIR. Vive en .venv-faithdiff y se instala
 con install/extras_faithdiff.(sh|bat).
 """
 
@@ -70,7 +70,7 @@ def mejorar(entrada, prompt="", escala=2, pasos=20, cfg=5.0, fp8=False):
     import hardware
 
     if not hardware.info_sistema()["cuda"]:
-        raise RuntimeError("FaithDiff requiere GPU NVIDIA/CUDA. En Mac usa HYPIR o SeedVR2.")
+        raise RuntimeError("FaithDiff requiere GPU NVIDIA/CUDA. En Mac usa SeedVR2.")
     if not disponible():
         raise RuntimeError(
             "FaithDiff no está instalado. Corre install/extras_faithdiff.sh (o .bat)."

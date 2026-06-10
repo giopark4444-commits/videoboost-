@@ -132,14 +132,6 @@ T = {
         "es": "FaithDiff — restauración fiel (recomendado, NVIDIA)",
         "en": "FaithDiff — faithful restoration (recommended, NVIDIA)",
         "fr": "FaithDiff — restauration fidèle (recommandé, NVIDIA)"},
-    "i_hypir": {
-        "es": "HYPIR — restauración SOTA",
-        "en": "HYPIR — SOTA restoration",
-        "fr": "HYPIR — restauration SOTA"},
-    "i_supir": {
-        "es": "SUPIR — máximo detalle (lento)",
-        "en": "SUPIR — maximum detail (slow)",
-        "fr": "SUPIR — détail maximal (lent)"},
     "i_seedvr2": {"es": "SeedVR2 — imagen", "en": "SeedVR2 — image", "fr": "SeedVR2 — image"},
     "i_realesrgan": {
         "es": "Real-ESRGAN — rápido (Vulkan)",
@@ -214,20 +206,6 @@ T = {
         "fr": "Restauration fidèle par diffusion (CVPR 2025). Surpasse SUPIR dans son article "
               "et ~4× plus rapide ; pensé pour photos et films anciens. Prompt facultatif. "
               "**Licence MIT — usage commercial libre.** NVIDIA uniquement."},
-    "n_hypir": {
-        "es": "Restauración en 1 paso (SIGGRAPH 2025). Acepta un prompt opcional que guía "
-              "la textura. *Licencia: solo uso no comercial.*",
-        "en": "One-step restoration (SIGGRAPH 2025). Takes an optional prompt to guide "
-              "texture. *License: non-commercial use only.*",
-        "fr": "Restauration en 1 étape (SIGGRAPH 2025). Accepte un prompt facultatif qui "
-              "guide la texture. *Licence : usage non commercial uniquement.*"},
-    "n_supir": {
-        "es": "Reconstruye detalle a nivel de poros de piel. 25-35 pasos de difusión: lento "
-              "y pesado (ideal en la 4080). *Licencia: solo uso no comercial.*",
-        "en": "Rebuilds detail down to skin pores. 25-35 diffusion steps: slow and heavy "
-              "(ideal on the 4080). *License: non-commercial use only.*",
-        "fr": "Reconstruit le détail jusqu'aux pores de la peau. 25-35 étapes de diffusion : "
-              "lent et lourd (idéal sur la 4080). *Licence : usage non commercial uniquement.*"},
     "n_seedvr2_img": {
         "es": "El mismo motor de video aplicado a una imagen suelta. Muy buen equilibrio.",
         "en": "The video engine applied to a single image. Great balance.",

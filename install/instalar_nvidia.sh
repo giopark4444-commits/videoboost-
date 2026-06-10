@@ -28,4 +28,4 @@ python install/descargar_vulkan.py
 
 echo ""
 echo "✅ Instalación base completa. Ejecuta ./iniciar.sh"
-echo "   Imágenes (HYPIR/SUPIR): install/extras_imagenes.sh · FlashVSR: install/extras_flashvsr.sh"
+echo "   Imágenes: install/extras_faithdiff.sh (recomendado) · extras_instantir.sh · FlashVSR: install/extras_flashvsr.sh"

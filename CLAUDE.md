@@ -14,10 +14,12 @@ RTX 4080**. Lee PROPUESTA.md para el razonamiento del stack.
   de idioma. Los motores se identifican por ids estables ("seedvr2", "rife"…) y las
   etiquetas salen de `i18n.t()`.
 - Venvs separados para evitar choques de dependencias: `.venv` (app+SeedVR2),
-  `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-faithdiff`, `.venv-instantir`,
-  `.venv-caras` (CodeFormer), `.venv-color` (DDColor), `.venv-flashvsr`.
-  `engines/images.py`, `faithdiff.py`, `instantir.py`, `faces.py`, `color.py` y
-  `flashvsr.py` invocan el python del venv correspondiente por subprocess.
+  `.venv-faithdiff`, `.venv-instantir`, `.venv-caras` (CodeFormer),
+  `.venv-color` (DDColor), `.venv-flashvsr`. `engines/faithdiff.py`,
+  `instantir.py`, `faces.py`, `color.py` y `flashvsr.py` invocan el python del venv
+  correspondiente por subprocess.
+- HYPIR y SUPIR se retiraron (licencia no comercial). Reemplazos libres: FaithDiff
+  (MIT, recomendado) e InstantIR (Apache 2.0). No reincorporarlos sin permiso.
 
 ## Puntos frágiles / NO probados en GPU real
 
@@ -30,29 +32,23 @@ en este orden:
    correr `python vendor/seedvr2/inference_cli.py --help` y ajustar.
    - En Mac: NO pasar `--blocks_to_swap` (el CLI lo rechaza/ignora con memoria unificada).
    - fp8 solo en CUDA; en MPS usar fp16 o GGUF.
-2. **HYPIR**: comando exacto copiado de su README (test.py con lora_modules
-   comma-separated, model_t/coeff_t 200, lora_rank 256). `--device mps` no está
-   verificado por los autores; si falla en Mac, probar `--device cpu` o parchear.
-3. **FlashVSR** (`engines/flashvsr.py`): los entrypoints `_ENTRYPOINTS` son candidatos,
+2. **FlashVSR** (`engines/flashvsr.py`): los entrypoints `_ENTRYPOINTS` son candidatos,
    el repo reorganiza scripts entre versiones. Verificar nombre real y sus argumentos
    tras clonar. Pesos por Git LFS según su README. Solo CUDA.
-4. **SUPIR**: `test.py --img_dir --save_dir --SUPIR_sign Q --upscale N` según su README,
-   pero los pesos (SUPIR-v0Q + SDXL + CLIPs) se configuran a mano en sus yaml de
-   opciones. Es el motor más quisquilloso; está marcado como "experto" en la doc.
-5. **CodeFormer** (`engines/faces.py`): `inference_codeformer.py -w <fidelidad>
+3. **CodeFormer** (`engines/faces.py`): `inference_codeformer.py -w <fidelidad>
    --input_path --output_path --upscale N --face_upsample --bg_upsampler realesrgan`.
    El resultado final queda en `output_path/final_results/`. basicsr va en modo
    `develop` (lo hace el instalador). En Mac auto-detecta MPS; si una versión vieja
    fuerza CUDA, parchear o probar CPU. Pesos auto-descargados a la primera.
-6. **InstantIR** (`engines/instantir.py`): `infer.py --sdxl_path --vision_encoder_path
+4. **InstantIR** (`engines/instantir.py`): `infer.py --sdxl_path --vision_encoder_path
    --instantir_path --test_path --out_path --num_inference_steps --cfg`. Necesita SDXL
    + DINOv2-large + pesos InstantX/InstantIR (los baja el instalador a models/). Solo
    CUDA. La salida conserva el nombre del archivo de entrada en out_path. Apache 2.0.
-7. **DDColor** (`engines/color.py`): `scripts/infer.py --model_path --model_size large
+5. **DDColor** (`engines/color.py`): `scripts/infer.py --model_path --model_size large
    --input --output --input_size 512`. Pesos de HF piddnad/ddcolor_modelscope
    (pytorch_model.pt) a models/DDColor/. El script oficial usa cuda o **cpu** (no MPS):
    en Mac va lento pero funciona. Apache 2.0.
-8. **FaithDiff** (`engines/faithdiff.py`): motor de imagen **recomendado por defecto**
+6. **FaithDiff** (`engines/faithdiff.py`): motor de imagen **recomendado por defecto**
    (licencia MIT, supera a SUPIR en su paper). Usamos `test_wo_llava.py --img_dir
    --json_dir --save_dir --upscale --guidance_scale --num_inference_steps [--use_fp8]`
    para **evitar LLaVA-13B**: el caption se arma de un prompt opcional dentro de un JSON
@@ -62,10 +58,10 @@ en este orden:
    cada ejecución** apuntando a models/FaithDiff/. Instalador baja jychen9811/FaithDiff
    + SG161222/RealVisXL_V4.0 + madebyollin/sdxl-vae-fp16-fix. Verificar en GPU real que
    RealVisXL se carga en formato diffusers y el nombre del .bin. Solo CUDA.
-9. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
+7. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
    nihui 20220728/20221029). RIFE usa el modelo `rife-v4.6` incluido en el zip; el
    código toma el `rife-v4*` más alto que encuentre.
-10. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
+8. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
 ## Reglas de memoria
@@ -77,5 +73,7 @@ en este orden:
 
 ## Licencias
 
-SeedVR2/FlashVSR: Apache 2.0. HYPIR/SUPIR: **no comercial** (permiso:
-jinjin.gu@suppixel.ai). No incorporar HYPIR/SUPIR a nada que se venda.
+Todos los motores incluidos permiten uso comercial. FaithDiff: **MIT**. SeedVR2,
+FlashVSR, InstantIR y DDColor: **Apache 2.0**. Vulkan (Real-ESRGAN, etc.): BSD/MIT.
+CodeFormer: NTU S-Lab (revisar para comercial). HYPIR y SUPIR se **retiraron** por
+ser de uso no comercial; no reincorporarlos a nada que se venda.

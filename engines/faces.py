@@ -5,7 +5,7 @@ texturas pero "resbalan" en los rostros; estos modelos están entrenados solo en
 caras y recuperan ojos, dientes y piel de forma realista.
 
 Funciona en CUDA (NVIDIA) y MPS (Mac con chip M). Vive en su propio venv
-(.venv-caras) porque basicsr/facexlib chocan con diffusers de HYPIR/SeedVR2.
+(.venv-caras) porque basicsr/facexlib chocan con diffusers de FaithDiff/SeedVR2.
 Se instala con install/extras_caras.(sh|bat). Licencia: CodeFormer NTU S-Lab
 (no comercial); GFPGAN Apache 2.0.
 

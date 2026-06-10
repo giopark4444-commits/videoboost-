@@ -39,4 +39,4 @@ python install/descargar_vulkan.py
 
 echo ""
 echo "✅ Instalación base completa. Ejecuta ./iniciar.sh"
-echo "   Para los motores de imágenes (HYPIR/SUPIR): install/extras_imagenes.sh"
+echo "   Motores de imagen extra: install/extras_caras.sh (caras) · install/extras_color.sh (color)"
