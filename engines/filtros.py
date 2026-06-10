@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 from engines import SALIDAS, correr
-from engines.ffmpeg_utils import ffmpeg, info_video
+from engines.ffmpeg_utils import ffmpeg
 
 
 def _tiene_filtro(nombre: str) -> bool:
@@ -103,9 +103,12 @@ def estabilizar(entrada, suavidad: int = 10, zoom: float = 0.3):
         ]
         yield from correr(cmd1)
 
-        # Pasada 2: aplicar la transformación
+        # Pasada 2: aplicar la transformación.
+        # optzoom=1 ya calcula un zoom adaptativo por frame para ocultar los
+        # bordes negros; el slider (0-1) añade solo un zoom estático suave
+        # (0-15%). Mapear 0-1 → 0-100% recortaba demasiado la imagen.
         yield "▶ estabilizar (pasada 2/2, aplicando transformación)"
-        zoom_pct = int(zoom * 100)
+        zoom_pct = round(max(0.0, min(1.0, zoom)) * 15)
         cmd2 = [
             ffmpeg(), "-y", "-i", str(entrada),
             "-vf", (f"vidstabtransform=input={trf}:"

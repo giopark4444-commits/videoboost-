@@ -53,24 +53,6 @@ def _generar_clave(cliente: str) -> str:
         return f"❌ Error al generar: {e}"
 
 
-def _verificar_clave(clave: str) -> str:
-    """Verifica una clave de licencia usando la clave pública embebida."""
-    if not clave or not clave.strip():
-        return "⚠️ Pega una clave para verificar."
-    try:
-        from licencias import verificar
-        datos = verificar(clave.strip())
-        return (f"✅ **Válida**\n\n"
-                f"- **Cliente:** {datos.get('cliente', '?')}\n"
-                f"- **Emitida:** {datos.get('emitida', '?')}")
-    except ImportError:
-        return "❌ No se pudo importar `licencias.py`."
-    except ValueError as e:
-        return f"❌ **No válida:** {e}"
-    except Exception as e:
-        return f"❌ Error: {e}"
-
-
 def _verificar_raw(clave: str) -> str:
     """Verifica sin necesitar licencia_publica.py (usa la privada para decodificar)."""
     if not clave or not clave.strip():

@@ -161,8 +161,8 @@ def _listar_presets_revelado() -> list[str]:
 def _estado_modelos() -> dict:
     """Devuelve un dict {nombre: bool} indicando si los pesos están presentes."""
     sv2_dir = MODELS / "SEEDVR2"
-    sv2_ok = sv2_dir.is_dir() and any(
-        sv2_dir.glob("*.safetensors")) or any(sv2_dir.glob("*.gguf")) if sv2_dir.is_dir() else False
+    sv2_ok = sv2_dir.is_dir() and (
+        any(sv2_dir.glob("*.safetensors")) or any(sv2_dir.glob("*.gguf")))
     fd_ok = (MODELS / "FaithDiff" / "Real_4_SDXL").is_dir()
     ir_ok = (MODELS / "InstantIR").is_dir() and any((MODELS / "InstantIR").iterdir())
     dd_ok = (MODELS / "DDColor" / "pytorch_model.pt").exists()
@@ -291,9 +291,11 @@ def hacer_procesar_video(lang):
 
             log.append(f"{t('listo', lang)}: {salida}")
 
-            # Comparador antes/después (frames)
+            # Comparador antes/después (frames). Los JPEG temporales se borran
+            # en cuanto comparador_html los incrusta como data URI (no se reusan).
             cmp_html = ""
             if salida:
+                frame_antes = frame_despues = None
                 try:
                     frame_antes = ff.extraer_frame_preview(video, 0.3)
                     frame_despues = ff.extraer_frame_preview(salida, 0.3)
@@ -301,6 +303,10 @@ def hacer_procesar_video(lang):
                         cmp_html = comparador_html(frame_antes, frame_despues, lang)
                 except Exception:
                     pass
+                finally:
+                    for f in (frame_antes, frame_despues):
+                        if f:
+                            Path(f).unlink(missing_ok=True)
 
             yield "\n".join(log[-400:]), salida, cmp_html
         except Exception as e:
@@ -386,7 +392,7 @@ def hacer_procesar_lote(lang):
                 elif motor in ("realesrgan", "realcugan", "waifu2x"):
                     gen = vulkan.mejorar_video(ruta, motor=motor, escala=int(escala), ruido=0)
                 else:
-                    gen = vulkan.mejorar_imagen(ruta, escala=int(escala))
+                    raise ValueError(f"Motor no soportado en lote: {motor}")
 
                 consumo = _consumir(gen, log)
                 salida = None
@@ -877,10 +883,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             def _preview_imagen(motor, resolucion):
                 if motor == "seedvr2_img" and int(resolucion or 0) >= 4320:
                     if _puede_8k_img:
-                        return "🎯 Objetivo **4320p** (8K) · hardware suficiente"
+                        return f"{t('obj_8k', lang)} · {t('hw_suficiente', lang)}"
                     mem = (f"{HW['vram_gb']:.0f} GB VRAM" if HW["cuda"]
                            else f"{HW['ram_gb']:.0f} GB RAM")
-                    return (f"🎯 Objetivo **4320p** (8K) · "
+                    return (f"{t('obj_8k', lang)} · "
                             + t("aviso_8k_insuf", lang) + f" ({mem})")
                 return ""
 
@@ -934,15 +940,27 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 btn_refrescar = gr.Button(t("galeria_refrescar", lang), size="sm")
                 btn_limpiar = gr.Button(t("galeria_limpiar", lang), variant="stop",
                                         size="sm")
+            # Borrado en dos pasos: el primer clic revela el botón de confirmar.
+            with gr.Row(visible=False) as fila_confirmar:
+                gr.Markdown(t("galeria_confirmar_aviso", lang))
+                btn_confirmar = gr.Button(t("galeria_confirmar", lang),
+                                          variant="stop", size="sm")
+                btn_cancelar_limpiar = gr.Button(t("cancelar", lang), size="sm")
+
             btn_refrescar.click(_refrescar_galeria, None, [galeria, galeria_md])
-            btn_limpiar.click(_limpiar_galeria, None, [galeria, galeria_md])
+            btn_limpiar.click(lambda: gr.update(visible=True), None, fila_confirmar)
+            btn_cancelar_limpiar.click(lambda: gr.update(visible=False), None,
+                                       fila_confirmar)
+            btn_confirmar.click(_limpiar_galeria, None, [galeria, galeria_md]).then(
+                lambda: gr.update(visible=False), None, fila_confirmar)
 
         # ---------------------------------------------------------------- Lote
         with gr.Tab(t("tab_lote", lang)):
+            _disp_v = motores_video()
             _MOTORES_LOTE = [m for m in (
                 "seedvr2", "realesrgan", "realcugan", "waifu2x", "rife",
                 "flashvsr", "desentrelazar", "denoise"
-            ) if m in motores_video() + ["seedvr2"]]
+            ) if m in _disp_v]
             with gr.Row():
                 with gr.Column():
                     lote_files = gr.File(file_count="multiple",

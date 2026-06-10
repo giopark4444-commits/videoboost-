@@ -10,6 +10,9 @@ models/
 # Resultados
 salidas/
 
+# Presets de revelado guardados por el usuario (locales a cada instalación)
+presets/
+
 # Licencias: la privada JAMÁS se versiona; la activación es por máquina
 clave_privada.pem
 licencia.json

@@ -90,6 +90,22 @@ def vulkan_disponible() -> bool:
     return any((BIN / "realesrgan").rglob("realesrgan-ncnn-vulkan*")) if (BIN / "realesrgan").exists() else False
 
 
+def ffmpeg_disponible() -> bool:
+    """Hay un ffmpeg utilizable: en bin/, en el PATH o el de imageio-ffmpeg (pip).
+
+    Debe coincidir con lo que resuelve engines.ffmpeg_utils.ffmpeg(); si no, la
+    UI ocultaría motores FFmpeg que en realidad funcionan (revelado, grano, etc.)."""
+    if shutil.which("ffmpeg") is not None:
+        return True
+    if BIN.exists() and any(BIN.rglob("ffmpeg*")):
+        return True
+    try:
+        import imageio_ffmpeg
+        return bool(imageio_ffmpeg.get_ffmpeg_exe())
+    except Exception:
+        return False
+
+
 def _recomendar_seedvr2(cuda, vram, mps, ram):
     """Modelo DiT, batch_size (regla 4n+1) y bloques a swapear según memoria."""
     if cuda:
@@ -136,7 +152,7 @@ def info_sistema() -> dict:
         "mps": mps,
         "ram_gb": round(ram, 1),
         "vulkan": vulkan_disponible(),
-        "ffmpeg": shutil.which("ffmpeg") is not None or any(BIN.rglob("ffmpeg*")) if BIN.exists() else shutil.which("ffmpeg") is not None,
+        "ffmpeg": ffmpeg_disponible(),
         "seedvr2": seedvr2_instalado and (cuda or mps),
         "flashvsr": (VENDOR / "FlashVSR").exists() and cuda,
         "nivel": nivel,

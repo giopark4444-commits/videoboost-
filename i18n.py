@@ -98,6 +98,14 @@ T = {
         "es": " ⚠️ 8K requiere ≥16 GB VRAM — puede fallar en tu equipo",
         "en": " ⚠️ 8K requires ≥16 GB VRAM — may fail on your hardware",
         "fr": " ⚠️ La 8K nécessite ≥16 Go VRAM — peut échouer sur votre matériel"},
+    "obj_8k": {
+        "es": "🎯 Objetivo **4320p** (8K)",
+        "en": "🎯 Target **4320p** (8K)",
+        "fr": "🎯 Cible **4320p** (8K)"},
+    "hw_suficiente": {
+        "es": "hardware suficiente",
+        "en": "sufficient hardware",
+        "fr": "matériel suffisant"},
     "combo": {
         "es": "💡 **Combo «Topaz completo»:** primero SeedVR2 (o Real-ESRGAN), luego RIFE sobre el resultado.",
         "en": "💡 **“Full Topaz” combo:** SeedVR2 (or Real-ESRGAN) first, then RIFE on the result.",
@@ -493,6 +501,12 @@ T = {
         "es": "Refrescar", "en": "Refresh", "fr": "Actualiser"},
     "galeria_limpiar": {
         "es": "Limpiar todo", "en": "Clear all", "fr": "Tout supprimer"},
+    "galeria_confirmar_aviso": {
+        "es": "⚠️ Esto borra **todos** los archivos de salidas/. No se puede deshacer.",
+        "en": "⚠️ This deletes **all** files in salidas/. This cannot be undone.",
+        "fr": "⚠️ Ceci supprime **tous** les fichiers de salidas/. Irréversible."},
+    "galeria_confirmar": {
+        "es": "Sí, borrar todo", "en": "Yes, delete all", "fr": "Oui, tout supprimer"},
     "galeria_vacia": {
         "es": "_No hay archivos en salidas/_", "en": "_No files in salidas/_",
         "fr": "_Aucun fichier dans salidas/_"},
