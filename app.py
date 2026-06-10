@@ -561,8 +561,13 @@ def motores_imagen():
 
 # ---------------------------------------------------------------- interfaz
 
-with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
-               js=_JS_CARGA) as demo:
+# Gradio 6 movió theme/css/js del constructor de Blocks() al método launch();
+# en 4.x/5.x van en el constructor. Detectamos la versión para que la UI cálida,
+# el modo oscuro y el comparador se apliquen en cualquier instalación.
+_GR6 = int(gr.__version__.split(".")[0]) >= 6
+_APARIENCIA = dict(theme=ui_theme.TEMA, css=ui_theme.CSS, js=_JS_CARGA)
+
+with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
     idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
                       container=False, elem_id="vb-lang", scale=0)
     # Cambia al activar la licencia para que la UI completa se re-renderice.
@@ -975,4 +980,4 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
 
 
 if __name__ == "__main__":
-    demo.launch(inbrowser=True)
+    demo.launch(inbrowser=True, **(_APARIENCIA if _GR6 else {}))

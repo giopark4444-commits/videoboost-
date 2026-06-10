@@ -105,7 +105,11 @@ CSS = """
 .admin-note { color: #888; font-size: 0.88em; margin-top: 0.5em; }
 """
 
-with gr.Blocks(title="VideoBoost — Admin Licencias", css=CSS) as admin:
+# Gradio 6 movió css del constructor a launch(); 4.x/5.x lo aceptan en Blocks().
+_GR6 = int(gr.__version__.split(".")[0]) >= 6
+
+with gr.Blocks(title="VideoBoost — Admin Licencias",
+               **({} if _GR6 else dict(css=CSS))) as admin:
     gr.HTML('<div class="admin-title">🔑 VideoBoost — Panel de licencias</div>'
             '<div class="admin-note">Solo para uso del vendedor. '
             'No compartas esta herramienta.</div>')
@@ -125,7 +129,6 @@ with gr.Blocks(title="VideoBoost — Admin Licencias", css=CSS) as admin:
             label="Clave generada (copia y envía al cliente)",
             lines=3,
             interactive=False,
-            show_copy_button=True,
         )
         gen_btn.click(_generar_clave, gen_cliente, gen_out)
 
@@ -174,4 +177,4 @@ with gr.Blocks(title="VideoBoost — Admin Licencias", css=CSS) as admin:
 
 
 if __name__ == "__main__":
-    admin.launch(server_port=7861, inbrowser=True)
+    admin.launch(server_port=7861, inbrowser=True, **(dict(css=CSS) if _GR6 else {}))
