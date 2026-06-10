@@ -17,20 +17,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from engines import RAIZ, SALIDAS, VENDOR, correr
+from engines import SALIDAS, VENDOR, correr, python_venv
 
 CODEFORMER_DIR = VENDOR / "CodeFormer"
-
-
-def _python_venv() -> str:
-    venv = RAIZ / ".venv-caras"
-    for rel in ("bin/python", "Scripts/python.exe"):
-        p = venv / rel
-        if p.exists():
-            return str(p)
-    raise RuntimeError(
-        "No existe el entorno .venv-caras. Corre install/extras_caras.sh (o .bat)."
-    )
 
 
 def disponible() -> bool:
@@ -48,7 +37,7 @@ def restaurar_caras(entrada, fidelidad=0.7, escala=2, upsample_caras=True):
             "CodeFormer no está instalado. Corre install/extras_caras.sh (o .bat)."
         )
     entrada = Path(entrada)
-    py = _python_venv()
+    py = python_venv(".venv-caras", "install/extras_caras.sh")
 
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_caras_"))
     in_dir, out_dir = tmp / "in", tmp / "out"

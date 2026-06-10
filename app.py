@@ -85,7 +85,10 @@ def comparador_html(antes, despues, lang):
     try:
         a, d = _data_uri(antes), _data_uri(despues)
     except Exception:
-        return ""  # si algo falla, no rompemos el flujo; el log ya tiene la ruta
+        # No rompemos el flujo: el archivo ya está en salidas/ y el botón de
+        # descarga funciona; avisamos en vez de dejar el panel en blanco.
+        return (f'<p style="color:var(--vb-muted,#7c776d)">{t("listo", lang)} — '
+                f'{despues}</p>')
     return (
         '<div class="ba-cmp" style="--pos:50%">'
         f'<img class="ba-after" src="{d}">'
@@ -187,7 +190,7 @@ def hacer_procesar_imagen(lang):
 
 def hacer_vista_previa(lang):
     def vista_previa(video, motor, escala, mult, resolucion):
-        if not video:
+        if not video or not all((escala, mult, resolucion)):
             return ""
         try:
             info = ff.info_video(video)

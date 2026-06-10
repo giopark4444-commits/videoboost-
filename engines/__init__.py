@@ -12,6 +12,17 @@ SALIDAS = RAIZ / "salidas"
 SALIDAS.mkdir(exist_ok=True)
 
 
+def python_venv(nombre: str, instalador: str) -> str:
+    """Ruta al python del venv `nombre` (ej. ".venv-caras"), o RuntimeError
+    indicando qué instalador correr."""
+    venv = RAIZ / nombre
+    for rel in ("bin/python", "Scripts/python.exe"):
+        p = venv / rel
+        if p.exists():
+            return str(p)
+    raise RuntimeError(f"No existe el entorno {nombre}. Corre {instalador} (o .bat).")
+
+
 def correr(cmd, cwd=None, env=None):
     """Ejecuta un comando y va cediendo cada línea de salida (generador).
 

@@ -17,21 +17,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from engines import MODELS, RAIZ, SALIDAS, VENDOR, correr
+from engines import MODELS, SALIDAS, VENDOR, correr, python_venv
 
 FAITHDIFF_DIR = VENDOR / "FaithDiff"
 PESOS = MODELS / "FaithDiff"  # FaithDiff.bin + Real_4_SDXL/ + VAE_FP16/
-
-
-def _python_venv() -> str:
-    venv = RAIZ / ".venv-faithdiff"
-    for rel in ("bin/python", "Scripts/python.exe"):
-        p = venv / rel
-        if p.exists():
-            return str(p)
-    raise RuntimeError(
-        "No existe el entorno .venv-faithdiff. Corre install/extras_faithdiff.sh (o .bat)."
-    )
 
 
 def _bin_faithdiff():
@@ -76,7 +65,7 @@ def mejorar(entrada, prompt="", escala=2, pasos=20, cfg=5.0, fp8=False):
             "FaithDiff no está instalado. Corre install/extras_faithdiff.sh (o .bat)."
         )
     entrada = Path(entrada)
-    py = _python_venv()
+    py = python_venv(".venv-faithdiff", "install/extras_faithdiff.sh")
     _escribir_ckpt_pth()
 
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_faithdiff_"))

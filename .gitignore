@@ -1,8 +1,6 @@
 # Entornos virtuales (uno por grupo de motores para evitar choques de dependencias)
 .venv/
-.venv-imagenes/
-.venv-supir/
-.venv-flashvsr/
+.venv-*/
 
 # Binarios y modelos descargados por los instaladores
 bin/

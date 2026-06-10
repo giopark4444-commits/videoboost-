@@ -26,8 +26,6 @@ T = {
         "es": "Mejora de video e imagen con IA · 100% local",
         "en": "AI video & image enhancement · 100% local",
         "fr": "Amélioration vidéo et image par IA · 100% local"},
-    "idioma": {
-        "es": "Idioma", "en": "Language", "fr": "Langue"},
     "tab_video": {"es": "Video", "en": "Video", "fr": "Vidéo"},
     "tab_imagenes": {"es": "Imágenes", "en": "Images", "fr": "Images"},
     "tab_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},

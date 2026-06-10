@@ -14,27 +14,15 @@ restauración, como FaithDiff.
 """
 
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 
-from engines import MODELS, RAIZ, SALIDAS, VENDOR, correr
+from engines import MODELS, SALIDAS, VENDOR, correr, python_venv
 
 INSTANTIR_DIR = VENDOR / "InstantIR"
 PESOS = MODELS / "InstantIR"  # checkpoint de InstantX/InstantIR
 SDXL = MODELS / "sdxl-base-1.0"
 DINOV2 = MODELS / "dinov2-large"
-
-
-def _python_venv() -> str:
-    venv = RAIZ / ".venv-instantir"
-    for rel in ("bin/python", "Scripts/python.exe"):
-        p = venv / rel
-        if p.exists():
-            return str(p)
-    raise RuntimeError(
-        "No existe el entorno .venv-instantir. Corre install/extras_instantir.sh (o .bat)."
-    )
 
 
 def disponible() -> bool:
@@ -52,7 +40,7 @@ def mejorar(entrada, prompt="", pasos=30, cfg=7.0, ancho=None, alto=None):
             "InstantIR no está instalado. Corre install/extras_instantir.sh (o .bat)."
         )
     entrada = Path(entrada)
-    py = _python_venv()
+    py = python_venv(".venv-instantir", "install/extras_instantir.sh")
 
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_instantir_"))
     in_dir, out_dir = tmp / "in", tmp / "out"

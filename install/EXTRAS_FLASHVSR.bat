@@ -19,7 +19,11 @@ if not exist vendor\FlashVSR git clone --depth 1 https://github.com/OpenImagingL
 if exist vendor\FlashVSR\requirements.txt pip install -r vendor\FlashVSR\requirements.txt
 pip install huggingface_hub
 
+echo Descargando pesos FlashVSR v1.1 (recomendada por los autores)...
+python -c "from huggingface_hub import snapshot_download; snapshot_download('JunhaoZhuang/FlashVSR-v1.1', local_dir='vendor/FlashVSR/examples/WanVSR/FlashVSR-v1.1')"
+call .venv-flashvsr\Scripts\deactivate.bat
+
 echo.
-echo ATENCION: los pesos de FlashVSR se descargan segun su README (HuggingFace, Git LFS):
+echo FlashVSR listo (v1.1). Si su README cambia la ruta de pesos, ajustarla ahi:
 echo https://github.com/OpenImagingLab/FlashVSR#readme
 pause

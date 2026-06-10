@@ -12,25 +12,20 @@ _ENTRYPOINTS (ver CLAUDE.md).
 
 from pathlib import Path
 
-from engines import RAIZ, SALIDAS, VENDOR, correr
+from engines import SALIDAS, VENDOR, correr, python_venv
 
 FLASHVSR_DIR = VENDOR / "FlashVSR"
 
+# v1.1 primero (recomendada por los autores: más estabilidad y fidelidad);
+# luego los nombres de v1.0 y genéricos como fallback para clones antiguos.
 _ENTRYPOINTS = [
+    "examples/WanVSR/infer_flashvsr_v1.1_full.py",
+    "examples/WanVSR/infer_flashvsr_v1.1_tiny.py",
     "examples/WanVSR/infer_flashvsr_full.py",
     "examples/WanVSR/infer_flashvsr_tiny.py",
     "inference.py",
     "infer.py",
 ]
-
-
-def _python_venv() -> str:
-    venv = RAIZ / ".venv-flashvsr"
-    for rel in ("bin/python", "Scripts/python.exe"):
-        p = venv / rel
-        if p.exists():
-            return str(p)
-    raise RuntimeError("No existe .venv-flashvsr. Corre install/extras_flashvsr.sh (o .bat).")
 
 
 def disponible() -> bool:
@@ -39,7 +34,7 @@ def disponible() -> bool:
 
 def mejorar(entrada):
     entrada = Path(entrada)
-    py = _python_venv()
+    py = python_venv(".venv-flashvsr", "install/extras_flashvsr.sh")
     entrypoint = next((FLASHVSR_DIR / e for e in _ENTRYPOINTS if (FLASHVSR_DIR / e).exists()), None)
     if entrypoint is None:
         raise RuntimeError(

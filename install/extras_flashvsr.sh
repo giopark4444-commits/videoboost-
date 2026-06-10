@@ -22,9 +22,18 @@ if [ -f vendor/FlashVSR/requirements.txt ]; then
   pip install -r vendor/FlashVSR/requirements.txt
 fi
 pip install huggingface_hub
+
+echo "↓ Descargando pesos FlashVSR v1.1 (recomendada por los autores)…"
+python - <<'PY'
+from huggingface_hub import snapshot_download
+# El README oficial indica clonar los pesos dentro de examples/WanVSR.
+snapshot_download("JunhaoZhuang/FlashVSR-v1.1",
+                  local_dir="vendor/FlashVSR/examples/WanVSR/FlashVSR-v1.1")
+print("✅ Pesos FlashVSR v1.1 descargados.")
+PY
 deactivate
 
 echo ""
-echo "⚠️ Los pesos de FlashVSR se descargan según su README (HuggingFace, Git LFS):"
+echo "✅ FlashVSR listo (v1.1). Si su README cambia la ruta de pesos, ajustarla ahí:"
 echo "   https://github.com/OpenImagingLab/FlashVSR#readme"
 echo "   Es la pieza más nueva del stack; si algo falla, SeedVR2 cubre lo mismo con más calidad."

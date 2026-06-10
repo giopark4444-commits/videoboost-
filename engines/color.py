@@ -12,21 +12,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from engines import MODELS, RAIZ, SALIDAS, VENDOR, correr
+from engines import MODELS, SALIDAS, VENDOR, correr, python_venv
 
 DDCOLOR_DIR = VENDOR / "DDColor"
 PESOS = MODELS / "DDColor" / "pytorch_model.pt"
-
-
-def _python_venv() -> str:
-    venv = RAIZ / ".venv-color"
-    for rel in ("bin/python", "Scripts/python.exe"):
-        p = venv / rel
-        if p.exists():
-            return str(p)
-    raise RuntimeError(
-        "No existe el entorno .venv-color. Corre install/extras_color.sh (o .bat)."
-    )
 
 
 def disponible() -> bool:
@@ -42,7 +31,7 @@ def colorizar(entrada, tamano=512):
             "DDColor no está instalado. Corre install/extras_color.sh (o .bat)."
         )
     entrada = Path(entrada)
-    py = _python_venv()
+    py = python_venv(".venv-color", "install/extras_color.sh")
 
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_color_"))
     in_dir, out_dir = tmp / "in", tmp / "out"
