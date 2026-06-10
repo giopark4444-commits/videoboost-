@@ -248,7 +248,16 @@ def hacer_vista_previa(lang):
             nw, nh = round(w * factor / 2) * 2, round(h * factor / 2) * 2
         else:
             nw, nh = w * int(escala), h * int(escala)
-        aviso = t("supera_4k", lang) if max(nw, nh) > 4096 else ""
+        _8k = max(nw, nh) >= 7680
+        _puede_8k = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
+        if _8k and not _puede_8k:
+            mem = (f"{HW['vram_gb']:.0f} GB VRAM" if HW["cuda"]
+                   else f"{HW['ram_gb']:.0f} GB RAM")
+            aviso = f"{t('aviso_8k_insuf', lang)} ({mem})"
+        elif max(nw, nh) > 4096:
+            aviso = t("supera_4k", lang)
+        else:
+            aviso = ""
         return f"{w}×{h} → **{nw}×{nh}**{aviso}"
 
     return vista_previa
@@ -466,7 +475,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
                     mult = gr.Slider(2, 4, value=2, step=1, label=t("mult_fps", lang), visible=False)
                     with gr.Group(visible=ids_v[0] == "seedvr2") as grupo_sv2:
-                        resolucion = gr.Dropdown([720, 1080, 1440, 2160], value=1080,
+                        resolucion = gr.Dropdown([720, 1080, 1440, 2160, 4320], value=1080,
                                                  label=t("resolucion_obj", lang))
                         modelo_sv2 = gr.Dropdown(seedvr2.MODELOS, value=HW["seedvr2_modelo"],
                                                  label=t("modelo_auto", lang))
@@ -523,7 +532,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                          visible=ids_i[0] not in ("seedvr2_img", "instantir",
                                                                   "ddcolor", "grano", "lut"))
-                    resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
+                    resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
                     fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
@@ -532,6 +541,7 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
                     grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
+                    preview_i = gr.Markdown(elem_classes="size-preview")
                     boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
                                         elem_classes="cta")
                 with gr.Column():
@@ -557,6 +567,22 @@ with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS,
             motor_i.change(controles_i, motor_i,
                            [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
                             grupo_g_i, grupo_l_i])
+
+            _puede_8k_img = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
+
+            def _preview_imagen(motor, resolucion):
+                if motor == "seedvr2_img" and int(resolucion or 0) >= 4320:
+                    if _puede_8k_img:
+                        return "🎯 Objetivo **4320p** (8K) · hardware suficiente"
+                    mem = (f"{HW['vram_gb']:.0f} GB VRAM" if HW["cuda"]
+                           else f"{HW['ram_gb']:.0f} GB RAM")
+                    return (f"🎯 Objetivo **4320p** (8K) · "
+                            + t("aviso_8k_insuf", lang) + f" ({mem})")
+                return ""
+
+            motor_i.change(_preview_imagen, [motor_i, resolucion_i], preview_i)
+            resolucion_i.change(_preview_imagen, [motor_i, resolucion_i], preview_i)
+
             boton_i.click(hacer_procesar_imagen(lang),
                           [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
                            gpre_i, gint_i, gtam_i, gcol_i, *rev_i],

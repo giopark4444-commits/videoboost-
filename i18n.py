@@ -94,6 +94,10 @@ T = {
     "se_mantiene": {"es": "se mantiene", "en": "unchanged", "fr": "inchangée"},
     "supera_4k": {"es": " ⚠️ supera 4K — será lento", "en": " ⚠️ above 4K — will be slow",
                   "fr": " ⚠️ dépasse la 4K — ce sera lent"},
+    "aviso_8k_insuf": {
+        "es": " ⚠️ 8K requiere ≥16 GB VRAM — puede fallar en tu equipo",
+        "en": " ⚠️ 8K requires ≥16 GB VRAM — may fail on your hardware",
+        "fr": " ⚠️ La 8K nécessite ≥16 Go VRAM — peut échouer sur votre matériel"},
     "combo": {
         "es": "💡 **Combo «Topaz completo»:** primero SeedVR2 (o Real-ESRGAN), luego RIFE sobre el resultado.",
         "en": "💡 **“Full Topaz” combo:** SeedVR2 (or Real-ESRGAN) first, then RIFE on the result.",

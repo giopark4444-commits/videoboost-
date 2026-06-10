@@ -69,6 +69,9 @@ def mejorar(entrada, resolucion=1080, modelo=None, batch_size=None, es_video=Tru
                 "--vae_offload_device", "cpu",
                 "--vae_encode_tiled", "--vae_decode_tiled",
             ]
+        elif resolucion >= 4320:
+            # 8K output: activar tiling de VAE incluso con VRAM suficiente
+            cmd += ["--vae_encode_tiled", "--vae_decode_tiled"]
     elif hw["mps"]:
         # Nada de BlockSwap/fp8 en Mac; el tiling de VAE sí ayuda con videos grandes.
         if resolucion >= 1440:
