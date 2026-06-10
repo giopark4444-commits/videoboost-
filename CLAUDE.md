@@ -15,8 +15,9 @@ RTX 4080**. Lee PROPUESTA.md para el razonamiento del stack.
   etiquetas salen de `i18n.t()`.
 - Venvs separados para evitar choques de dependencias: `.venv` (app+SeedVR2),
   `.venv-imagenes` (HYPIR), `.venv-supir`, `.venv-instantir`, `.venv-caras`
-  (CodeFormer), `.venv-flashvsr`. `engines/images.py`, `instantir.py`, `faces.py` y
-  `flashvsr.py` invocan el python del venv correspondiente por subprocess.
+  (CodeFormer), `.venv-color` (DDColor), `.venv-flashvsr`. `engines/images.py`,
+  `instantir.py`, `faces.py`, `color.py` y `flashvsr.py` invocan el python del venv
+  correspondiente por subprocess.
 
 ## Puntos frágiles / NO probados en GPU real
 
@@ -47,10 +48,14 @@ en este orden:
    --instantir_path --test_path --out_path --num_inference_steps --cfg`. Necesita SDXL
    + DINOv2-large + pesos InstantX/InstantIR (los baja el instalador a models/). Solo
    CUDA. La salida conserva el nombre del archivo de entrada en out_path. Apache 2.0.
-7. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
+7. **DDColor** (`engines/color.py`): `scripts/infer.py --model_path --model_size large
+   --input --output --input_size 512`. Pesos de HF piddnad/ddcolor_modelscope
+   (pytorch_model.pt) a models/DDColor/. El script oficial usa cuda o **cpu** (no MPS):
+   en Mac va lento pero funciona. Apache 2.0.
+8. **Binarios Vulkan**: URLs fijadas a releases conocidos (Real-ESRGAN v0.2.5.0,
    nihui 20220728/20221029). RIFE usa el modelo `rife-v4.6` incluido en el zip; el
    código toma el `rife-v4*` más alto que encuentre.
-8. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
+9. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
 
 ## Reglas de memoria

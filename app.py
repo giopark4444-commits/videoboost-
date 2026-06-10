@@ -12,7 +12,7 @@ import gradio as gr
 
 import hardware
 from engines import ffmpeg_utils as ff
-from engines import faces, flashvsr, images, instantir, seedvr2, vulkan
+from engines import color, faces, flashvsr, images, instantir, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -25,7 +25,7 @@ MOTORES_VIDEO_NOTAS = {
 MOTORES_IMG_NOTAS = {
     "hypir": "n_hypir", "supir": "n_supir", "seedvr2_img": "n_seedvr2_img",
     "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
-    "instantir": "n_instantir",
+    "instantir": "n_instantir", "ddcolor": "n_ddcolor",
 }
 # Motores de imagen que aceptan un prompt opcional.
 IMG_CON_PROMPT = ("hypir", "instantir")
@@ -54,6 +54,8 @@ def motores_imagen():
         m.append("instantir")
     if faces.disponible():
         m.append("codeformer")
+    if color.disponible():
+        m.append("ddcolor")
     if HW["vulkan"]:
         m.append("realesrgan_img")
     return m or ["realesrgan_img"]
@@ -123,6 +125,8 @@ def hacer_procesar_imagen(lang):
                 gen = faces.restaurar_caras(imagen, fidelidad=float(fidelidad), escala=int(escala))
             elif motor == "instantir":
                 gen = instantir.mejorar(imagen, prompt=prompt or "")
+            elif motor == "ddcolor":
+                gen = color.colorizar(imagen)
             else:
                 gen = vulkan.mejorar_imagen(imagen, escala=int(escala))
             consumo = _consumir(gen, log)
@@ -188,6 +192,7 @@ def texto_sistema(lang):
         f"- **SUPIR:** {'✅' if images.supir_disponible() else t('s_opcional', lang)}",
         f"- **InstantIR:** {'✅' if instantir.disponible() else t('s_opcional_nvidia', lang)}",
         f"- **CodeFormer (caras):** {'✅' if faces.disponible() else t('s_opcional', lang)}",
+        f"- **DDColor (color):** {'✅' if color.disponible() else t('s_opcional', lang)}",
         f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
         "",
         t("combo", lang),
@@ -250,7 +255,8 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
             ids_i = motores_imagen()
             etiquetas_i = {"hypir": "i_hypir", "supir": "i_supir",
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
-                           "codeformer": "i_codeformer", "instantir": "i_instantir"}
+                           "codeformer": "i_codeformer", "instantir": "i_instantir",
+                           "ddcolor": "i_ddcolor"}
             with gr.Row():
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
@@ -260,7 +266,7 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
-                                         visible=ids_i[0] not in ("seedvr2_img", "instantir"))
+                                         visible=ids_i[0] not in ("seedvr2_img", "instantir", "ddcolor"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
@@ -276,7 +282,7 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                 return (
                     gr.update(value=t(MOTORES_IMG_NOTAS[motor], lang)),
                     gr.update(visible=motor in IMG_CON_PROMPT),
-                    gr.update(visible=motor not in ("seedvr2_img", "instantir")),
+                    gr.update(visible=motor not in ("seedvr2_img", "instantir", "ddcolor")),
                     gr.update(visible=motor == "seedvr2_img"),
                     gr.update(visible=motor == "codeformer"),
                 )

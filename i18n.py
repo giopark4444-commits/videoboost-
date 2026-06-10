@@ -137,6 +137,10 @@ T = {
         "es": "InstantIR — restauración instantánea (NVIDIA)",
         "en": "InstantIR — instant restoration (NVIDIA)",
         "fr": "InstantIR — restauration instantanée (NVIDIA)"},
+    "i_ddcolor": {
+        "es": "DDColor — colorizar (B/N → color)",
+        "en": "DDColor — colorize (B&W → color)",
+        "fr": "DDColor — coloriser (N&B → couleur)"},
 
     # ---- control de fidelidad de caras ----
     "fidelidad": {
@@ -226,6 +230,16 @@ T = {
         "fr": "Restauration par diffusion avec référence générative. Qualité égale ou "
               "supérieure à SUPIR mais plus rapide, et **licence Apache 2.0** (usage "
               "commercial libre). NVIDIA uniquement. Accepte un prompt facultatif."},
+    "n_ddcolor": {
+        "es": "Da color a fotos en blanco y negro (ICCV 2023). Más nuevo y mejor que "
+              "DeOldify: colores ricos y coherentes. El «colorize model» tipo HitPaw. "
+              "Apache 2.0. En Mac corre en CPU (más lento).",
+        "en": "Adds color to black-and-white photos (ICCV 2023). Newer and better than "
+              "DeOldify: rich, coherent colors. The HitPaw-style “colorize model”. "
+              "Apache 2.0. On Mac it runs on CPU (slower).",
+        "fr": "Met en couleur les photos en noir et blanc (ICCV 2023). Plus récent et "
+              "meilleur que DeOldify : couleurs riches et cohérentes. Le « colorize "
+              "model » façon HitPaw. Apache 2.0. Sur Mac, tourne sur CPU (plus lent)."},
 
     # ---- pestaña sistema ----
     "s_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},

@@ -40,6 +40,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 - Motores de imágenes: `install/extras_imagenes.sh` (añade `--supir` para SUPIR) /
   `install\EXTRAS_IMAGENES.bat`
 - Restauración de caras (CodeFormer): `install/extras_caras.sh` / `install\EXTRAS_CARAS.bat`
+- Colorización (DDColor): `install/extras_color.sh` / `install\EXTRAS_COLOR.bat`
 - InstantIR (imágenes, solo NVIDIA): `install/extras_instantir.sh` / `install\EXTRAS_INSTANTIR.bat`
 - FlashVSR (modo rápido, solo NVIDIA): `install/extras_flashvsr.sh` / `.bat`
 
@@ -63,6 +64,7 @@ bash install/instalar_nvidia.sh && ./iniciar.sh
 | **SUPIR** (XPixel) | Máximo detalle reconstruido (nivel poros de piel). Lento. | Ideal NVIDIA 16 GB+ |
 | **InstantIR** (instantX) | Restauración instantánea, calidad ≥ SUPIR, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
 | **CodeFormer** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. | NVIDIA o Mac M |
+| **DDColor** | **Colorizar** fotos en blanco y negro. El "colorize model" tipo HitPaw. | NVIDIA (Mac: CPU) |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
 | **Real-ESRGAN** | Escalado instantáneo. | Cualquier GPU |
 
@@ -72,7 +74,7 @@ Son productos cerrados, pero la técnica detrás es conocida — y aquí la tien
 
 | Producto de pago | Lo que hace por dentro | Tu equivalente en VideoBoost |
 |---|---|---|
-| **HitPaw** | GANs clásicos: Real-ESRGAN, GFPGAN/CodeFormer, RIFE | Nivel Compatible + **CodeFormer** |
+| **HitPaw** | GANs clásicos: upscale, caras, interpolación, colorizado | Vulkan + **CodeFormer** + **DDColor** + RIFE |
 | **Magnific AI** | Difusión Stable Diffusion por mosaicos (tile) | **SUPIR / HYPIR** |
 | **Topaz Video AI** | Modelos propios de video con consistencia temporal | **SeedVR2** (igual o mejor) |
 
@@ -112,6 +114,7 @@ videoboost/
 │   ├── images.py           # HYPIR y SUPIR (venvs propios)
 │   ├── instantir.py        # InstantIR — restauración de imágenes (NVIDIA, venv propio)
 │   ├── faces.py            # CodeFormer — restauración de caras (venv propio)
+│   ├── color.py            # DDColor — colorización B/N → color (venv propio)
 │   └── ffmpeg_utils.py     # Extraer/reensamblar frames, info de video
 ├── install/                # Instaladores por plataforma + descarga de binarios
 ├── bin/, vendor/, models/  # Descargados por los instaladores (no versionados)
