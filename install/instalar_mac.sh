@@ -6,16 +6,9 @@ cd "$(dirname "$0")/.."
 
 echo "== VideoBoost · instalador para Mac (Apple Silicon) =="
 
-# 1. FFmpeg
-if ! command -v ffmpeg >/dev/null 2>&1; then
-  if command -v brew >/dev/null 2>&1; then
-    echo "📦 Instalando ffmpeg con Homebrew…"
-    brew install ffmpeg
-  else
-    echo "❌ Falta ffmpeg y no hay Homebrew. Instala Homebrew (https://brew.sh) y reintenta."
-    exit 1
-  fi
-fi
+# 1. FFmpeg: ya no es obligatorio instalarlo a mano — viene por pip
+#    (imageio-ffmpeg en requirements.txt). Si Homebrew ya lo tiene, mejor (trae
+#    ffprobe), pero NO bloqueamos la instalación si falta.
 
 # 2. Entorno Python principal (app + SeedVR2)
 echo "🐍 Creando entorno .venv…"
