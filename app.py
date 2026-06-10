@@ -11,6 +11,7 @@ import traceback
 import gradio as gr
 
 import hardware
+import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import color, faces, flashvsr, images, instantir, seedvr2, vulkan
 from i18n import IDIOMAS, idioma_por_defecto, t
@@ -156,7 +157,7 @@ def hacer_vista_previa(lang):
             return ""
         w, h = info["ancho"], info["alto"]
         if motor == "rife":
-            return (f"🎬 {w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
+            return (f"{w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
                     f"**{info['fps'] * int(mult):.0f} fps**")
         if motor in ("seedvr2", "flashvsr"):
             factor = int(resolucion) / min(w, h)
@@ -164,19 +165,28 @@ def hacer_vista_previa(lang):
         else:
             nw, nh = w * int(escala), h * int(escala)
         aviso = t("supera_4k", lang) if max(nw, nh) > 4096 else ""
-        return f"🎬 {w}×{h} → **{nw}×{nh}**{aviso}"
+        return f"{w}×{h} → **{nw}×{nh}**{aviso}"
 
     return vista_previa
 
 
-def resumen_hw(lang):
+def header_html(lang):
     if HW["cuda"]:
-        gpu = f"NVIDIA {HW['gpu']} · {HW['vram_gb']} GB VRAM (CUDA)"
+        gpu = f"NVIDIA {HW['gpu']} · {HW['vram_gb']} GB VRAM"
     elif HW["mps"]:
         gpu = f"Apple Silicon · {HW['ram_gb']} {t('mem_unificada', lang)}"
     else:
         gpu = t("gpu_generica", lang)
-    return f"**{gpu}** — {t('nivel', lang)} **{HW['nivel']} · {t('nivel_' + str(HW['nivel']), lang)}**"
+    tier = f"{t('nivel', lang)} {HW['nivel']} · {t('nivel_' + str(HW['nivel']), lang)}"
+    return (
+        '<div id="vb-header">'
+        f'<h1 class="vb-title">{t("titulo", lang)}</h1>'
+        f'<p class="vb-sub-text">{t("subtitulo", lang)}</p>'
+        '<div class="vb-sub">'
+        f'<span class="vb-pill"><span class="vb-dot"></span>{gpu}</span>'
+        f'<span class="vb-tier">{tier}</span>'
+        '</div></div>'
+    )
 
 
 def texto_sistema(lang):
@@ -202,12 +212,13 @@ def texto_sistema(lang):
 
 # ---------------------------------------------------------------- interfaz
 
-with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
-    idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), label="🌐", scale=0)
+with gr.Blocks(title="VideoBoost", theme=ui_theme.TEMA, css=ui_theme.CSS) as demo:
+    idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
+                      container=False, elem_id="vb-lang", scale=0)
 
     @gr.render(inputs=idioma)
     def ui(lang):
-        gr.Markdown(f"{t('titulo', lang)}\n{resumen_hw(lang)}")
+        gr.HTML(header_html(lang))
 
         with gr.Tab(t("tab_video", lang)):
             ids_v = motores_video()
@@ -215,8 +226,10 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                 with gr.Column():
                     video_in = gr.Video(label=t("video_entrada", lang))
                     motor_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_v],
-                                       value=ids_v[0], label=t("motor", lang))
-                    nota_v = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_v[0]], lang))
+                                       value=ids_v[0], label=t("motor", lang),
+                                       elem_classes="engine-picker")
+                    nota_v = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_v[0]], lang),
+                                         elem_classes="engine-note")
                     escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                        visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x"))
                     ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
@@ -228,10 +241,12 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                                                  label=t("modelo_auto", lang))
                         batch_sv2 = gr.Dropdown(seedvr2.BATCHES, value=HW["seedvr2_batch"],
                                                 label=t("batch", lang))
-                    preview = gr.Markdown()
-                    boton_v = gr.Button(t("boton_video", lang), variant="primary")
+                    preview = gr.Markdown(elem_classes="size-preview")
+                    boton_v = gr.Button(t("boton_video", lang), variant="primary",
+                                        elem_classes="cta")
                 with gr.Column():
-                    log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18)
+                    log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18,
+                                       elem_classes="console")
                     video_out = gr.Video(label=t("resultado", lang))
 
             def controles_v(motor):
@@ -261,8 +276,10 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
                     motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
-                                       value=ids_i[0], label=t("motor", lang))
-                    nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang))
+                                       value=ids_i[0], label=t("motor", lang),
+                                       elem_classes="engine-picker")
+                    nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang),
+                                         elem_classes="engine-note")
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
@@ -273,9 +290,11 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                     fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
                                             label=t("fidelidad", lang),
                                             visible=ids_i[0] == "codeformer")
-                    boton_i = gr.Button(t("boton_imagen", lang), variant="primary")
+                    boton_i = gr.Button(t("boton_imagen", lang), variant="primary",
+                                        elem_classes="cta")
                 with gr.Column():
-                    log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14)
+                    log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14,
+                                       elem_classes="console")
                     img_out = gr.Image(label=t("resultado", lang))
 
             def controles_i(motor):
@@ -294,7 +313,7 @@ with gr.Blocks(title="VideoBoost", theme=gr.themes.Soft()) as demo:
                           [log_i, img_out])
 
         with gr.Tab(t("tab_sistema", lang)):
-            gr.Markdown(texto_sistema(lang))
+            gr.Markdown(texto_sistema(lang), elem_classes="sys-card")
 
 
 if __name__ == "__main__":

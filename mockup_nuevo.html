@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VideoBoost · Diseño nuevo</title>
+<style>
+  :root{
+    --bg:#faf9f5; --surface:#ffffff; --border:#ece7dd; --border-s:#ddd5c7;
+    --text:#23211d; --muted:#7c776d; --accent:#c96442; --accent-soft:#fbf2ee;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 20px 56px;position:relative}
+
+  /* Cabecera */
+  .header{padding:30px 0 22px;border-bottom:1px solid var(--border);margin-bottom:22px}
+  .title{font-size:30px;font-weight:650;letter-spacing:-.01em;margin:0}
+  .subtext{margin:8px 0 14px;color:var(--muted);font-size:14.5px}
+  .sub{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:#fff;
+    border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:13px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .tier{color:var(--muted);font-size:13.5px}
+
+  /* Idioma arriba derecha */
+  .lang{position:absolute;top:34px;right:20px;display:flex;gap:0;border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;background:#fff}
+  .lang span{padding:6px 13px;font-size:13px;cursor:pointer;color:var(--muted)}
+  .lang span.on{background:var(--accent-soft);color:var(--text);font-weight:600}
+
+  /* Pestañas */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px}
+  .tab{padding:11px 16px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;
+    margin-bottom:-1px;cursor:pointer}
+  .tab.on{color:var(--text);border-bottom-color:var(--accent)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .lbl{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 7px}
+  .drop{border:1px solid var(--border);border-radius:14px;padding:30px 16px;text-align:center;
+    color:var(--muted);background:#fff;margin-bottom:18px}
+
+  /* Tarjetas de motor */
+  .engines{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .eng{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--border);
+    border-radius:12px;background:#fff;cursor:pointer}
+  .eng:hover{border-color:var(--border-s);background:#fdfcfa}
+  .eng.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+  .rad{width:15px;height:15px;border-radius:50%;border:2px solid #cdc6b8;flex:none}
+  .eng.on .rad{border-color:var(--accent);box-shadow:inset 0 0 0 3px var(--accent)}
+  .eng small{color:var(--muted);font-weight:400}
+
+  .note{background:#f6f4ee;border:1px solid var(--border);border-radius:12px;padding:13px 15px;
+    margin-bottom:16px;color:#54514a;font-size:13.5px;line-height:1.55}
+  .note b{color:var(--text)}
+
+  .group{border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:16px;background:#fff}
+  .field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+  .inp{width:100%;padding:9px 12px;border:1px solid #e3ddd1;border-radius:10px;background:#fff;
+    font-size:13px;color:var(--text);position:relative}
+  .sel::after{content:"▾";float:right;color:var(--muted)}
+
+  .preview{font-size:14.5px;margin:2px 0 16px}.preview b{font-weight:700}
+  .cta{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;
+    font-size:15px;font-weight:600;cursor:pointer}
+  .cta:hover{background:#b5512f}
+
+  .console{background:#1f1e1c;color:#d6d2c7;border-radius:12px;padding:15px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.65;
+    height:288px;overflow:hidden;white-space:pre-wrap}
+  .console .ok{color:#86c98c}.console .info{color:#8fbce0}.console .run{color:#e3b562}
+  .result{margin-top:16px;border:1px solid var(--border);border-radius:14px;height:196px;
+    background:repeating-conic-gradient(#f3f1ea 0% 25%,#fff 0% 50%) 50%/22px 22px;
+    display:flex;align-items:center;justify-content:center;color:var(--muted);position:relative}
+  .result .badge{position:absolute;bottom:11px;right:11px;background:rgba(31,30,28,.8);color:#fff;
+    padding:4px 10px;border-radius:8px;font-size:11px}
+  .foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:34px}
+
+  @media (max-width:760px){
+    .cols{grid-template-columns:1fr}
+    .lang{position:static;margin-top:14px;display:inline-flex}
+    .title{font-size:25px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang"><span class="on">Español</span><span>English</span><span>Français</span></div>
+
+  <div class="header">
+    <h1 class="title">VideoBoost</h1>
+    <p class="subtext">Mejora de video e imagen con IA · 100% local</p>
+    <div class="sub">
+      <span class="pill"><span class="dot"></span>Apple Silicon · 64 GB memoria unificada</span>
+      <span class="tier">Nivel 2 · Pro</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on">Video</div>
+    <div class="tab">Imágenes</div>
+    <div class="tab">Sistema</div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="lbl">Video de entrada</div>
+      <div class="drop">concierto_2009.mp4 · 1280×720 · 00:14</div>
+
+      <div class="lbl">Motor</div>
+      <div class="engines">
+        <div class="eng on"><span class="rad"></span><span>SeedVR2 — restauración IA <small>· recomendado</small></span></div>
+        <div class="eng"><span class="rad"></span><span>Real-ESRGAN — video real <small>· Vulkan</small></span></div>
+        <div class="eng"><span class="rad"></span><span>Real-CUGAN — anime con ruido <small>· Vulkan</small></span></div>
+        <div class="eng"><span class="rad"></span><span>RIFE — más fps, interpolación <small>· Vulkan</small></span></div>
+      </div>
+
+      <div class="note">Difusión en 1 paso con <b>consistencia temporal nativa</b> (cero
+        parpadeo). Reconstruye detalle real en video degradado. Nivel Topaz.</div>
+
+      <div class="group">
+        <div class="field"><div class="lbl">Resolución objetivo (lado corto)</div>
+          <div class="inp sel">1080</div></div>
+        <div class="field"><div class="lbl">Modelo (auto-recomendado)</div>
+          <div class="inp sel">seedvr2_ema_7b_fp16.safetensors</div></div>
+        <div class="field"><div class="lbl">Frames por lote</div>
+          <div class="inp sel">9</div></div>
+      </div>
+
+      <div class="preview">1280×720 → <b>1920×1080</b></div>
+      <button class="cta">Mejorar video</button>
+    </div>
+
+    <div>
+      <div class="lbl">Progreso</div>
+      <div class="console">▶ SeedVR2 — restauración IA
+<span class="run">SeedVR2 · modelo 7b_fp16 · resolución 1080p · batch 9</span>
+<span class="info">La primera vez descargará el modelo de HuggingFace.</span>
+[SeedVR2] device: mps (Apple Silicon · memoria unificada)
+[SeedVR2] frames: 420 · fps 30.0
+[SeedVR2] lote 12/47  ████░░░░░░  26%  ·  2.1 s/lote
+[SeedVR2] color_correction: lab
+[SeedVR2] reensamblando con audio original…
+<span class="ok">Listo: salidas/concierto_2009_seedvr2_1080p.mp4</span></div>
+
+      <div class="lbl" style="margin-top:16px">Resultado</div>
+      <div class="result"><span>concierto_2009_seedvr2_1080p.mp4</span>
+        <span class="badge">1920×1080 · 30 fps</span></div>
+    </div>
+  </div>
+
+  <p class="foot">Diseño nuevo · cálido, minimalista, responsive · refleja el tema real aplicado a app.py</p>
+</div>
+</body>
+</html>

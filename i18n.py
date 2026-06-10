@@ -21,12 +21,16 @@ def idioma_por_defecto() -> str:
 T = {
     # ---- generales ----
     "titulo": {
-        "es": "# 🚀 VideoBoost", "en": "# 🚀 VideoBoost", "fr": "# 🚀 VideoBoost"},
+        "es": "VideoBoost", "en": "VideoBoost", "fr": "VideoBoost"},
+    "subtitulo": {
+        "es": "Mejora de video e imagen con IA · 100% local",
+        "en": "AI video & image enhancement · 100% local",
+        "fr": "Amélioration vidéo et image par IA · 100% local"},
     "idioma": {
-        "es": "🌐 Idioma", "en": "🌐 Language", "fr": "🌐 Langue"},
-    "tab_video": {"es": "🎬 Video", "en": "🎬 Video", "fr": "🎬 Vidéo"},
-    "tab_imagenes": {"es": "🖼️ Imágenes", "en": "🖼️ Images", "fr": "🖼️ Images"},
-    "tab_sistema": {"es": "⚙️ Sistema", "en": "⚙️ System", "fr": "⚙️ Système"},
+        "es": "Idioma", "en": "Language", "fr": "Langue"},
+    "tab_video": {"es": "Video", "en": "Video", "fr": "Vidéo"},
+    "tab_imagenes": {"es": "Imágenes", "en": "Images", "fr": "Images"},
+    "tab_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
     "nivel": {"es": "Nivel", "en": "Tier", "fr": "Niveau"},
     "nivel_3": {"es": "Máximo", "en": "Maximum", "fr": "Maximum"},
     "nivel_2": {"es": "Pro", "en": "Pro", "fr": "Pro"},
@@ -58,7 +62,7 @@ T = {
         "es": "Frames por lote (más = mejor consistencia, más memoria)",
         "en": "Frames per batch (more = better consistency, more memory)",
         "fr": "Images par lot (plus = meilleure cohérence, plus de mémoire)"},
-    "boton_video": {"es": "✨ Mejorar video", "en": "✨ Enhance video", "fr": "✨ Améliorer la vidéo"},
+    "boton_video": {"es": "Mejorar video", "en": "Enhance video", "fr": "Améliorer la vidéo"},
     "progreso": {"es": "Progreso", "en": "Progress", "fr": "Progression"},
     "resultado": {"es": "Resultado", "en": "Result", "fr": "Résultat"},
 
@@ -72,7 +76,7 @@ T = {
         "es": "ej.: retrato nítido, piel detallada",
         "en": "e.g.: sharp portrait, detailed skin",
         "fr": "ex. : portrait net, peau détaillée"},
-    "boton_imagen": {"es": "✨ Mejorar imagen", "en": "✨ Enhance image", "fr": "✨ Améliorer l'image"},
+    "boton_imagen": {"es": "Mejorar imagen", "en": "Enhance image", "fr": "Améliorer l'image"},
 
     # ---- mensajes ----
     "sube_video": {"es": "⚠️ Sube un video primero.", "en": "⚠️ Upload a video first.",
