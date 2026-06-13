@@ -1,0 +1,16 @@
+{
+  "name": "videoboost",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Video processing helpers (starter)",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.9"
+  }
+}
