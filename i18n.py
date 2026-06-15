@@ -547,6 +547,65 @@ T = {
                           "fr": "❌ facultatif, NVIDIA uniquement"},
     "s_sin_gpu": {"es": "sin acelerador detectado", "en": "no accelerator detected",
                   "fr": "aucun accélérateur détecté"},
+
+    # ---- aviso: no hay motor de mejora por IA instalado ----
+    "sin_mejorador_v": {
+        "es": "⚠️ **No hay ningún motor de mejora por IA instalado.** Los motores de "
+              "abajo solo aplican color, grano o limpieza — **no suben la resolución ni "
+              "reconstruyen detalle**. Para mejora real (SeedVR2, nivel Topaz), instálalo:",
+        "en": "⚠️ **No AI enhancement engine is installed.** The engines below only apply "
+              "color, grain or cleanup — **they do not increase resolution or rebuild "
+              "detail**. For real enhancement (SeedVR2, Topaz-level), install it:",
+        "fr": "⚠️ **Aucun moteur d'amélioration par IA n'est installé.** Les moteurs "
+              "ci-dessous n'appliquent que couleur, grain ou nettoyage — **ils n'augmentent "
+              "pas la résolution**. Pour une vraie amélioration (SeedVR2, niveau Topaz), "
+              "installez-le :"},
+    "sin_mejorador_i": {
+        "es": "⚠️ **No hay ningún motor de mejora por IA instalado.** Los motores de "
+              "abajo solo aplican color o grano — **no suben la resolución ni reconstruyen "
+              "detalle**. Para mejora real de imagen, instala los motores:",
+        "en": "⚠️ **No AI enhancement engine is installed.** The engines below only apply "
+              "color or grain — **they do not increase resolution or rebuild detail**. For "
+              "real image enhancement, install the engines:",
+        "fr": "⚠️ **Aucun moteur d'amélioration par IA n'est installé.** Les moteurs "
+              "ci-dessous n'appliquent que couleur ou grain. Pour une vraie amélioration "
+              "d'image, installez les moteurs :"},
+    "como_instalar_mac": {
+        "es": "En Terminal, dentro de la carpeta de la app: `bash install/instalar_mac.sh` "
+              "(descarga SeedVR2, varios GB). Luego reinicia VideoBoost.",
+        "en": "In Terminal, inside the app folder: `bash install/instalar_mac.sh` "
+              "(downloads SeedVR2, several GB). Then restart VideoBoost.",
+        "fr": "Dans le Terminal, dans le dossier de l'app : `bash install/instalar_mac.sh` "
+              "(télécharge SeedVR2, plusieurs Go). Puis relancez VideoBoost."},
+    "como_instalar_nvidia": {
+        "es": "En la terminal, dentro de la carpeta de la app: `bash install/instalar_nvidia.sh` "
+              "(o `install\\INSTALAR_NVIDIA.bat` en Windows). Luego reinicia VideoBoost.",
+        "en": "In the terminal, inside the app folder: `bash install/instalar_nvidia.sh` "
+              "(or `install\\INSTALAR_NVIDIA.bat` on Windows). Then restart VideoBoost.",
+        "fr": "Dans le terminal, dans le dossier de l'app : `bash install/instalar_nvidia.sh` "
+              "(ou `install\\INSTALAR_NVIDIA.bat` sous Windows). Puis relancez VideoBoost."},
+
+    # ---- vista previa de motor + resolución ----
+    "vp_motor": {"es": "Motor", "en": "Engine", "fr": "Moteur"},
+    "vp_no_resol": {
+        "es": "no cambia la resolución (solo color/limpieza)",
+        "en": "does not change resolution (color/cleanup only)",
+        "fr": "ne change pas la résolution (couleur/nettoyage seulement)"},
+    "vp_sube_a": {"es": "sube a", "en": "upscales to", "fr": "passe à"},
+
+    # ---- formato / descarga de video ----
+    "formato_nota": {
+        "es": "ProRes y H.265 son para exportar/editar — **no se previsualizan en el "
+              "navegador** (el reproductor saldría en blanco). La vista previa siempre usa "
+              "H.264; descarga el formato elegido con el botón de abajo.",
+        "en": "ProRes and H.265 are for export/editing — **they don't preview in the "
+              "browser** (the player would show blank). The preview always uses H.264; "
+              "download your chosen format with the button below.",
+        "fr": "ProRes et H.265 servent à l'export/montage — **pas d'aperçu dans le "
+              "navigateur** (le lecteur resterait blanc). L'aperçu utilise toujours H.264 ; "
+              "téléchargez le format choisi avec le bouton ci-dessous."},
+    "descargar_v": {
+        "es": "Descargar video", "en": "Download video", "fr": "Télécharger la vidéo"},
 }
 
 

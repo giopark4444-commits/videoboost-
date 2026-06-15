@@ -145,8 +145,25 @@ footer{display:none !important;}
 .cta button{width:100% !important; padding:13px !important; font-size:15px !important;
   font-weight:600 !important;}
 
+/* Aviso destacado: no hay motor de mejora por IA instalado */
+.aviso-sin-motor{background:#fdf1e7 !important; border:1px solid #e9b894 !important;
+  border-left:4px solid var(--vb-accent) !important; border-radius:12px !important;
+  padding:14px 18px !important; margin:4px 0 18px !important;}
+.aviso-sin-motor p{margin:0 0 6px !important; color:#5a3a2a !important; font-size:14px !important;
+  line-height:1.55 !important;}
+.aviso-sin-motor p:last-child{margin:0 !important;}
+.aviso-sin-motor code{background:#f4dcc9 !important; color:#7a3d20 !important;
+  padding:1px 6px !important; border-radius:6px !important; font-size:12.5px !important;}
+.dark .aviso-sin-motor{background:#3a2a1f !important; border-color:#6f4a30 !important;}
+.dark .aviso-sin-motor p{color:#f0d4c0 !important;}
+.dark .aviso-sin-motor code{background:#4a3424 !important; color:#f0c4a0 !important;}
+
+/* Nota bajo el selector de formato */
+.formato-nota p{margin:4px 0 0 !important; font-size:12.5px !important;
+  color:var(--vb-muted) !important; line-height:1.5 !important;}
+
 /* Comparador antes/después (CSS puro, sin dependencias) */
-.ba-cmp{position:relative; width:100%; border-radius:14px; overflow:hidden;
+.ba-cmp{position:relative; width:100%; min-height:320px; border-radius:14px; overflow:hidden;
   border:1px solid var(--vb-border); background:#1f1e1c; line-height:0; user-select:none;
   touch-action:none;}
 .ba-cmp img{display:block; width:100%;}

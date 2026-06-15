@@ -249,10 +249,11 @@ def hacer_procesar_video(lang):
                  g_preset, g_int, g_tam, g_color,
                  formato, den_luma, den_croma, est_suav, est_zoom,
                  *rev):
+        oculto = gr.update(visible=False)
         if not video:
-            yield t("sube_video", lang), None, ""
+            yield t("sube_video", lang), None, "", oculto
             return
-        log = [f"▶ {motor}"]
+        log = [f"▶ {t('m_' + motor, lang).split(' — ')[0]}"]
         try:
             if motor == "seedvr2":
                 gen = seedvr2.mejorar(video, resolucion=int(resolucion), modelo=modelo,
@@ -280,16 +281,20 @@ def hacer_procesar_video(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), None, ""
+                    yield next(consumo), None, "", oculto
                 except StopIteration as fin:
                     salida = fin.value
                     break
 
-            # Post-proceso: transcodificación de formato
-            if salida and formato:
-                salida = _transcodificar_video(salida, formato, log)
+            # `salida` es H.264 (siempre reproducible en el navegador): es lo que
+            # alimenta el reproductor y el comparador. El formato elegido (ProRes,
+            # H.265, WebM) se entrega APARTE como descarga — meter ProRes en el
+            # reproductor del navegador da un recuadro en blanco.
+            descarga = salida
+            if salida and formato and formato != "h264":
+                descarga = _transcodificar_video(salida, formato, log)
 
-            log.append(f"{t('listo', lang)}: {salida}")
+            log.append(f"{t('listo', lang)}: {Path(salida).name if salida else '?'}")
 
             # Comparador antes/después (frames). Los JPEG temporales se borran
             # en cuanto comparador_html los incrusta como data URI (no se reusan).
@@ -308,10 +313,11 @@ def hacer_procesar_video(lang):
                         if f:
                             Path(f).unlink(missing_ok=True)
 
-            yield "\n".join(log[-400:]), salida, cmp_html
+            dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
+            yield "\n".join(log[-400:]), salida, cmp_html, dl
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None, ""
+            yield "\n".join(log[-400:]), None, "", oculto
 
     return procesar
 
@@ -418,23 +424,28 @@ def hacer_procesar_lote(lang):
 
 def hacer_vista_previa(lang):
     def vista_previa(video, motor, escala, mult, resolucion):
-        if not video or not all((escala, mult, resolucion)):
-            return ""
+        # Nombre corto del motor (antes del " — " de la etiqueta i18n).
+        etiqueta = t("m_" + motor, lang).split(" — ")[0]
+        cab = f"**{t('vp_motor', lang)}:** {etiqueta}"
+        if not video:
+            return cab
         try:
             info = ff.info_video(video)
         except Exception:
-            return ""
+            return cab
         w, h = info["ancho"], info["alto"]
-        if motor in ("grano", "lut", "desentrelazar", "denoise", "estabilizar"):
-            return f"{w}×{h} {t('se_mantiene', lang)}"
         if motor == "rife":
-            return (f"{w}×{h} {t('se_mantiene', lang)} · {info['fps']:.0f} fps → "
-                    f"**{info['fps'] * int(mult):.0f} fps**")
+            return (f"{cab} · {w}×{h} ({t('se_mantiene', lang)}) · "
+                    f"{info['fps']:.0f} → **{info['fps'] * int(mult or 2):.0f} fps**")
+        if motor not in _ESCALADORES:
+            # Filtros FFmpeg: no cambian la resolución (lo decimos sin ambigüedad).
+            return f"{cab} · {w}×{h} — {t('vp_no_resol', lang)}"
+        # Escaladores: calculamos la resolución final.
         if motor in ("seedvr2", "flashvsr"):
-            factor = int(resolucion) / min(w, h)
+            factor = int(resolucion or 1080) / min(w, h)
             nw, nh = round(w * factor / 2) * 2, round(h * factor / 2) * 2
         else:
-            nw, nh = w * int(escala), h * int(escala)
+            nw, nh = w * int(escala or 2), h * int(escala or 2)
         _8k = max(nw, nh) >= 7680
         _puede_8k = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
         if _8k and not _puede_8k:
@@ -445,7 +456,7 @@ def hacer_vista_previa(lang):
             aviso = t("supera_4k", lang)
         else:
             aviso = ""
-        return f"{w}×{h} → **{nw}×{nh}**{aviso}"
+        return f"{cab} · {w}×{h} {t('vp_sube_a', lang)} **{nw}×{nh}**{aviso}"
 
     return vista_previa
 
@@ -563,6 +574,28 @@ def motores_imagen():
     if HW["ffmpeg"]:
         m += ["lut", "grano"]
     return m or ["realesrgan_img"]
+
+
+# Motores que de verdad mejoran (suben resolución / reconstruyen detalle). Los
+# filtros FFmpeg (color, grano, limpieza) NO entran aquí: ayudan a comunicar al
+# usuario cuándo la máquina solo tiene filtros y aún le falta instalar la IA.
+_MEJORADORES_VIDEO = {"seedvr2", "realesrgan", "realcugan", "waifu2x", "flashvsr"}
+_MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
+                    "realesrgan_img"}
+# Motores que escalan a una resolución/escala (para la vista previa de tamaño).
+_ESCALADORES = {"seedvr2", "flashvsr", "realesrgan", "realcugan", "waifu2x"}
+
+
+def _hay_mejorador_video() -> bool:
+    return any(m in _MEJORADORES_VIDEO for m in motores_video())
+
+
+def _hay_mejorador_imagen() -> bool:
+    return any(m in _MEJORADORES_IMG for m in motores_imagen())
+
+
+def _como_instalar(lang) -> str:
+    return t("como_instalar_nvidia" if HW["cuda"] else "como_instalar_mac", lang)
 
 
 # ---------------------------------------------------------------- interfaz
@@ -735,6 +768,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
         with gr.Tab(t("tab_video", lang)):
             ids_v = motores_video()
+            if not _hay_mejorador_video():
+                gr.Markdown(f"{t('sin_mejorador_v', lang)}\n\n{_como_instalar(lang)}",
+                            elem_classes="aviso-sin-motor")
             with gr.Row():
                 with gr.Column():
                     video_in = gr.Video(label=t("video_entrada", lang))
@@ -776,6 +812,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
                         value="h264",
                         label=t("formato_salida_v", lang))
+                    gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
                     with gr.Row():
                         boton_v = gr.Button(t("boton_video", lang), variant="primary",
@@ -786,6 +823,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18,
                                        elem_classes="console")
                     video_out = gr.Video(label=t("resultado", lang))
+                    descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
+                                                   elem_classes="cta")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
 
             def controles_v(motor):
@@ -813,7 +852,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                  batch_sv2, gpre_v, gint_v, gtam_v, gcol_v,
                  formato_v, den_luma, den_croma, est_suav, est_zoom,
                  *rev_v],
-                [log_v, video_out, comparador_v])
+                [log_v, video_out, comparador_v, descarga_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
 
         with gr.Tab(t("tab_imagenes", lang)):
@@ -822,6 +861,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
                            "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut"}
+            if not _hay_mejorador_imagen():
+                gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
+                            elem_classes="aviso-sin-motor")
             with gr.Row():
                 with gr.Column():
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
