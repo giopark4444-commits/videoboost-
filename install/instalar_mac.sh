@@ -51,7 +51,15 @@ pip install -r vendor/seedvr2/requirements.txt
 
 # 4. Motores Vulkan (funcionan vía MoltenVK en Mac)
 python install/descargar_vulkan.py
+deactivate
+
+# 5. Extras de imagen que SÍ funcionan en Mac (caras + color). No-fatales: si
+#    alguno falla, la instalación base sigue siendo válida. (FaithDiff/InstantIR/
+#    FlashVSR son solo-NVIDIA y no se instalan en Mac.)
+echo ""
+echo "🎭 Instalando extras de imagen para Mac (CodeFormer caras · DDColor color)…"
+bash install/extras_caras.sh || echo "⚠️  CodeFormer no se instaló (puedes reintentar: bash install/extras_caras.sh)"
+bash install/extras_color.sh || echo "⚠️  DDColor no se instaló (puedes reintentar: bash install/extras_color.sh)"
 
 echo ""
-echo "✅ Instalación base completa. Ejecuta ./iniciar.sh"
-echo "   Motores de imagen extra: install/extras_caras.sh (caras) · install/extras_color.sh (color)"
+echo "✅ Instalación completa. Ejecuta ./iniciar.sh"

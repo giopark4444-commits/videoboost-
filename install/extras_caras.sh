@@ -30,12 +30,16 @@ mkdir -p vendor
 if [ ! -d vendor/CodeFormer ]; then
   git clone --depth 1 https://github.com/sczhou/CodeFormer.git vendor/CodeFormer
 fi
-pip install -r vendor/CodeFormer/requirements.txt
-# basicsr se instala en modo desarrollo, como pide el README de CodeFormer.
-( cd vendor/CodeFormer && python basicsr/setup.py develop )
-# Pre-descarga de los pesos (CodeFormer + detección/parsing de caras).
-( cd vendor/CodeFormer && python scripts/download_pretrained_models.py facelib \
-  && python scripts/download_pretrained_models.py CodeFormer )
+# numpy<2: el basicsr 1.3.2 incluido en el repo usa APIs que numpy 2.x rompe.
+pip install -r vendor/CodeFormer/requirements.txt "numpy<2"
+# NO usamos `basicsr/setup.py develop`: está deprecado y falla con setuptools
+# moderno. No hace falta: el basicsr incluido se importa desde la carpeta del
+# repo al ejecutar la inferencia (engines/faces.py corre con cwd=vendor/
+# CodeFormer). Solo bajamos los pesos — con PYTHONPATH=. para que el script de
+# descarga (en scripts/) encuentre basicsr.
+( cd vendor/CodeFormer \
+  && PYTHONPATH=. BASICSR_EXT=False python scripts/download_pretrained_models.py facelib \
+  && PYTHONPATH=. BASICSR_EXT=False python scripts/download_pretrained_models.py CodeFormer )
 touch .venv-caras/.ok   # marcador: instalación completa (lo lee engines/faces.disponible)
 deactivate
 echo "✅ CodeFormer listo."
