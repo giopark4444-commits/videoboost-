@@ -1102,11 +1102,21 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             # "👁 Vista previa" del filtro en el frame actual → comparador central.
             _prev_in = [pos_frac, video_out, video_in, filtro_v, gpre_v, gint_v,
                         gtam_v, gcol_v, den_luma, den_croma, *rev_v]
-            boton_preview.click(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
-            # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
-            filtro_v.change(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
-            for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
-                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
+            _prev_fn = hacer_preview_filtro(lang)
+
+            def _auto_prev(componente, evento="change"):
+                """Engancha el auto-preview (en vivo) a un control del filtro."""
+                getattr(componente, evento)(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
+
+            boton_preview.click(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
+            _auto_prev(filtro_v)  # al cambiar de filtro
+            # LUTs en vivo: dropdowns (change) y mezclas (release, al soltar).
+            for _i, _c in enumerate(rev_v):
+                _auto_prev(_c, "change" if _i in (0, 2, 4) else "release")
+            # Grano y ruido también en vivo.
+            _auto_prev(gpre_v); _auto_prev(gcol_v)
+            for _c in (gint_v, gtam_v, den_luma, den_croma):
+                _auto_prev(_c, "release")
 
             boton_filtro.click(
                 hacer_aplicar_filtros(lang),
