@@ -17,13 +17,16 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from engines import SALIDAS, VENDOR, correr, python_venv
+from engines import RAIZ, SALIDAS, VENDOR, correr, python_venv
 
 CODEFORMER_DIR = VENDOR / "CodeFormer"
 
 
 def disponible() -> bool:
-    return (CODEFORMER_DIR / "inference_codeformer.py").exists()
+    # No basta con que el repo esté clonado: la instalación de basicsr puede
+    # haber fallado. Exigimos el marcador que extras_caras.sh escribe al final.
+    return ((CODEFORMER_DIR / "inference_codeformer.py").exists()
+            and (RAIZ / ".venv-caras" / ".ok").exists())
 
 
 def restaurar_caras(entrada, fidelidad=0.7, escala=2, upsample_caras=True):

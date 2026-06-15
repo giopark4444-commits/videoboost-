@@ -549,6 +549,31 @@ T = {
                           "fr": "❌ facultatif, NVIDIA uniquement"},
     "s_sin_gpu": {"es": "sin acelerador detectado", "en": "no accelerator detected",
                   "fr": "aucun accélérateur détecté"},
+    # ---- secciones del estado de motores (pestaña Sistema) ----
+    "s_listos": {
+        "es": "Motores listos en tu equipo",
+        "en": "Engines ready on your machine",
+        "fr": "Moteurs prêts sur votre machine"},
+    "s_instalables": {
+        "es": "Extras opcionales — se instalan con un comando",
+        "en": "Optional extras — install with one command",
+        "fr": "Extras optionnels — à installer en une commande"},
+    "s_no_aplican": {
+        "es": "No disponibles en tu equipo (no es un error)",
+        "en": "Not available on your machine (not an error)",
+        "fr": "Indisponibles sur votre machine (ce n'est pas une erreur)"},
+    "s_requiere_nvidia": {
+        "es": "requiere GPU NVIDIA",
+        "en": "requires an NVIDIA GPU",
+        "fr": "nécessite un GPU NVIDIA"},
+    "s_instalar_intro": {
+        "es": "En Terminal, dentro de la carpeta de la app, ejecuta:",
+        "en": "In Terminal, inside the app folder, run:",
+        "fr": "Dans le Terminal, dans le dossier de l'app, lancez :"},
+    "s_nada_listo": {
+        "es": "_Aún no hay motores instalados — corre el instalador de tu plataforma._",
+        "en": "_No engines installed yet — run your platform's installer._",
+        "fr": "_Aucun moteur installé — lancez l'installateur de votre plateforme._"},
 
     # ---- aviso: no hay motor de mejora por IA instalado ----
     "sin_mejorador_v": {

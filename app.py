@@ -518,29 +518,52 @@ _JS_RESET = ("() => { ['vb_modo','vb_acento','vb_fondo'].forEach(k => "
 
 
 def texto_sistema(lang):
-    sv2 = (f"{t('s_listo_modelo', lang)} `{HW['seedvr2_modelo']}`" if HW["seedvr2"]
-           else t("s_no_instalado", lang))
+    # --- Resumen de hardware ---
     filas = [
         f"- **{t('s_sistema', lang)}:** {HW['so']}" + (" (Apple Silicon)" if HW["apple_silicon"] else ""),
         f"- **GPU:** {HW['gpu'] or ('Apple Silicon / Metal' if HW['mps'] else t('s_sin_gpu', lang))}",
         f"- **VRAM:** {HW['vram_gb']} GB" if HW["cuda"] else f"- **RAM:** {HW['ram_gb']} GB",
-        f"- **Vulkan:** {t('s_instalados', lang) if HW['vulkan'] else t('s_corre_inst', lang)}",
-        f"- **SeedVR2:** {sv2}",
-        f"- **FaithDiff:** {'✅' if faithdiff.disponible() else t('s_opcional_nvidia', lang)}",
-        f"- **InstantIR:** {'✅' if instantir.disponible() else t('s_opcional_nvidia', lang)}",
-        f"- **CodeFormer (caras):** {'✅' if faces.disponible() else t('s_opcional', lang)}",
-        f"- **DDColor (color):** {'✅' if color.disponible() else t('s_opcional', lang)}",
-        f"- **FlashVSR:** {'✅' if HW['flashvsr'] and flashvsr.disponible() else t('s_opcional_nvidia', lang)}",
+        f"- **{t('nivel', lang)}:** {HW['nivel']} · {t('nivel_' + str(HW['nivel']), lang)}",
         "",
-        f"### {t('s_modelos', lang)}",
     ]
-    for nombre, ok in _estado_modelos().items():
-        estado = t("s_pesos_ok", lang) if ok else t("s_pesos_no", lang)
-        filas.append(f"- **{nombre}:** {estado}")
-    filas += [
-        "",
-        t("combo", lang),
+
+    # --- Motores, clasificados según TU equipo ---
+    # (nombre, ¿listo?, comando de instalación, ¿solo NVIDIA?)
+    sv2_extra = (f" · `{HW['seedvr2_modelo']}`" if HW["seedvr2"] else "")
+    inst_base = "bash install/instalar_nvidia.sh" if HW["cuda"] else "bash install/instalar_mac.sh"
+    motores = [
+        (f"SeedVR2 — restauración IA{sv2_extra}", HW["seedvr2"], inst_base, False),
+        ("Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)", HW["vulkan"], inst_base, False),
+        ("CodeFormer — restaurar caras", faces.disponible(), "bash install/extras_caras.sh", False),
+        ("DDColor — colorizar B/N", color.disponible(), "bash install/extras_color.sh", False),
+        ("FaithDiff — restauración fiel (MIT)", faithdiff.disponible(),
+         "bash install/extras_faithdiff.sh", True),
+        ("InstantIR — restauración instantánea", instantir.disponible(),
+         "bash install/extras_instantir.sh", True),
+        ("FlashVSR — modo rápido", HW["flashvsr"] and flashvsr.disponible(),
+         "bash install/extras_flashvsr.sh", True),
     ]
+    listos, instalables, no_aplican = [], [], []
+    for nombre, ok, inst, solo_nvidia in motores:
+        if ok:
+            listos.append(f"- ✅ **{nombre}**")
+        elif solo_nvidia and not HW["cuda"]:
+            no_aplican.append(f"- **{nombre}** — {t('s_requiere_nvidia', lang)}")
+        else:
+            instalables.append((nombre, inst))
+
+    filas.append(f"### {t('s_listos', lang)}")
+    filas += listos or [t("s_nada_listo", lang)]
+
+    if instalables:
+        filas += ["", f"### {t('s_instalables', lang)}", t("s_instalar_intro", lang)]
+        for nombre, inst in instalables:
+            filas.append(f"- **{nombre}**\n  `{inst}`")
+
+    if no_aplican:
+        filas += ["", f"### {t('s_no_aplican', lang)}"] + no_aplican
+
+    filas += ["", t("combo", lang)]
     lic = licencias.activa()
     if licencias.requiere_licencia() and lic:
         filas.append(f"\n🔑 {t('lic_activada', lang)} **{lic.get('cliente', '?')}**")
