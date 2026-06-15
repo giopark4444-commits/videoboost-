@@ -87,12 +87,17 @@ body.dark, .dark{
   padding:0 clamp(16px, 2vw, 40px) 56px !important;}
 footer{display:none !important;}
 
-/* En pantalla ancha: la columna de controles se queda a un ancho cómodo y
-   estable; la columna de resultados (video, comparador) se lleva el resto del
-   espacio. Así «full-width» significa MÁS sitio para ver el resultado y para
-   sumar opciones, no controles estirados. */
-.col-controls{flex:0 1 470px !important; max-width:470px;}
-@media (max-width:900px){ .col-controls{flex:1 1 auto !important; max-width:none;} }
+/* Layout de 3 columnas (estilo GptPlatform): controles · escenario · panel.
+   El escenario (resultado + comparador) se lleva todo el espacio sobrante; los
+   laterales quedan a un ancho cómodo y estable. Por debajo de 1180px todo se
+   reacomoda en una sola columna. */
+.col-controls{flex:0 0 360px !important; max-width:360px;}
+.col-aside{flex:0 0 330px !important; max-width:330px;}
+.col-stage{flex:1 1 0 !important; min-width:0;}
+@media (max-width:1180px){
+  .col-controls, .col-aside, .col-stage{
+    flex:1 1 100% !important; max-width:none !important;}
+}
 /* Topes de longitud de línea: el texto no se estira en monitores anchos */
 .engine-note p, .formato-nota p, .size-preview p,
 .aviso-sin-motor p, .cmp-cap{max-width:72ch;}

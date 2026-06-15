@@ -856,9 +856,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                             elem_classes="cta")
                         cancelar_v = gr.Button(t("cancelar", lang), variant="stop",
                                                size="sm")
-                with gr.Column():
-                    log_v = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18,
-                                       elem_classes="console")
+                # --- Centro: el resultado y la comparación (el «escenario») ---
+                with gr.Column(elem_classes="col-stage"):
                     video_out = gr.Video(label=t("resultado", lang))
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
@@ -879,6 +878,11 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         cmp_msg = gr.Markdown("", elem_classes="size-preview")
                         cmp_estado = gr.State([])
                         cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
+
+                # --- Derecha: progreso (consola de estado) ---
+                with gr.Column(elem_classes="col-aside"):
+                    log_v = gr.Textbox(label=t("progreso", lang), lines=22, max_lines=22,
+                                       elem_classes="console")
 
             def controles_v(motor):
                 return (
@@ -984,13 +988,16 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                             elem_classes="cta")
                         cancelar_i = gr.Button(t("cancelar", lang), variant="stop",
                                                size="sm")
-                with gr.Column():
-                    log_i = gr.Textbox(label=t("progreso", lang), lines=14, max_lines=14,
-                                       elem_classes="console")
+                # --- Centro: el resultado / comparador ---
+                with gr.Column(elem_classes="col-stage"):
                     gr.Markdown(t("arrastra_comparar", lang), elem_classes="size-preview")
                     img_out = gr.HTML()
                     descarga_i = gr.DownloadButton(t("descargar", lang), visible=False,
                                                    elem_classes="cta")
+                # --- Derecha: progreso ---
+                with gr.Column(elem_classes="col-aside"):
+                    log_i = gr.Textbox(label=t("progreso", lang), lines=18, max_lines=18,
+                                       elem_classes="console")
 
             def controles_i(motor):
                 return (
