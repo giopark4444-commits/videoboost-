@@ -21,8 +21,9 @@ import hardware
 import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import (color, faces, faithdiff, filtros, flashvsr, grano,
-                     instantir, luts, mantenimiento, seedvr2, vulkan)
+from engines import (color, diffbir, faces, faithdiff, filtros, flashvsr, grano,
+                     instantir, luts, mantenimiento, osdface, pmrf, seedvr2,
+                     vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -41,7 +42,8 @@ MOTORES_IMG_NOTAS = {
     "faithdiff": "n_faithdiff", "seedvr2_img": "n_seedvr2_img",
     "realesrgan_img": "n_realesrgan_img", "codeformer": "n_codeformer",
     "instantir": "n_instantir", "ddcolor": "n_ddcolor", "grano": "n_grano",
-    "lut": "n_lut",
+    "lut": "n_lut", "diffbir": "n_diffbir", "pmrf": "n_pmrf",
+    "osdface": "n_osdface",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
@@ -338,6 +340,12 @@ def hacer_procesar_imagen(lang):
         try:
             if motor == "faithdiff":
                 gen = faithdiff.mejorar(imagen, prompt=prompt or "", escala=int(escala))
+            elif motor == "diffbir":
+                gen = diffbir.mejorar(imagen, escala=int(escala))
+            elif motor == "pmrf":
+                gen = pmrf.mejorar(imagen)
+            elif motor == "osdface":
+                gen = osdface.mejorar(imagen)
             elif motor == "seedvr2_img":
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "codeformer":
@@ -538,6 +546,12 @@ def texto_sistema(lang):
         ("DDColor — colorizar B/N", color.disponible(), "bash install/extras_color.sh", False),
         ("FaithDiff — restauración fiel (MIT)", faithdiff.disponible(),
          "bash install/extras_faithdiff.sh", True),
+        ("DiffBIR — caras + escena (Apache-2.0)", diffbir.disponible(),
+         "bash install/extras_diffbir.sh", True),
+        ("PMRF — caras (MIT)", pmrf.disponible(),
+         "bash install/extras_pmrf.sh", True),
+        ("OSDFace — caras ⚠️ sin licencia (solo pruebas)", osdface.disponible(),
+         "bash install/extras_osdface.sh", True),
         ("InstantIR — restauración instantánea", instantir.disponible(),
          "bash install/extras_instantir.sh", True),
         ("FlashVSR — modo rápido", HW["flashvsr"] and flashvsr.disponible(),
@@ -590,12 +604,18 @@ def motores_imagen():
     m = []
     if faithdiff.disponible():
         m.append("faithdiff")  # recomendado por defecto (MIT, supera a SUPIR)
+    if diffbir.disponible():
+        m.append("diffbir")    # caras + escena, Apache-2.0
+    if pmrf.disponible():
+        m.append("pmrf")       # caras alineadas, MIT
     if HW["seedvr2"]:
         m.append("seedvr2_img")
     if instantir.disponible():
         m.append("instantir")
     if faces.disponible():
         m.append("codeformer")
+    if osdface.disponible():
+        m.append("osdface")    # ⚠️ sin licencia: solo pruebas
     if color.disponible():
         m.append("ddcolor")
     if HW["vulkan"]:
@@ -610,7 +630,7 @@ def motores_imagen():
 # usuario cuándo la máquina solo tiene filtros y aún le falta instalar la IA.
 _MEJORADORES_VIDEO = {"seedvr2", "realesrgan", "realcugan", "waifu2x", "flashvsr"}
 _MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
-                    "realesrgan_img"}
+                    "realesrgan_img", "diffbir", "pmrf", "osdface"}
 # Motores que escalan a una resolución/escala (para la vista previa de tamaño).
 _ESCALADORES = {"seedvr2", "flashvsr", "realesrgan", "realcugan", "waifu2x"}
 
@@ -952,7 +972,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             etiquetas_i = {"faithdiff": "i_faithdiff",
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
-                           "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut"}
+                           "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut",
+                           "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -968,7 +989,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                          visible=ids_i[0] not in ("seedvr2_img", "instantir",
-                                                                  "ddcolor", "grano", "lut"))
+                                                                  "ddcolor", "grano", "lut",
+                                                                  "pmrf", "osdface"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] == "seedvr2_img")
@@ -1004,7 +1026,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(value=t(MOTORES_IMG_NOTAS[motor], lang)),
                     gr.update(visible=motor in IMG_CON_PROMPT),
                     gr.update(visible=motor not in ("seedvr2_img", "instantir",
-                                                    "ddcolor", "grano", "lut")),
+                                                    "ddcolor", "grano", "lut",
+                                                    "pmrf", "osdface")),
                     gr.update(visible=motor == "seedvr2_img"),
                     gr.update(visible=motor == "codeformer"),
                     gr.update(visible=motor == "grano"),
@@ -1139,11 +1162,20 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 "vulkan": "Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)",
                 "codeformer": "CodeFormer — caras",
                 "ddcolor": "DDColor — color",
+                "diffbir": "DiffBIR — caras + escena (Apache-2.0)",
+                "pmrf": "PMRF — caras (MIT)",
+                "osdface": "OSDFace — caras ⚠️ sin licencia (pruebas)",
+                "flashvsr": "FlashVSR — video rápido (Apache-2.0)",
             }
+            # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
+            # muestran en mantenimiento solo si ya están instalados.
+            _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr"}
 
             def _mant_aplica(m):
                 if m == "seedvr2":
                     return HW["mps"] or HW["cuda"]
+                if m in _MANT_NVIDIA:
+                    return HW["cuda"] or mantenimiento.ubicacion(m)["existe"]
                 return True  # vulkan, codeformer, ddcolor sirven en cualquier equipo
 
             _gestionables = [m for m in mantenimiento.MOTORES if _mant_aplica(m)]

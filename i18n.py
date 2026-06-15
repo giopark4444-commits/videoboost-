@@ -159,6 +159,55 @@ T = {
         "es": "DDColor — colorizar (B/N → color)",
         "en": "DDColor — colorize (B&W → color)",
         "fr": "DDColor — coloriser (N&B → couleur)"},
+    "i_diffbir": {
+        "es": "DiffBIR — caras + escena (NVIDIA)",
+        "en": "DiffBIR — faces + scene (NVIDIA)",
+        "fr": "DiffBIR — visages + scène (NVIDIA)"},
+    "i_pmrf": {
+        "es": "PMRF — caras muy naturales (NVIDIA)",
+        "en": "PMRF — very natural faces (NVIDIA)",
+        "fr": "PMRF — visages très naturels (NVIDIA)"},
+    "i_osdface": {
+        "es": "OSDFace — caras ⚠️ sin licencia (pruebas)",
+        "en": "OSDFace — faces ⚠️ unlicensed (testing)",
+        "fr": "OSDFace — visages ⚠️ sans licence (test)"},
+    "n_diffbir": {
+        "es": "Restauración ciega por difusión con prior de Stable Diffusion (Apache-2.0). "
+              "Reconstruye detalle muy orgánico en **caras y escena completa**; ideal para "
+              "fotos y película degradada (cine). Usa la tarea `face_background`. Solo NVIDIA "
+              "en la práctica. Los pesos se descargan de HuggingFace la primera vez.",
+        "en": "Blind diffusion restoration with a Stable Diffusion prior (Apache-2.0). Rebuilds "
+              "very organic detail in **faces and full scenes**; great for degraded photos and "
+              "film. Uses the `face_background` task. NVIDIA in practice. Weights download from "
+              "HuggingFace on first run.",
+        "fr": "Restauration aveugle par diffusion avec prior Stable Diffusion (Apache-2.0). "
+              "Reconstruit un détail très organique sur **visages et scène complète** ; idéal "
+              "pour photos et films dégradés. Tâche `face_background`. NVIDIA en pratique. Poids "
+              "téléchargés depuis HuggingFace au premier lancement."},
+    "n_pmrf": {
+        "es": "Posterior-Mean Rectified Flow (MIT) — caras **muy naturales y orgánicas** (top "
+              "en NTIRE 2025). Está entrenado para **caras cuadradas y alineadas** (una cara); "
+              "para fotos generales usa DiffBIR o CodeFormer. Solo NVIDIA. Modelo desde "
+              "HuggingFace en el primer uso.",
+        "en": "Posterior-Mean Rectified Flow (MIT) — **very natural, organic faces** (top at "
+              "NTIRE 2025). Trained for **square aligned faces** (one face); for general photos "
+              "use DiffBIR or CodeFormer. NVIDIA only. Model from HuggingFace on first run.",
+        "fr": "Posterior-Mean Rectified Flow (MIT) — **visages très naturels** (top NTIRE 2025). "
+              "Entraîné pour **visages carrés alignés** (un visage) ; pour photos générales, "
+              "DiffBIR ou CodeFormer. NVIDIA uniquement. Modèle depuis HuggingFace au 1er usage."},
+    "n_osdface": {
+        "es": "Difusión de 1 paso (CVPR 2025): textura de cara muy orgánica (pestañas, cejas, "
+              "pelo, piel); base del ganador del reto NTIRE 2026. ⚠️ **Sin licencia en el repo "
+              "→ solo pruebas / uso personal, NO para una versión que vendas** (haría falta "
+              "permiso de los autores). Solo NVIDIA.",
+        "en": "One-step diffusion (CVPR 2025): very organic face texture (lashes, brows, hair, "
+              "skin); base of the NTIRE 2026 challenge winner. ⚠️ **No license in the repo → "
+              "testing / personal use only, NOT for a version you sell** (needs the authors' "
+              "permission). NVIDIA only.",
+        "fr": "Diffusion en 1 étape (CVPR 2025) : texture de visage très organique (cils, "
+              "sourcils, cheveux, peau) ; base du gagnant du défi NTIRE 2026. ⚠️ **Sans licence "
+              "dans le dépôt → usage test / personnel seulement, PAS pour une version vendue** "
+              "(permission des auteurs requise). NVIDIA uniquement."},
 
     # ---- apariencia / tema ----
     "ap_titulo": {"es": "🎨 Apariencia", "en": "🎨 Appearance", "fr": "🎨 Apparence"},

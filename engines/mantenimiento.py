@@ -43,6 +43,30 @@ _GESTION = {
         borrar=[MODELS / "DDColor", RAIZ / ".venv-color" / ".ok"],
         instalador=["bash", "install/extras_color.sh"],
     ),
+    "diffbir": dict(
+        repo=VENDOR / "DiffBIR",
+        carpeta=VENDOR / "DiffBIR" / "weights",
+        borrar=[VENDOR / "DiffBIR" / "weights", RAIZ / ".venv-diffbir" / ".ok"],
+        instalador=["bash", "install/extras_diffbir.sh"],
+    ),
+    "pmrf": dict(
+        repo=VENDOR / "PMRF",
+        carpeta=VENDOR / "PMRF",
+        borrar=[RAIZ / ".venv-pmrf" / ".ok"],
+        instalador=["bash", "install/extras_pmrf.sh"],
+    ),
+    "osdface": dict(
+        repo=VENDOR / "OSDFace",
+        carpeta=MODELS / "OSDFace",
+        borrar=[MODELS / "OSDFace", RAIZ / ".venv-osdface" / ".ok"],
+        instalador=["bash", "install/extras_osdface.sh"],
+    ),
+    "flashvsr": dict(
+        repo=VENDOR / "FlashVSR",
+        carpeta=VENDOR / "FlashVSR" / "examples" / "WanVSR" / "FlashVSR-v1.1",
+        borrar=[VENDOR / "FlashVSR" / "examples" / "WanVSR" / "FlashVSR-v1.1"],
+        instalador=["bash", "install/extras_flashvsr.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)

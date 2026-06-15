@@ -10,7 +10,14 @@ if ! command -v nvidia-smi >/dev/null 2>&1; then
 fi
 
 echo "== FlashVSR (experimental) =="
-python3 -m venv .venv-flashvsr
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)' 2>/dev/null; then
+    PY="$c"; break
+  fi
+done
+[ -z "$PY" ] && { echo "❌ Necesitas Python 3.10+."; exit 1; }
+"$PY" -m venv .venv-flashvsr
 source .venv-flashvsr/bin/activate
 pip install --upgrade pip
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124

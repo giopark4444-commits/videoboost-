@@ -68,6 +68,26 @@ en este orden:
    tonos 2-3× la de sombras/luces. Único motor probado end-to-end sin GPU.
 9. **gr.render** requiere gradio ≥4.40. Al cambiar idioma se pierde el estado de los
    componentes (video subido, etc.) — esperado, elegir idioma primero.
+10. **DiffBIR** (`engines/diffbir.py`, Apache-2.0): CLI `inference.py --task
+    {sr,face,face_background,denoise} --input --output --upscale --version v2.1
+    --captioner none --device cuda --precision fp16`. Pesos auto de HuggingFace.
+    Verificar en GPU que `--captioner none` existe en la versión clonada.
+11. **PMRF** (`engines/pmrf.py`, MIT): CLI `inference.py --ckpt_path
+    ohayonguy/PMRF_blind_face_image_restoration --ckpt_path_is_huggingface
+    --lq_data_path --output_dir --num_flow_steps 25`. SOLO caras alineadas (una
+    cara); para fotos generales no aplica sin un paso de alineación previo.
+12. **OSDFace** (`engines/osdface.py`): ⚠️ SIN LICENCIA → solo pruebas, no venta.
+    `infer.py --input_image <dir> --output_dir <dir> --pretrained_model_name_or_path
+    stabilityai/stable-diffusion-2-1-base --img_encoder_weight <ckpt>/associate_2.ckpt
+    --ckpt_path <ckpt> --merge_lora`. Pesos en Google Drive (gdown; el instalador
+    pide OSDFACE_GDRIVE o colocarlos a mano en models/OSDFace/).
+13. **FlashVSR** (`engines/flashvsr.py`, Apache-2.0): los scripts
+    `examples/WanVSR/infer_flashvsr_v1.1_*.py` NO usan argparse (traen `inputs=[...]`
+    y `RESULT_ROOT` hardcodeados); el engine genera una copia parcheada con el video
+    del usuario. Verificar en GPU que esos nombres de variable no cambiaron.
+14. **DiffBIR/PMRF/OSDFace/FlashVSR son de difusión SD → solo NVIDIA en la
+    práctica.** Escritos sin GPU disponible; verificar flags en la RTX 4080 al
+    estrenarlos (igual que SeedVR2 en su momento).
 
 ## Licencias de venta (licencias.py)
 
