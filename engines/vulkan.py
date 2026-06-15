@@ -57,7 +57,10 @@ def mejorar_video(entrada, motor="realesrgan", escala=2, ruido=0, tile=0):
         yield from correr(ff.cmd_extraer_frames(entrada, dir_in))
 
         yield f"🚀 Escalando x{escala} con {motor} (GPU/Vulkan)…"
-        yield from correr(_cmd_escalado(motor, exe, dir_in, dir_out, escala, ruido, tile))
+        # cwd = carpeta del binario: los ncnn-vulkan buscan models/ relativo al
+        # directorio de trabajo; si no lo encuentran, segfaultan (no dan error).
+        yield from correr(_cmd_escalado(motor, exe, dir_in, dir_out, escala, ruido, tile),
+                          cwd=exe.parent)
 
         salida = SALIDAS / f"{entrada.stem}_x{escala}_{motor}.mp4"
         yield "🎞️ Reensamblando con el audio original…"
@@ -89,7 +92,8 @@ def interpolar_video(entrada, mult=2):
         yield from correr(ff.cmd_extraer_frames(entrada, dir_in))
 
         yield f"🚀 Interpolando x{mult} con RIFE ({modelo.name})…"
-        yield from correr([exe, "-i", dir_in, "-o", dir_out, "-m", modelo, "-n", total_salida])
+        yield from correr([exe, "-i", dir_in, "-o", dir_out, "-m", modelo, "-n", total_salida],
+                          cwd=exe.parent)
 
         salida = SALIDAS / f"{entrada.stem}_{int(round(info['fps'] * mult))}fps_rife.mp4"
         yield "🎞️ Reensamblando con el audio original…"
@@ -111,5 +115,5 @@ def mejorar_imagen(entrada, escala=4):
     else:
         cmd = [exe, "-i", entrada, "-o", salida, "-n", "realesr-animevideov3", "-s", escala]
     yield f"🚀 Escalando imagen x{escala} con Real-ESRGAN…"
-    yield from correr(cmd)
+    yield from correr(cmd, cwd=exe.parent)
     return str(salida)
