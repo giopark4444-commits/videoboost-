@@ -91,11 +91,13 @@ footer{display:none !important;}
    El escenario (resultado + comparador) se lleva todo el espacio sobrante; los
    laterales quedan a un ancho cómodo y estable. Por debajo de 1180px todo se
    reacomoda en una sola columna. */
-.col-controls{flex:0 0 360px !important; max-width:360px;}
-.col-aside{flex:0 0 330px !important; max-width:330px;}
+/* 4 columnas: controles · escenario · filtros · revelado(LUTs/presets) */
+.col-controls{flex:0 0 320px !important; max-width:320px;}
+.col-aside{flex:0 0 250px !important; max-width:250px;}
+.col-revelado{flex:0 0 330px !important; max-width:330px;}
 .col-stage{flex:1 1 0 !important; min-width:0;}
-@media (max-width:1180px){
-  .col-controls, .col-aside, .col-stage{
+@media (max-width:1280px){
+  .col-controls, .col-aside, .col-revelado, .col-stage{
     flex:1 1 100% !important; max-width:none !important;}
 }
 /* Topes de longitud de línea: el texto no se estira en monitores anchos */

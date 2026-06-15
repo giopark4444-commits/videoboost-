@@ -969,7 +969,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 gr.Markdown(f"{t('sin_mejorador_v', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
             with gr.Row():
-                with gr.Column(elem_classes="col-controls"):
+                with gr.Column(elem_classes="col-controls", min_width=300):
                     video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input")
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
@@ -1000,7 +1000,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
                 # --- Centro: resultado + comparación por el frame del propio video ---
-                with gr.Column(elem_classes="col-stage"):
+                with gr.Column(elem_classes="col-stage", min_width=320):
                     video_out = gr.Video(label=t("resultado", lang), elem_id="vb-result")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
@@ -1015,9 +1015,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
 
-                # --- Derecha: filtros y ajustes (post-proceso del resultado) ---
-                with gr.Column(elem_classes="col-aside"):
-                    ids_f = filtros_video()
+                # --- Columna 3: filtros y ajustes (elegir filtro + aplicar) ---
+                ids_f = filtros_video()
+                with gr.Column(elem_classes="col-aside", min_width=220):
                     gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",
                                 elem_classes="filtros-head")
                     filtro_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_f],
@@ -1032,9 +1032,15 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     with gr.Group(visible=ids_f[0] == "estabilizar") as grupo_est:
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
-                    grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
                     boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
                                              elem_classes="cta")
+                    gr.Markdown(t("filtros_aplicar_nota", lang), elem_classes="formato-nota")
+
+                # --- Columna 4 (derecha): revelado de color — presets + LUTs + sliders ---
+                with gr.Column(elem_classes="col-revelado", min_width=300,
+                               visible=ids_f[0] == "lut") as col_revelado:
+                    gr.Markdown(f"### {t('m_lut', lang)}", elem_classes="filtros-head")
+                    grupo_l_v, rev_v = grupo_revelado(True)
 
             def controles_v(motor):
                 return (
@@ -1064,11 +1070,11 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=filtro == "grano"),
                     gr.update(visible=filtro == "denoise"),
                     gr.update(visible=filtro == "estabilizar"),
-                    gr.update(visible=filtro == "lut"),
+                    gr.update(visible=filtro == "lut"),   # muestra/oculta la 4ª columna
                 )
 
             filtro_v.change(controles_filtro, filtro_v,
-                            [nota_filtro, grupo_g_v, grupo_den, grupo_est, grupo_l_v])
+                            [nota_filtro, grupo_g_v, grupo_den, grupo_est, col_revelado])
 
             # JS: rellena pos_frac (fracción 0-1) con el tiempo ACTUAL del
             # reproductor de resultado (o de entrada si aún no hay resultado),

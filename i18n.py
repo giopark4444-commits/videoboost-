@@ -813,8 +813,16 @@ T = {
     "filtros_ver_preview": {
         "es": "👁 Vista previa", "en": "👁 Preview", "fr": "👁 Aperçu"},
     "filtros_aplicar": {
-        "es": "Aplicar al resultado", "en": "Apply to result",
-        "fr": "Appliquer au résultat"},
+        "es": "Aplicar filtro al video mejorado",
+        "en": "Apply filter to the enhanced video",
+        "fr": "Appliquer le filtre à la vidéo améliorée"},
+    "filtros_aplicar_nota": {
+        "es": "Se aplica al video de **«Resultado»** (el ya mejorado). Si aún no has "
+              "mejorado nada, se aplica al video de entrada.",
+        "en": "Applies to the **“Result”** video (the enhanced one). If you haven't "
+              "enhanced yet, it applies to the input video.",
+        "fr": "S'applique à la vidéo **« Résultat »** (l'améliorée). Si vous n'avez rien "
+              "amélioré, elle s'applique à la vidéo d'entrée."},
     "filtros_sin_base": {
         "es": "⚠️ Primero mejora un video (o sube uno); el filtro se aplica sobre ese resultado.",
         "en": "⚠️ Enhance a video first (or upload one); the filter applies to that result.",
