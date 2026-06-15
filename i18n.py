@@ -29,6 +29,31 @@ T = {
     "tab_video": {"es": "Video", "en": "Video", "fr": "Vidéo"},
     "tab_imagenes": {"es": "Imágenes", "en": "Images", "fr": "Images"},
     "tab_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
+    "tab_comparar_luts": {
+        "es": "Comparar LUTs", "en": "Compare LUTs", "fr": "Comparer LUTs"},
+    "luts_intro": {
+        "es": "Sube un frame (o una foto) y míralo con **todos los LUTs a la vez**, "
+              "para elegir de un vistazo el que más te guste. Luego úsalo en el "
+              "«Revelado de color» de la pestaña Video.",
+        "en": "Upload a frame (or photo) and see it with **all LUTs at once** to pick "
+              "your favourite at a glance. Then use it in “Color grading” on the Video tab.",
+        "fr": "Téléversez une image (ou photo) et voyez-la avec **tous les LUTs à la "
+              "fois** pour choisir d'un coup d'œil. Utilisez-le ensuite dans "
+              "« Étalonnage » de l'onglet Vidéo."},
+    "luts_entrada": {
+        "es": "Frame o foto", "en": "Frame or photo", "fr": "Image ou photo"},
+    "luts_comparar": {
+        "es": "🎨 Comparar todos los LUTs", "en": "🎨 Compare all LUTs",
+        "fr": "🎨 Comparer tous les LUTs"},
+    "luts_galeria": {
+        "es": "Tu frame con cada LUT", "en": "Your frame with each LUT",
+        "fr": "Votre image avec chaque LUT"},
+    "luts_sube": {
+        "es": "⚠️ Sube un frame o foto primero.", "en": "⚠️ Upload a frame or photo first.",
+        "fr": "⚠️ Téléversez d'abord une image ou photo."},
+    "luts_progreso": {
+        "es": "Aplicando LUT {n}/{total}…", "en": "Applying LUT {n}/{total}…",
+        "fr": "Application du LUT {n}/{total}…"},
     "nivel": {"es": "Nivel", "en": "Tier", "fr": "Niveau"},
     "nivel_3": {"es": "Máximo", "en": "Maximum", "fr": "Maximum"},
     "nivel_2": {"es": "Pro", "en": "Pro", "fr": "Pro"},

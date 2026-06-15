@@ -441,6 +441,41 @@ def hacer_comparar_frame(lang):
     return comparar
 
 
+def hacer_comparar_luts(lang):
+    """Aplica TODOS los LUTs al mismo frame y los muestra juntos en una rejilla,
+    para comparar de un vistazo cuál queda mejor."""
+    import shutil
+    import tempfile
+
+    def comparar(imagen):
+        if not imagen:
+            yield [], t("luts_sube", lang)
+            return
+        tmp = Path(tempfile.mkdtemp(prefix="vb_luts_"))
+        galeria = [(imagen, "Original")]
+        yield galeria, ""
+        nombres = list(luts.NOMBRES.items())
+        for n, (lut, nombre) in enumerate(nombres, 1):
+            try:
+                gen = luts.etalonar(imagen, es_video=False, looks=[(lut, 1.0)])
+                salida = None
+                try:
+                    while True:
+                        next(gen)
+                except StopIteration as fin:
+                    salida = fin.value
+                if salida:
+                    dest = tmp / f"{lut}.png"
+                    shutil.copy(salida, dest)
+                    galeria.append((str(dest), nombre))
+            except Exception:
+                pass
+            yield galeria, t("luts_progreso", lang).format(n=n, total=len(nombres))
+        yield galeria, ""
+
+    return comparar
+
+
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
                  g_preset, g_int, g_tam, g_color, formato_img, *rev):
@@ -1221,6 +1256,21 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                  gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
                 [log_i, img_out, descarga_i])
             cancelar_i.click(fn=None, cancels=[ev_i])
+
+        # ---------------------------------------------------------------- Comparar LUTs
+        with gr.Tab(t("tab_comparar_luts", lang)):
+            gr.Markdown(t("luts_intro", lang))
+            with gr.Row():
+                with gr.Column(scale=1, min_width=260):
+                    luts_img = gr.Image(type="filepath", label=t("luts_entrada", lang))
+                    luts_btn = gr.Button(t("luts_comparar", lang), variant="primary",
+                                         elem_classes="cta")
+                    luts_msg = gr.Markdown("", elem_classes="size-preview")
+                with gr.Column(scale=3, min_width=400):
+                    luts_galeria = gr.Gallery(label=t("luts_galeria", lang), columns=4,
+                                              height="auto", object_fit="contain",
+                                              show_label=True)
+            luts_btn.click(hacer_comparar_luts(lang), luts_img, [luts_galeria, luts_msg])
 
         # ---------------------------------------------------------------- Galería
         with gr.Tab(t("tab_galeria", lang)):
