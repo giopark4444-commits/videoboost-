@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from engines import MODELS, SALIDAS, VENDOR, correr
+from engines import ffmpeg_utils as ff
 
 CLI = VENDOR / "seedvr2" / "inference_cli.py"
 
@@ -79,5 +80,7 @@ def mejorar(entrada, resolucion=1080, modelo=None, batch_size=None, es_video=Tru
 
     yield f"🚀 SeedVR2 · modelo {modelo} · resolución {resolucion}p · batch {batch if es_video else '—'}"
     yield "ℹ️ La primera vez descargará el modelo de HuggingFace (puede tardar)."
-    yield from correr(cmd, cwd=CLI.parent)
+    # El CLI exige `ffmpeg` en el PATH para --video_backend ffmpeg; garantizamos
+    # que lo encuentre aunque solo tengamos el de imageio-ffmpeg o bin/.
+    yield from correr(cmd, cwd=CLI.parent, env=ff.entorno_con_ffmpeg())
     return str(salida)

@@ -10,6 +10,7 @@ ffmpeg.
 import json
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -40,6 +41,37 @@ def ffmpeg() -> str:
 def ffprobe():
     """Ruta a ffprobe si existe (bin/ o PATH), o None — es opcional."""
     return _en_bin("ffprobe") or shutil.which("ffprobe")
+
+
+def entorno_con_ffmpeg(env: dict | None = None) -> dict:
+    """Devuelve un dict de entorno con un `ffmpeg` (y `ffprobe` si lo hay)
+    accesibles en el PATH como tales.
+
+    Herramientas externas (p. ej. el CLI de SeedVR2) hacen `which ffmpeg` y
+    fallan si solo tenemos el binario de imageio-ffmpeg (nombre versionado) o
+    uno en bin/. Creamos symlinks `ffmpeg`/`ffprobe` en bin/_ffmpeg_path/ y
+    anteponemos ese directorio al PATH. Si ya hay ffmpeg en el PATH, no toca nada.
+    """
+    import os
+
+    base = dict(env or os.environ)
+    if shutil.which("ffmpeg", path=base.get("PATH", "")):
+        return base
+    shim = BIN / "_ffmpeg_path"
+    shim.mkdir(parents=True, exist_ok=True)
+    for nombre, ruta in (("ffmpeg", ffmpeg()), ("ffprobe", ffprobe())):
+        if not ruta:
+            continue
+        enlace = shim / nombre
+        try:
+            if enlace.exists() or enlace.is_symlink():
+                enlace.unlink()
+            enlace.symlink_to(ruta)
+        except OSError:
+            shutil.copy(ruta, enlace)
+            enlace.chmod(enlace.stat().st_mode | stat.S_IEXEC)
+    base["PATH"] = str(shim) + os.pathsep + base.get("PATH", "")
+    return base
 
 
 def _falta(nombre):
