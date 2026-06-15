@@ -989,7 +989,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                            "seedvr2_img": "i_seedvr2", "realesrgan_img": "i_realesrgan",
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
                            "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut",
-                           "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface"}
+                           "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface",
+                           "seedvr2_mlx_img": "i_seedvr2_mlx"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
