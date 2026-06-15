@@ -116,6 +116,30 @@ T = {
         "es": "SeedVR2 — restauración IA (recomendado)",
         "en": "SeedVR2 — AI restoration (recommended)",
         "fr": "SeedVR2 — restauration IA (recommandé)"},
+    "m_seedvr2_mlx": {
+        "es": "SeedVR2 (MLX) — IA nativa Apple Silicon",
+        "en": "SeedVR2 (MLX) — native Apple Silicon AI",
+        "fr": "SeedVR2 (MLX) — IA native Apple Silicon"},
+    "i_seedvr2_mlx": {
+        "es": "SeedVR2 (MLX) — IA nativa Apple Silicon",
+        "en": "SeedVR2 (MLX) — native Apple Silicon AI",
+        "fr": "SeedVR2 (MLX) — IA native Apple Silicon"},
+    "n_seedvr2_mlx": {
+        "es": "El motor **SeedVR2 corriendo en MLX** (el framework de Apple), nativo de "
+              "Apple Silicon: misma restauración por difusión que SeedVR2 pero mucho más "
+              "rápida en Mac que la versión PyTorch/MPS. **Es por frame** (sin consistencia "
+              "temporal nativa) → en video puede haber leve parpadeo; usamos semilla fija para "
+              "reducirlo. MIT. La primera vez descarga los pesos (varios GB).",
+        "en": "**SeedVR2 running on MLX** (Apple's framework), native to Apple Silicon: same "
+              "diffusion restoration as SeedVR2 but far faster on Mac than the PyTorch/MPS "
+              "build. **Per-frame** (no native temporal consistency) → video may flicker "
+              "slightly; we use a fixed seed to reduce it. MIT. First run downloads the weights "
+              "(several GB).",
+        "fr": "**SeedVR2 sur MLX** (le framework d'Apple), natif Apple Silicon : même "
+              "restauration par diffusion que SeedVR2 mais bien plus rapide sur Mac que la "
+              "version PyTorch/MPS. **Image par image** (sans cohérence temporelle native) → "
+              "léger scintillement possible en vidéo ; graine fixe pour l'atténuer. MIT. "
+              "Premier lancement : téléchargement des poids (plusieurs Go)."},
     "m_realesrgan": {
         "es": "Real-ESRGAN — video real (Vulkan)",
         "en": "Real-ESRGAN — real-world video (Vulkan)",

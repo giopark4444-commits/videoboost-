@@ -67,6 +67,12 @@ _GESTION = {
         borrar=[VENDOR / "FlashVSR" / "examples" / "WanVSR" / "FlashVSR-v1.1"],
         instalador=["bash", "install/extras_flashvsr.sh"],
     ),
+    "seedvr2_mlx": dict(
+        repo=None,  # paquete pip (mflux); los pesos van al cache de HuggingFace
+        carpeta=RAIZ / ".venv-mlx",
+        borrar=[RAIZ / ".venv-mlx" / ".ok"],
+        instalador=["bash", "install/extras_mlx.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)
