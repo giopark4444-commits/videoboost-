@@ -480,6 +480,36 @@ T = {
         "fr": "Comparateur avant/après (image)"},
     "comparador_fs": {
         "es": "Pantalla completa", "en": "Fullscreen", "fr": "Plein écran"},
+    # ---- comparador avanzado: elegir frame por línea de tiempo + hasta 4 ----
+    "cmp_avanzado": {
+        "es": "🔬 Comparar otros frames (línea de tiempo)",
+        "en": "🔬 Compare other frames (timeline)",
+        "fr": "🔬 Comparer d'autres images (chronologie)"},
+    "cmp_posicion": {
+        "es": "Momento del video", "en": "Point in the video",
+        "fr": "Moment de la vidéo"},
+    "cmp_ayuda": {
+        "es": "Mueve la barra al momento que quieras y pulsa «Añadir»: puedes fijar "
+              "hasta 4 frames para compararlos antes/después a la vez.",
+        "en": "Move the bar to any moment and press “Add”: you can pin up to 4 "
+              "frames to compare before/after at once.",
+        "fr": "Déplacez la barre au moment voulu et appuyez sur « Ajouter » : vous "
+              "pouvez épingler jusqu'à 4 images à comparer avant/après."},
+    "cmp_anadir": {
+        "es": "➕ Añadir este frame", "en": "➕ Add this frame",
+        "fr": "➕ Ajouter cette image"},
+    "cmp_limpiar": {
+        "es": "🗑️ Limpiar", "en": "🗑️ Clear", "fr": "🗑️ Effacer"},
+    "cmp_sin_video": {
+        "es": "⚠️ Primero mejora un video; luego podrás comparar sus frames.",
+        "en": "⚠️ Enhance a video first; then you can compare its frames.",
+        "fr": "⚠️ Améliorez d'abord une vidéo ; vous pourrez ensuite comparer ses images."},
+    "cmp_lleno": {
+        "es": "Ya hay 4 frames fijados — pulsa «Limpiar» para empezar de nuevo.",
+        "en": "4 frames already pinned — press “Clear” to start over.",
+        "fr": "4 images déjà épinglées — appuyez sur « Effacer » pour recommencer."},
+    "cmp_frame_en": {
+        "es": "Frame al", "en": "Frame at", "fr": "Image à"},
     # ---- presets de revelado ----
     "preset_nombre": {
         "es": "Nombre del preset", "en": "Preset name", "fr": "Nom du préréglage"},

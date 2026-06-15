@@ -162,6 +162,10 @@ footer{display:none !important;}
 .formato-nota p{margin:4px 0 0 !important; font-size:12.5px !important;
   color:var(--vb-muted) !important; line-height:1.5 !important;}
 
+/* Título de cada frame fijado en el comparador avanzado */
+.cmp-cap{margin:10px 0 4px !important; font-size:12.5px !important;
+  color:var(--vb-muted) !important; font-weight:600 !important;}
+
 /* Comparador antes/después (CSS puro, sin dependencias).
    La imagen "después" (en flujo) define la altura exacta del contenedor; la
    "antes" se superpone con el MISMO tamaño (width:100%, alto automático) para

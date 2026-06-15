@@ -864,6 +864,22 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                    elem_classes="cta")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
 
+                    # --- Comparador avanzado: elegir frame por la línea de tiempo
+                    #     y fijar hasta 4 para comparar a la vez (colapsado para
+                    #     no ocupar espacio hasta que se use). ---
+                    with gr.Accordion(t("cmp_avanzado", lang), open=False):
+                        gr.Markdown(t("cmp_ayuda", lang), elem_classes="size-preview")
+                        cmp_pos = gr.Slider(0, 100, value=30, step=1,
+                                            label=t("cmp_posicion", lang) + " (%)")
+                        with gr.Row():
+                            cmp_add = gr.Button(t("cmp_anadir", lang), size="sm",
+                                                variant="primary")
+                            cmp_clear = gr.Button(t("cmp_limpiar", lang), size="sm",
+                                                  variant="stop")
+                        cmp_msg = gr.Markdown("", elem_classes="size-preview")
+                        cmp_estado = gr.State([])
+                        cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
+
             def controles_v(motor):
                 return (
                     gr.update(value=_nota_video(motor, lang)),
@@ -891,6 +907,41 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                  *rev_v],
                 [log_v, video_out, comparador_v, descarga_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
+
+            # --- Comparador avanzado: añadir/limpiar frames por la línea de tiempo ---
+            def _frame_a_cmp(video, salida, pos):
+                fa = ff.extraer_frame_preview(video, pos / 100.0) if video else None
+                fd = ff.extraer_frame_preview(salida, pos / 100.0) if salida else None
+                html = ""
+                if fa and fd:
+                    cap = f"<p class='cmp-cap'>{t('cmp_frame_en', lang)} {int(pos)}%</p>"
+                    html = cap + comparador_html(fa, fd, lang)
+                for f in (fa, fd):
+                    if f:
+                        Path(f).unlink(missing_ok=True)
+                return html
+
+            def _render_slots(estado):
+                return [gr.update(value=(estado[i] if i < len(estado) else ""),
+                                  visible=i < len(estado)) for i in range(4)]
+
+            def _anadir_cmp(video, salida, pos, estado):
+                estado = list(estado or [])
+                if not video or not salida:
+                    return [estado, t("cmp_sin_video", lang)] + _render_slots(estado)
+                if len(estado) >= 4:
+                    return [estado, t("cmp_lleno", lang)] + _render_slots(estado)
+                html = _frame_a_cmp(video, salida, pos)
+                if html:
+                    estado.append(html)
+                return [estado, ""] + _render_slots(estado)
+
+            def _limpiar_cmp():
+                return [[], ""] + [gr.update(value="", visible=False) for _ in range(4)]
+
+            cmp_add.click(_anadir_cmp, [video_in, video_out, cmp_pos, cmp_estado],
+                          [cmp_estado, cmp_msg] + cmp_slots)
+            cmp_clear.click(_limpiar_cmp, None, [cmp_estado, cmp_msg] + cmp_slots)
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
