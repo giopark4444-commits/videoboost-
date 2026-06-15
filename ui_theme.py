@@ -80,10 +80,23 @@ body.dark, .dark{
 .dark .engine-note{background:#2b2b29 !important;}
 .dark #vb-header .vb-pill{background:var(--vb-surface);}
 .dark .sys-card{background:var(--vb-surface);}
-/* Lienzo centrado y bien proporcionado en todo dispositivo */
-.gradio-container{max-width:1140px !important; margin:0 auto !important;
-  padding:0 20px 56px !important;}
+/* Lienzo a pantalla completa: ocupa todo el ancho disponible, con un margen
+   lateral cómodo que escala (no los ~400px de hueco que dejaba el tope de
+   1140px en monitores grandes). */
+.gradio-container{max-width:100% !important; margin:0 !important;
+  padding:0 clamp(16px, 2vw, 40px) 56px !important;}
 footer{display:none !important;}
+
+/* En pantalla ancha: la columna de controles se queda a un ancho cómodo y
+   estable; la columna de resultados (video, comparador) se lleva el resto del
+   espacio. Así «full-width» significa MÁS sitio para ver el resultado y para
+   sumar opciones, no controles estirados. */
+.col-controls{flex:0 1 470px !important; max-width:470px;}
+@media (max-width:900px){ .col-controls{flex:1 1 auto !important; max-width:none;} }
+/* Topes de longitud de línea: el texto no se estira en monitores anchos */
+.engine-note p, .formato-nota p, .size-preview p,
+.aviso-sin-motor p, .cmp-cap{max-width:72ch;}
+.sys-card{max-width:80ch;}
 
 /* Cabecera */
 #vb-header{padding:30px 0 22px; border-bottom:1px solid var(--vb-border); margin-bottom:22px;}

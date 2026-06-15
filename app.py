@@ -809,7 +809,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 gr.Markdown(f"{t('sin_mejorador_v', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
             with gr.Row():
-                with gr.Column():
+                with gr.Column(elem_classes="col-controls"):
                     video_in = gr.Video(label=t("video_entrada", lang))
                     motor_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_v],
                                        value=ids_v[0], label=t("motor", lang),
@@ -953,7 +953,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
             with gr.Row():
-                with gr.Column():
+                with gr.Column(elem_classes="col-controls"):
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
                     motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
                                        value=ids_i[0], label=t("motor", lang),
