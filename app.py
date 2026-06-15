@@ -1161,11 +1161,24 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                             yield gr.update(value="\n".join(log[-200:]), visible=True)
                     return correr_mant
 
+                def _hacer_abrir(motor):
+                    def abrir():
+                        return gr.update(value=mantenimiento.abrir_carpeta(motor),
+                                         visible=True)
+                    return abrir
+
                 for _m in _gestionables:
+                    _u = mantenimiento.ubicacion(_m)
+                    _detalle = _u["tamano"] if _u["existe"] else t("mant_no_descargado", lang)
                     with gr.Row():
-                        gr.Markdown(f"**{_MANT_NOMBRES[_m]}**")
+                        gr.Markdown(
+                            f"**{_MANT_NOMBRES[_m]}**  \n"
+                            f"{t('mant_ubic', lang)}: `{_u['ruta']}` · {_detalle}",
+                            elem_classes="mant-info")
+                        _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
                         _btn_re = gr.Button(t("mant_redescargar", lang), size="sm")
                         _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
+                    _btn_open.click(_hacer_abrir(_m), None, mant_log)
                     _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
                     _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
 

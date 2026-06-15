@@ -8,6 +8,7 @@ repo git para comparar versiones con el remoto.
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from engines import BIN, MODELS, RAIZ, VENDOR, correr
@@ -20,27 +21,79 @@ from engines import BIN, MODELS, RAIZ, VENDOR, correr
 _GESTION = {
     "seedvr2": dict(
         repo=VENDOR / "seedvr2",
+        carpeta=MODELS / "SEEDVR2",   # dónde viven los pesos descargados
         borrar=[MODELS / "SEEDVR2"],
         instalador=None,  # el modelo se vuelve a descargar solo al pulsar «Mejorar»
     ),
     "vulkan": dict(
         repo=None,  # binarios de release fijo (sin auto-actualización)
+        carpeta=BIN,
         borrar=[BIN / "realesrgan", BIN / "realcugan", BIN / "waifu2x", BIN / "rife"],
         instalador=["python", "install/descargar_vulkan.py"],
     ),
     "codeformer": dict(
         repo=VENDOR / "CodeFormer",
+        carpeta=VENDOR / "CodeFormer" / "weights",
         borrar=[VENDOR / "CodeFormer" / "weights", RAIZ / ".venv-caras" / ".ok"],
         instalador=["bash", "install/extras_caras.sh"],
     ),
     "ddcolor": dict(
         repo=VENDOR / "DDColor",
+        carpeta=MODELS / "DDColor",
         borrar=[MODELS / "DDColor", RAIZ / ".venv-color" / ".ok"],
         instalador=["bash", "install/extras_color.sh"],
     ),
 }
 
 MOTORES = list(_GESTION)
+
+
+def _tamano_dir(p: Path) -> int:
+    """Bytes totales de un archivo o carpeta (0 si no existe)."""
+    if not p.exists():
+        return 0
+    if p.is_file():
+        return p.stat().st_size
+    return sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+
+
+def _humano(n: int) -> str:
+    tam = float(n)
+    for unidad in ("B", "KB", "MB", "GB"):
+        if tam < 1024 or unidad == "GB":
+            return f"{tam:.0f} {unidad}" if unidad == "B" else f"{tam:.1f} {unidad}"
+        tam /= 1024
+    return f"{tam:.1f} GB"
+
+
+def carpeta(motor: str) -> Path:
+    """Carpeta del disco donde se guardan los archivos descargados del motor."""
+    g = _GESTION.get(motor)
+    if not g:
+        raise RuntimeError(f"Motor desconocido: {motor}")
+    return g["carpeta"]
+
+
+def ubicacion(motor: str) -> dict:
+    """Info de almacenamiento: ruta absoluta, si existe y tamaño en disco."""
+    p = carpeta(motor)
+    total = _tamano_dir(p)
+    return {"ruta": str(p), "existe": p.exists() and total > 0,
+            "tamano": _humano(total) if total else None}
+
+
+def abrir_carpeta(motor: str) -> str:
+    """Abre la carpeta del motor en el explorador del sistema (Finder/Explorer)."""
+    p = carpeta(motor)
+    objetivo = p if p.exists() else p.parent  # si aún no existe, abre el contenedor
+    objetivo.mkdir(parents=True, exist_ok=True)
+    if sys.platform == "darwin":
+        subprocess.run(["open", str(objetivo)])
+    elif sys.platform == "win32":
+        subprocess.run(["explorer", str(objetivo)])
+    else:
+        subprocess.run(["xdg-open", str(objetivo)])
+    return f"📁 Abierto en el explorador: {objetivo}"
 
 
 def _borrar(p: Path):

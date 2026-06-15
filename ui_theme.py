@@ -226,6 +226,12 @@ footer{display:none !important;}
 /* Pestaña Sistema más legible */
 .sys-card{background:#fff; border:1px solid var(--vb-border); border-radius:14px; padding:6px 20px;}
 
+/* Mantenimiento: nombre del motor + ruta de descarga */
+.mant-info p{margin:0 !important; font-size:14px !important; line-height:1.5 !important;}
+.mant-info code{font-size:11.5px !important; color:var(--vb-muted) !important;
+  background:var(--vb-accent-soft) !important; padding:1px 6px !important;
+  border-radius:6px !important; word-break:break-all;}
+
 /* Responsive */
 @media (max-width:760px){
   .gradio-container{padding:0 14px 40px !important;}

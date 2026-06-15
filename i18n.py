@@ -693,6 +693,13 @@ T = {
         "es": "🔍 Comprobar versión", "en": "🔍 Check version", "fr": "🔍 Vérifier la version"},
     "mant_log": {
         "es": "Mantenimiento", "en": "Maintenance", "fr": "Maintenance"},
+    "mant_abrir": {
+        "es": "📁 Abrir carpeta", "en": "📁 Open folder", "fr": "📁 Ouvrir le dossier"},
+    "mant_ubic": {
+        "es": "Se guarda en", "en": "Stored at", "fr": "Enregistré dans"},
+    "mant_no_descargado": {
+        "es": "(aún no descargado)", "en": "(not downloaded yet)",
+        "fr": "(pas encore téléchargé)"},
 }
 
 
