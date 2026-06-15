@@ -162,12 +162,32 @@ footer{display:none !important;}
 .formato-nota p{margin:4px 0 0 !important; font-size:12.5px !important;
   color:var(--vb-muted) !important; line-height:1.5 !important;}
 
-/* Comparador antes/después (CSS puro, sin dependencias) */
-.ba-cmp{position:relative; width:100%; min-height:320px; border-radius:14px; overflow:hidden;
+/* Comparador antes/después (CSS puro, sin dependencias).
+   La imagen "después" (en flujo) define la altura exacta del contenedor; la
+   "antes" se superpone con el MISMO tamaño (width:100%, alto automático) para
+   que el corte coincida pixel a pixel. Sin min-height: forzarlo desalineaba
+   las capas cuando la imagen era más baja. */
+.ba-cmp{position:relative; width:100%; border-radius:14px; overflow:hidden;
   border:1px solid var(--vb-border); background:#1f1e1c; line-height:0; user-select:none;
   touch-action:none;}
 .ba-cmp img{display:block; width:100%;}
-.ba-cmp .ba-before{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
+.ba-cmp .ba-before{position:absolute; top:0; left:0; width:100%; height:auto;}
+
+/* Botón de pantalla completa (encima del slider invisible; abajo-derecha
+   para no chocar con la etiqueta "Después") */
+.ba-cmp .ba-fs{position:absolute; bottom:9px; right:9px; z-index:4; width:30px; height:30px;
+  display:flex; align-items:center; justify-content:center; padding:0; line-height:1;
+  font-size:16px; border:none; border-radius:8px; cursor:pointer;
+  background:rgba(31,30,28,.72); color:#fff; box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.ba-cmp .ba-fs:hover{background:rgba(31,30,28,.92);}
+
+/* En pantalla completa: ambas capas con el mismo encuadre (contain) para que
+   sigan alineadas, centradas sobre fondo negro. */
+.ba-cmp:fullscreen, .ba-cmp:-webkit-full-screen{background:#000; display:flex;
+  align-items:center; justify-content:center; border:none; border-radius:0;}
+.ba-cmp:fullscreen .ba-after, .ba-cmp:fullscreen .ba-before,
+.ba-cmp:-webkit-full-screen .ba-after, .ba-cmp:-webkit-full-screen .ba-before{
+  position:absolute; top:0; left:0; width:100vw; height:100vh; object-fit:contain;}
 .ba-cmp .ba-line{position:absolute; top:0; bottom:0; left:var(--pos,50%); width:2px;
   background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.22); transform:translateX(-1px);
   pointer-events:none;}

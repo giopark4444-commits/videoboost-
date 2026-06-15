@@ -199,6 +199,9 @@ def comparador_html(antes, despues, lang):
     except Exception:
         return (f'<p style="color:var(--vb-muted,#7c776d)">{t("listo", lang)} — '
                 f'{despues}</p>')
+    fs_js = ("var c=this.closest('.ba-cmp');"
+             "if(document.fullscreenElement){document.exitFullscreen()}"
+             "else{(c.requestFullscreen||c.webkitRequestFullscreen).call(c)}")
     return (
         '<div class="ba-cmp" style="--pos:50%">'
         f'<img class="ba-after" src="{d}">'
@@ -207,6 +210,8 @@ def comparador_html(antes, despues, lang):
         '<div class="ba-line"></div>'
         f'<span class="ba-tag ba-l">{t("antes", lang)}</span>'
         f'<span class="ba-tag ba-r">{t("despues", lang)}</span>'
+        f'<button class="ba-fs" type="button" title="{t("comparador_fs", lang)}" '
+        f'onclick="{fs_js}">⤢</button>'
         '<input type="range" min="0" max="100" value="50" '
         "oninput=\"this.parentNode.style.setProperty('--pos', this.value+'%')\">"
         '</div>'

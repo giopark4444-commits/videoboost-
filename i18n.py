@@ -478,6 +478,8 @@ T = {
     "comparador_video": {
         "es": "Comparador antes/después (frame)", "en": "Before/after comparator (frame)",
         "fr": "Comparateur avant/après (image)"},
+    "comparador_fs": {
+        "es": "Pantalla completa", "en": "Fullscreen", "fr": "Plein écran"},
     # ---- presets de revelado ----
     "preset_nombre": {
         "es": "Nombre del preset", "en": "Preset name", "fr": "Nom du préréglage"},
