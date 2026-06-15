@@ -1017,7 +1017,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
                 # --- Columna 3: elegir filtro (botón Aplicar ARRIBA) ---
                 ids_f = filtros_video()
-                _CON_CTRL = {"lut", "grano", "denoise", "estabilizar"}  # filtros con ajustes
+                # Filtros "simples" (grano/desentrelazar/ruido/estabilizar): sus
+                # opciones van JUNTAS en un solo grupo. El revelado (lut) va aparte.
+                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar"}
+                _CON_CTRL = _SIMPLES | {"lut"}
                 with gr.Column(elem_classes="col-aside", min_width=220):
                     gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",
                                 elem_classes="filtros-head")
@@ -1035,11 +1038,17 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 #     según el filtro seleccionado, igual que el revelado).
                 with gr.Column(elem_classes="col-revelado", min_width=300,
                                visible=ids_f[0] in _CON_CTRL) as col_revelado:
-                    grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(ids_f[0] == "grano")
-                    with gr.Group(visible=ids_f[0] == "denoise") as grupo_den:
+                    # Grupo único con TODAS las opciones de los filtros simples.
+                    with gr.Group(visible=ids_f[0] in _SIMPLES) as grupo_simples:
+                        gr.Markdown(f"**{t('m_grano', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
+                        _gg, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(True)
+                        gr.Markdown(f"**{t('m_denoise', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
                         den_luma = gr.Slider(0.0, 10.0, value=3.0, step=0.5, label=t("den_luma", lang))
                         den_croma = gr.Slider(0.0, 10.0, value=2.0, step=0.5, label=t("den_chroma", lang))
-                    with gr.Group(visible=ids_f[0] == "estabilizar") as grupo_est:
+                        gr.Markdown(f"**{t('m_estabilizar', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
                     grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
@@ -1069,15 +1078,13 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             def controles_filtro(filtro):
                 return (
                     gr.update(value=t(MOTORES_VIDEO_NOTAS[filtro], lang)),  # nota
-                    gr.update(visible=filtro == "grano"),       # grupo grano
-                    gr.update(visible=filtro == "denoise"),     # sliders ruido
-                    gr.update(visible=filtro == "estabilizar"), # sliders estabilizar
-                    gr.update(visible=filtro == "lut"),         # panel revelado
-                    gr.update(visible=filtro in _CON_CTRL),     # 4ª columna (se abre si hay ajustes)
+                    gr.update(visible=filtro in _SIMPLES),  # grupo único grano/ruido/estabilizar
+                    gr.update(visible=filtro == "lut"),     # panel revelado
+                    gr.update(visible=filtro in _CON_CTRL), # 4ª columna (se abre si hay ajustes)
                 )
 
             filtro_v.change(controles_filtro, filtro_v,
-                            [nota_filtro, grupo_g_v, grupo_den, grupo_est, grupo_l_v, col_revelado])
+                            [nota_filtro, grupo_simples, grupo_l_v, col_revelado])
 
             # JS: rellena pos_frac (fracción 0-1) con el tiempo ACTUAL del
             # reproductor de resultado (o de entrada si aún no hay resultado),
