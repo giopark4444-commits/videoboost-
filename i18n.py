@@ -294,6 +294,70 @@ T = {
               "dans le dépôt → usage test / personnel seulement, PAS pour une version vendue** "
               "(permission des auteurs requise). NVIDIA uniquement."},
 
+    # ---- motores pesados nuevos (deblur / poca luz / restauración real / SR nítida) ----
+    "i_restormer": {
+        "es": "Restormer — deblur / lluvia / ruido (NVIDIA)",
+        "en": "Restormer — deblur / rain / noise (NVIDIA)",
+        "fr": "Restormer — flou / pluie / bruit (NVIDIA)"},
+    "i_retinexformer": {
+        "es": "Retinexformer — poca luz / noche (NVIDIA)",
+        "en": "Retinexformer — low light / night (NVIDIA)",
+        "fr": "Retinexformer — basse lumière / nuit (NVIDIA)"},
+    "i_dreamclear": {
+        "es": "DreamClear — restauración real máxima (NVIDIA)",
+        "en": "DreamClear — max real-world restoration (NVIDIA)",
+        "fr": "DreamClear — restauration réelle maximale (NVIDIA)"},
+    "i_hat": {
+        "es": "HAT — super-resolución nítida x4 (NVIDIA)",
+        "en": "HAT — sharp x4 super-resolution (NVIDIA)",
+        "fr": "HAT — super-résolution nette x4 (NVIDIA)"},
+    "n_restormer": {
+        "es": "Transformer de restauración (MIT). Quita **desenfoque de movimiento y de "
+              "enfoque, lluvia y ruido real** en una pasada determinista (no inventa textura). "
+              "Elige la tarea abajo. SOTA en GoPro/SIDD. Solo NVIDIA en la práctica.",
+        "en": "Restoration transformer (MIT). Removes **motion & defocus blur, rain and real "
+              "noise** in one deterministic pass (no hallucinated texture). Pick the task below. "
+              "SOTA on GoPro/SIDD. NVIDIA in practice.",
+        "fr": "Transformer de restauration (MIT). Enlève **flou de mouvement et de mise au point, "
+              "pluie et bruit réel** en une passe déterministe (sans inventer de texture). "
+              "Choisis la tâche ci-dessous. SOTA sur GoPro/SIDD. NVIDIA en pratique."},
+    "n_retinexformer": {
+        "es": "Aclara fotos **oscuras o nocturnas** y recupera sombras sin amplificar el ruido "
+              "(MIT, SOTA ICCV'23). Ideal para material subexpuesto. Solo NVIDIA en la práctica.",
+        "en": "Brightens **dark or night** photos and recovers shadows without amplifying noise "
+              "(MIT, SOTA ICCV'23). Great for underexposed material. NVIDIA in practice.",
+        "fr": "Éclaircit les photos **sombres ou nocturnes** et récupère les ombres sans amplifier "
+              "le bruit (MIT, SOTA ICCV'23). Idéal pour le sous-exposé. NVIDIA en pratique."},
+    "n_dreamclear": {
+        "es": "Restauración fotorrealista de mundo real de **alta capacidad** por difusión "
+              "(Apache-2.0, NeurIPS'24). Máxima calidad pero **lento y pide mucha VRAM**. "
+              "Complementa a FaithDiff/DiffBIR. Solo NVIDIA.",
+        "en": "High-capacity real-world photorealistic restoration via diffusion (Apache-2.0, "
+              "NeurIPS'24). Top quality but **slow and very VRAM-hungry**. Complements "
+              "FaithDiff/DiffBIR. NVIDIA only.",
+        "fr": "Restauration photoréaliste du monde réel à **haute capacité** par diffusion "
+              "(Apache-2.0, NeurIPS'24). Qualité maximale mais **lente et gourmande en VRAM**. "
+              "Complète FaithDiff/DiffBIR. NVIDIA uniquement."},
+    "n_hat": {
+        "es": "Super-resolución x4 muy **nítida y con mucho detalle**, sin alucinaciones de "
+              "difusión (Apache-2.0, SOTA CVPR'23). Más rápida que SeedVR2, más detalle que "
+              "Real-ESRGAN. Solo NVIDIA en la práctica.",
+        "en": "Very **sharp, high-detail** x4 super-resolution, no diffusion hallucinations "
+              "(Apache-2.0, SOTA CVPR'23). Faster than SeedVR2, more detail than Real-ESRGAN. "
+              "NVIDIA in practice.",
+        "fr": "Super-résolution x4 très **nette et détaillée**, sans hallucinations de diffusion "
+              "(Apache-2.0, SOTA CVPR'23). Plus rapide que SeedVR2, plus de détail que "
+              "Real-ESRGAN. NVIDIA en pratique."},
+    "rest_tarea": {"es": "Tarea (Restormer)", "en": "Task (Restormer)", "fr": "Tâche (Restormer)"},
+    "rest_motion_deblurring": {
+        "es": "Quitar desenfoque de movimiento", "en": "Motion deblur", "fr": "Flou de mouvement"},
+    "rest_single_image_defocus_deblurring": {
+        "es": "Quitar desenfoque de enfoque", "en": "Defocus deblur", "fr": "Flou de mise au point"},
+    "rest_deraining": {
+        "es": "Quitar lluvia", "en": "Remove rain", "fr": "Enlever la pluie"},
+    "rest_real_denoising": {
+        "es": "Quitar ruido real", "en": "Remove real noise", "fr": "Enlever le bruit réel"},
+
     # ---- apariencia / tema ----
     "ap_titulo": {"es": "🎨 Apariencia", "en": "🎨 Appearance", "fr": "🎨 Apparence"},
     "ap_modo": {"es": "Tema", "en": "Theme", "fr": "Thème"},

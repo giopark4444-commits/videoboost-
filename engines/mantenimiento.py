@@ -85,6 +85,32 @@ _GESTION = {
         borrar=[VENDOR / "fx-upscale" / ".build"],
         instalador=["bash", "install/extras_metalfx.sh"],
     ),
+    "restormer": dict(
+        repo=VENDOR / "Restormer",
+        carpeta=VENDOR / "Restormer",
+        borrar=[RAIZ / ".venv-restormer" / ".ok"],
+        instalador=["bash", "install/extras_restormer.sh"],
+    ),
+    "retinexformer": dict(
+        repo=VENDOR / "Retinexformer",
+        carpeta=VENDOR / "Retinexformer" / "pretrained_weights",
+        borrar=[VENDOR / "Retinexformer" / "pretrained_weights",
+                RAIZ / ".venv-retinexformer" / ".ok"],
+        instalador=["bash", "install/extras_retinexformer.sh"],
+    ),
+    "dreamclear": dict(
+        repo=VENDOR / "DreamClear",
+        carpeta=MODELS / "DreamClear",
+        borrar=[MODELS / "DreamClear", RAIZ / ".venv-dreamclear" / ".ok"],
+        instalador=["bash", "install/extras_dreamclear.sh"],
+    ),
+    "hat": dict(
+        repo=VENDOR / "HAT",
+        carpeta=VENDOR / "HAT" / "experiments" / "pretrained_models",
+        borrar=[VENDOR / "HAT" / "experiments" / "pretrained_models",
+                RAIZ / ".venv-hat" / ".ok"],
+        instalador=["bash", "install/extras_hat.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)

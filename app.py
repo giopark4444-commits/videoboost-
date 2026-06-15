@@ -9,6 +9,7 @@ Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 import base64
 import io
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -21,9 +22,10 @@ import hardware
 import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import (color, diffbir, faces, faithdiff, filtros, flashvsr, grano,
-                     instantir, luts, mantenimiento, metalfx, osdface, pmrf,
-                     realesrgan_mlx, seedvr2, seedvr2_mlx, vulkan)
+from engines import (color, diffbir, dreamclear, faces, faithdiff, filtros,
+                     flashvsr, grano, hat, instantir, luts, mantenimiento,
+                     metalfx, osdface, pmrf, realesrgan_mlx, restormer,
+                     retinexformer, seedvr2, seedvr2_mlx, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -46,6 +48,8 @@ MOTORES_IMG_NOTAS = {
     "lut": "n_lut", "diffbir": "n_diffbir", "pmrf": "n_pmrf",
     "osdface": "n_osdface", "seedvr2_mlx_img": "n_seedvr2_mlx",
     "realesrgan_mlx_img": "n_realesrgan_mlx",
+    "restormer": "n_restormer", "retinexformer": "n_retinexformer",
+    "dreamclear": "n_dreamclear", "hat": "n_hat",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
@@ -253,12 +257,59 @@ def _consumir(gen, log):
         gen.close()
 
 
+# ---- barra de % de avance: leer el progreso del propio log del motor ----
+# correr() une stderr→stdout, así que el avance de FFmpeg (frame=/time=), de los
+# binarios Vulkan ncnn y de las barras tqdm (45%|…) llega como líneas de log.
+_RE_FRAME = re.compile(r"frame=\s*(\d+)")
+_RE_TIME = re.compile(r"time=\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
+# % SOLO cuando la línea ES un porcentaje (Vulkan ncnn: "12.50%" / "[12%]") o es una
+# barra tqdm ("45%|████"). Así NO confundimos con las estadísticas de x264, que
+# llevan muchos "%" sueltos en su resumen final.
+_RE_PCT_SOLO = re.compile(r"^\s*\[?\s*(\d{1,3}(?:\.\d+)?)\s*%\s*\]?\s*$")
+_RE_PCT_TQDM = re.compile(r"(\d{1,3}(?:\.\d+)?)\s*%\s*\|")
+
+
+def _totales_video(video):
+    """(frames, segundos) del video; (0, 0.0) si no se puede saber."""
+    try:
+        info = ff.info_video(video)
+        return int(info.get("frames") or 0), float(info.get("duracion") or 0)
+    except Exception:
+        return 0, 0.0
+
+
+def _pct_de_linea(linea, total_frames, total_seg):
+    """Avance 0–1 deducido de una línea de log; None si no hay ninguna señal.
+
+    Prioriza las señales fiables y monótonas de FFmpeg (time=, luego frame=) y deja
+    el porcentaje suelto (Vulkan/tqdm) como último recurso cuando no hay totales.
+    """
+    if total_seg > 0:
+        m = _RE_TIME.search(linea)
+        if m:
+            seg = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+            return max(0.0, min(1.0, seg / total_seg))
+    if total_frames > 0:
+        m = _RE_FRAME.search(linea)
+        if m:
+            return max(0.0, min(1.0, int(m.group(1)) / total_frames))
+    m = _RE_PCT_SOLO.match(linea) or _RE_PCT_TQDM.search(linea)
+    if m:
+        v = float(m.group(1))
+        if 0.0 <= v <= 100.0:
+            return v / 100.0
+    return None
+
+
 def hacer_procesar_video(lang):
-    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato):
+    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato,
+                 progress=gr.Progress()):
         oculto = gr.update(visible=False)
         if not video:
             yield t("sube_video", lang), None, "", oculto
             return
+        total_f, total_s = _totales_video(video)
+        progress(0.0, desc=t("progreso", lang))
         log = [f"▶ {t('m_' + motor, lang).split(' — ')[0]}"]
         try:
             if motor == "seedvr2":
@@ -279,10 +330,15 @@ def hacer_procesar_video(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), None, "", oculto
+                    texto = next(consumo)
+                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    if frac is not None:
+                        progress(frac, desc=t("progreso", lang))
+                    yield texto, None, "", oculto
                 except StopIteration as fin:
                     salida = fin.value
                     break
+            progress(1.0, desc=t("listo", lang))
 
             # `salida` es H.264 (siempre reproducible en el navegador): es lo que
             # alimenta el reproductor y el comparador. El formato elegido (ProRes,
@@ -324,13 +380,21 @@ def hacer_aplicar_filtros(lang):
     """Aplica un filtro de post-proceso (revelado/grano/limpieza) AL RESULTADO ya
     mejorado (o al video original si aún no se mejoró), y actualiza el reproductor,
     el comparador y la descarga. Permite encadenar (aplicar uno tras otro)."""
-    def aplicar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam, g_color,
-                den_luma, den_croma, est_suav, est_zoom, formato, *rev):
+    # progress va PRIMERO (con defaults en el resto) a propósito: Gradio solo
+    # detecta gr.Progress entre los parámetros posicionales y deja de buscar al
+    # llegar a *rev; colocándolo al frente lo inserta en el índice 0 y todo lo
+    # demás (incluido *rev con los LUTs) queda alineado.
+    def aplicar(progress=gr.Progress(), salida_actual=None, video_orig=None,
+                filtro=None, g_preset=None, g_int=None, g_tam=None, g_color=None,
+                den_luma=None, den_croma=None, est_suav=None, est_zoom=None,
+                formato=None, *rev):
         oculto = gr.update(visible=False)
         base = salida_actual or video_orig
         if not base:
             yield t("filtros_sin_base", lang), None, "", oculto
             return
+        total_f, total_s = _totales_video(base)
+        progress(0.0, desc=t("progreso", lang))
         log = [f"▶ {t('m_' + filtro, lang).split(' — ')[0]}"]
         try:
             if filtro == "lut":
@@ -352,10 +416,15 @@ def hacer_aplicar_filtros(lang):
             salida = None
             while True:
                 try:
-                    yield next(consumo), None, "", oculto
+                    texto = next(consumo)
+                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    if frac is not None:
+                        progress(frac, desc=t("progreso", lang))
+                    yield texto, None, "", oculto
                 except StopIteration as fin:
                     salida = fin.value
                     break
+            progress(1.0, desc=t("listo", lang))
 
             descarga = salida
             if salida and formato and formato != "h264":
@@ -478,7 +547,7 @@ def hacer_comparar_luts(lang):
 
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
-                 g_preset, g_int, g_tam, g_color, formato_img, *rev):
+                 tarea_rest, g_preset, g_int, g_tam, g_color, formato_img, *rev):
         oculto = gr.update(visible=False)
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
@@ -493,6 +562,14 @@ def hacer_procesar_imagen(lang):
                 gen = pmrf.mejorar(imagen)
             elif motor == "osdface":
                 gen = osdface.mejorar(imagen)
+            elif motor == "restormer":
+                gen = restormer.mejorar(imagen, tarea=tarea_rest or "Motion_Deblurring")
+            elif motor == "retinexformer":
+                gen = retinexformer.mejorar(imagen)
+            elif motor == "dreamclear":
+                gen = dreamclear.mejorar(imagen, escala=int(escala))
+            elif motor == "hat":
+                gen = hat.mejorar(imagen, escala=int(escala))
             elif motor == "seedvr2_img":
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "seedvr2_mlx_img":
@@ -716,6 +793,14 @@ def texto_sistema(lang):
          "bash install/extras_instantir.sh", True),
         ("FlashVSR — modo rápido", HW["flashvsr"] and flashvsr.disponible(),
          "bash install/extras_flashvsr.sh", True),
+        ("Restormer — deblur / lluvia / ruido (MIT)", restormer.disponible(),
+         "bash install/extras_restormer.sh", True),
+        ("Retinexformer — poca luz (MIT)", retinexformer.disponible(),
+         "bash install/extras_retinexformer.sh", True),
+        ("DreamClear — restauración real máx. (Apache-2.0)", dreamclear.disponible(),
+         "bash install/extras_dreamclear.sh", True),
+        ("HAT — super-resolución nítida (Apache-2.0)", hat.disponible(),
+         "bash install/extras_hat.sh", True),
     ]
     listos, instalables, no_aplican = [], [], []
     for nombre, ok, inst, solo_nvidia in motores:
@@ -790,6 +875,14 @@ def motores_imagen():
         m.append("codeformer")
     if osdface.disponible():
         m.append("osdface")    # ⚠️ sin licencia: solo pruebas
+    if restormer.disponible():
+        m.append("restormer")  # deblur / lluvia / ruido real, MIT
+    if retinexformer.disponible():
+        m.append("retinexformer")  # poca luz / noche, MIT
+    if hat.disponible():
+        m.append("hat")        # super-resolución nítida no-difusión, Apache-2.0
+    if dreamclear.disponible():
+        m.append("dreamclear")  # restauración real máxima calidad, Apache-2.0
     if color.disponible():
         m.append("ddcolor")
     if HW["vulkan"]:
@@ -806,7 +899,8 @@ _MEJORADORES_VIDEO = {"seedvr2", "seedvr2_mlx", "realesrgan", "realcugan",
                       "waifu2x", "flashvsr"}
 _MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
                     "realesrgan_img", "diffbir", "pmrf", "osdface", "seedvr2_mlx_img",
-                    "realesrgan_mlx_img"}
+                    "realesrgan_mlx_img", "restormer", "retinexformer", "dreamclear",
+                    "hat"}
 # Motores que escalan a una resolución/escala (para la vista previa de tamaño).
 _ESCALADORES = {"seedvr2", "seedvr2_mlx", "flashvsr", "realesrgan", "realcugan",
                 "waifu2x", "metalfx"}
@@ -969,6 +1063,20 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     sl(0.0, 1.5, 0.0, 0.05, "l_claridad")
                     sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
                     sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
+
+                # ---- Comparar LUTs: ventana desprendible dentro de la zona de LUTs ----
+                # (acordeón que se abre y muestra el mismo frame con todos los LUTs)
+                with gr.Accordion("🎞️ " + t("tab_comparar_luts", lang), open=False):
+                    gr.Markdown(t("luts_intro", lang), elem_classes="size-preview")
+                    _cmp_img = gr.Image(type="filepath", label=t("luts_entrada", lang))
+                    _cmp_btn = gr.Button(t("luts_comparar", lang), variant="primary",
+                                         elem_classes="cta")
+                    _cmp_msg = gr.Markdown("", elem_classes="size-preview")
+                    _cmp_gal = gr.Gallery(label=t("luts_galeria", lang), columns=3,
+                                          height="auto", object_fit="contain",
+                                          show_label=True)
+                    _cmp_btn.click(hacer_comparar_luts(lang), _cmp_img,
+                                   [_cmp_gal, _cmp_msg])
 
             # ---- lógica presets ----
             def _guardar(nombre, *vals):
@@ -1167,7 +1275,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                            "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut",
                            "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface",
                            "seedvr2_mlx_img": "i_seedvr2_mlx",
-                           "realesrgan_mlx_img": "i_realesrgan_mlx"}
+                           "realesrgan_mlx_img": "i_realesrgan_mlx",
+                           "restormer": "i_restormer", "retinexformer": "i_retinexformer",
+                           "dreamclear": "i_dreamclear", "hat": "i_hat"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -1186,13 +1296,19 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                                   "ddcolor", "grano", "lut",
                                                                   "pmrf", "osdface",
                                                                   "seedvr2_mlx_img",
-                                                                  "realesrgan_mlx_img"))
+                                                                  "realesrgan_mlx_img",
+                                                                  "restormer", "retinexformer",
+                                                                  "hat"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] in ("seedvr2_img", "seedvr2_mlx_img"))
                     fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
                                             label=t("fidelidad", lang),
                                             visible=ids_i[0] == "codeformer")
+                    tarea_rest_i = gr.Dropdown(
+                        [(t(f"rest_{k.lower()}", lang), k) for k in restormer.TAREAS],
+                        value="Motion_Deblurring", label=t("rest_tarea", lang),
+                        visible=ids_i[0] == "restormer")
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
                     grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
@@ -1224,16 +1340,18 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=motor not in ("seedvr2_img", "instantir",
                                                     "ddcolor", "grano", "lut",
                                                     "pmrf", "osdface", "seedvr2_mlx_img",
-                                                    "realesrgan_mlx_img")),
+                                                    "realesrgan_mlx_img", "restormer",
+                                                    "retinexformer", "hat")),
                     gr.update(visible=motor in ("seedvr2_img", "seedvr2_mlx_img")),
                     gr.update(visible=motor == "codeformer"),
+                    gr.update(visible=motor == "restormer"),
                     gr.update(visible=motor == "grano"),
                     gr.update(visible=motor == "lut"),
                 )
 
             motor_i.change(controles_i, motor_i,
                            [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                            grupo_g_i, grupo_l_i])
+                            tarea_rest_i, grupo_g_i, grupo_l_i])
 
             _puede_8k_img = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
 
@@ -1253,24 +1371,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             ev_i = boton_i.click(
                 hacer_procesar_imagen(lang),
                 [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                 gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
+                 tarea_rest_i, gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
                 [log_i, img_out, descarga_i])
             cancelar_i.click(fn=None, cancels=[ev_i])
 
-        # ---------------------------------------------------------------- Comparar LUTs
-        with gr.Tab(t("tab_comparar_luts", lang)):
-            gr.Markdown(t("luts_intro", lang))
-            with gr.Row():
-                with gr.Column(scale=1, min_width=260):
-                    luts_img = gr.Image(type="filepath", label=t("luts_entrada", lang))
-                    luts_btn = gr.Button(t("luts_comparar", lang), variant="primary",
-                                         elem_classes="cta")
-                    luts_msg = gr.Markdown("", elem_classes="size-preview")
-                with gr.Column(scale=3, min_width=400):
-                    luts_galeria = gr.Gallery(label=t("luts_galeria", lang), columns=4,
-                                              height="auto", object_fit="contain",
-                                              show_label=True)
-            luts_btn.click(hacer_comparar_luts(lang), luts_img, [luts_galeria, luts_msg])
 
         # ---------------------------------------------------------------- Galería
         with gr.Tab(t("tab_galeria", lang)):
@@ -1381,10 +1485,15 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 "pmrf": "PMRF — caras (MIT)",
                 "osdface": "OSDFace — caras ⚠️ sin licencia (pruebas)",
                 "flashvsr": "FlashVSR — video rápido (Apache-2.0)",
+                "restormer": "Restormer — deblur / lluvia / ruido (MIT)",
+                "retinexformer": "Retinexformer — poca luz (MIT)",
+                "dreamclear": "DreamClear — restauración real (Apache-2.0)",
+                "hat": "HAT — super-resolución nítida (Apache-2.0)",
             }
             # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
             # muestran en mantenimiento solo si ya están instalados.
-            _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr"}
+            _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr",
+                            "restormer", "retinexformer", "dreamclear", "hat"}
 
             def _mant_aplica(m):
                 if m == "seedvr2":
