@@ -589,6 +589,24 @@ T = {
         "fr": "Comparateur avant/après (image)"},
     "comparador_fs": {
         "es": "Pantalla completa", "en": "Fullscreen", "fr": "Plein écran"},
+    # ---- comparador por el frame del propio video ----
+    "cmp_scrub_ayuda": {
+        "es": "Mueve la barra del video de arriba y **pausa en el frame que quieras**; "
+              "luego pulsa «📸 Comparar este frame» (entrada vs resultado) o «👁 Vista "
+              "previa» (cómo quedaría el filtro en ese frame).",
+        "en": "Scrub the video bar above and **pause on the frame you want**; then press "
+              "“📸 Compare this frame” (input vs result) or “👁 Preview” (how the filter "
+              "would look on that frame).",
+        "fr": "Déplacez la barre de la vidéo ci-dessus et **mettez en pause sur l'image "
+              "voulue** ; puis « 📸 Comparer cette image » (entrée vs résultat) ou « 👁 "
+              "Aperçu » (rendu du filtre sur cette image)."},
+    "cmp_este_frame": {
+        "es": "📸 Comparar este frame", "en": "📸 Compare this frame",
+        "fr": "📸 Comparer cette image"},
+    "cmp_sin_resultado": {
+        "es": "⚠️ Primero mejora el video; luego mueve la barra y compara cualquier frame.",
+        "en": "⚠️ Enhance the video first; then scrub and compare any frame.",
+        "fr": "⚠️ Améliorez d'abord la vidéo ; ensuite déplacez la barre et comparez n'importe quelle image."},
     # ---- comparador avanzado: elegir frame por línea de tiempo + hasta 4 ----
     "cmp_avanzado": {
         "es": "🔬 Comparar otros frames (línea de tiempo)",

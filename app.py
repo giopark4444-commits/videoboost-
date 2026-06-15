@@ -389,14 +389,15 @@ def hacer_preview_filtro(lang):
     """Vista previa rápida (un frame) de cómo quedará el filtro, sin aplicarlo."""
     from engines import preview as _prev
 
-    def previsualizar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
+    def previsualizar(pos, salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
                       g_color, den_luma, den_croma, *rev):
         base = salida_actual or video_orig
         if not base:
             return f"<p class='size-preview'>{t('filtros_sin_base', lang)}</p>"
         try:
+            pos = max(0.0, min(1.0, float(pos or 0.3)))
             antes, despues, soporta = _prev.previsualizar(
-                base, filtro, pos=0.3, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
+                base, filtro, pos=pos, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
                 g_color=g_color, den_luma=float(den_luma), den_croma=float(den_croma),
                 rev=rev)
             if not soporta:
@@ -417,6 +418,27 @@ def hacer_preview_filtro(lang):
         return html
 
     return previsualizar
+
+
+def hacer_comparar_frame(lang):
+    """Compara entrada vs resultado en el frame exacto donde el usuario pausó el
+    video (la posición la rellena el JS con el tiempo del reproductor)."""
+    def comparar(pos, video_in, video_out):
+        if not video_out:
+            return f"<p class='size-preview'>{t('cmp_sin_resultado', lang)}</p>"
+        pos = max(0.0, min(1.0, float(pos or 0.3)))
+        fa = ff.extraer_frame_preview(video_in, pos) if video_in else None
+        fd = ff.extraer_frame_preview(video_out, pos)
+        try:
+            if fa and fd:
+                return comparador_html(fa, fd, lang)
+            return f"<p class='size-preview'>{t('cmp_sin_resultado', lang)}</p>"
+        finally:
+            for f in (fa, fd):
+                if f:
+                    Path(f).unlink(missing_ok=True)
+
+    return comparar
 
 
 def hacer_procesar_imagen(lang):
@@ -948,7 +970,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                             elem_classes="aviso-sin-motor")
             with gr.Row():
                 with gr.Column(elem_classes="col-controls"):
-                    video_in = gr.Video(label=t("video_entrada", lang))
+                    video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input")
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
                         boton_v = gr.Button(t("boton_video", lang), variant="primary",
@@ -977,32 +999,19 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         label=t("formato_salida_v", lang))
                     gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
-                # --- Centro: el resultado y la comparación (el «escenario») ---
+                # --- Centro: resultado + comparación por el frame del propio video ---
                 with gr.Column(elem_classes="col-stage"):
-                    video_out = gr.Video(label=t("resultado", lang))
+                    video_out = gr.Video(label=t("resultado", lang), elem_id="vb-result")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
+                    gr.Markdown(t("cmp_scrub_ayuda", lang), elem_classes="size-preview")
+                    with gr.Row():
+                        boton_cmp_frame = gr.Button(t("cmp_este_frame", lang), size="sm")
+                        boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
-
-                    # --- Comparador avanzado: elegir frame por la línea de tiempo
-                    #     y fijar hasta 4 para comparar a la vez (colapsado para
-                    #     no ocupar espacio hasta que se use). ---
-                    with gr.Accordion(t("cmp_avanzado", lang), open=False):
-                        gr.Markdown(t("cmp_ayuda", lang), elem_classes="size-preview")
-                        cmp_pos = gr.Slider(0, 100, value=30, step=1,
-                                            label=t("cmp_posicion", lang) + " (%)")
-                        with gr.Row():
-                            cmp_add = gr.Button(t("cmp_anadir", lang), size="sm",
-                                                variant="primary")
-                            cmp_clear = gr.Button(t("cmp_limpiar", lang), size="sm",
-                                                  variant="stop")
-                        cmp_msg = gr.Markdown("", elem_classes="size-preview")
-                        cmp_estado = gr.State([])
-                        cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
-                    # Vista previa del filtro (botón + ventana) EN EL CENTRO,
-                    # debajo de "Comparar otros frames".
-                    boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
-                    preview_filtro = gr.HTML(label=t("filtros_preview", lang))
+                    # Posición (fracción 0-1) que el JS rellena con el tiempo actual
+                    # del reproductor de resultado/entrada.
+                    pos_frac = gr.Number(0.3, visible=False)
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
 
@@ -1061,55 +1070,33 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             filtro_v.change(controles_filtro, filtro_v,
                             [nota_filtro, grupo_g_v, grupo_den, grupo_est, grupo_l_v])
 
-            _prev_in = [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
-                        den_luma, den_croma, *rev_v]
-            # La vista previa del filtro se muestra en la ventana del CENTRO.
-            boton_preview.click(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            # JS: rellena pos_frac (fracción 0-1) con el tiempo ACTUAL del
+            # reproductor de resultado (o de entrada si aún no hay resultado),
+            # así "este frame" = el frame donde el usuario pausó el video.
+            _JS_POS = ("(pos, ...rest) => { const v = document.querySelector('#vb-result video') "
+                       "|| document.querySelector('#vb-input video'); "
+                       "if (v && v.duration) pos = v.currentTime / v.duration; "
+                       "return [pos, ...rest]; }")
+
+            # "📸 Comparar este frame": entrada vs resultado en el frame pausado.
+            boton_cmp_frame.click(hacer_comparar_frame(lang),
+                                  [pos_frac, video_in, video_out], comparador_v,
+                                  js=_JS_POS)
+
+            # "👁 Vista previa" del filtro en el frame actual → comparador central.
+            _prev_in = [pos_frac, video_out, video_in, filtro_v, gpre_v, gint_v,
+                        gtam_v, gcol_v, den_luma, den_croma, *rev_v]
+            boton_preview.click(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
             # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
-            filtro_v.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            filtro_v.change(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
             for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
-                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, comparador_v, js=_JS_POS)
 
             boton_filtro.click(
                 hacer_aplicar_filtros(lang),
                 [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
                  den_luma, den_croma, est_suav, est_zoom, formato_v, *rev_v],
                 [log_v, video_out, comparador_v, descarga_v])
-
-            # --- Comparador avanzado: añadir/limpiar frames por la línea de tiempo ---
-            def _frame_a_cmp(video, salida, pos):
-                fa = ff.extraer_frame_preview(video, pos / 100.0) if video else None
-                fd = ff.extraer_frame_preview(salida, pos / 100.0) if salida else None
-                html = ""
-                if fa and fd:
-                    cap = f"<p class='cmp-cap'>{t('cmp_frame_en', lang)} {int(pos)}%</p>"
-                    html = cap + comparador_html(fa, fd, lang)
-                for f in (fa, fd):
-                    if f:
-                        Path(f).unlink(missing_ok=True)
-                return html
-
-            def _render_slots(estado):
-                return [gr.update(value=(estado[i] if i < len(estado) else ""),
-                                  visible=i < len(estado)) for i in range(4)]
-
-            def _anadir_cmp(video, salida, pos, estado):
-                estado = list(estado or [])
-                if not video or not salida:
-                    return [estado, t("cmp_sin_video", lang)] + _render_slots(estado)
-                if len(estado) >= 4:
-                    return [estado, t("cmp_lleno", lang)] + _render_slots(estado)
-                html = _frame_a_cmp(video, salida, pos)
-                if html:
-                    estado.append(html)
-                return [estado, ""] + _render_slots(estado)
-
-            def _limpiar_cmp():
-                return [[], ""] + [gr.update(value="", visible=False) for _ in range(4)]
-
-            cmp_add.click(_anadir_cmp, [video_in, video_out, cmp_pos, cmp_estado],
-                          [cmp_estado, cmp_msg] + cmp_slots)
-            cmp_clear.click(_limpiar_cmp, None, [cmp_estado, cmp_msg] + cmp_slots)
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
