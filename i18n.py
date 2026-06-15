@@ -633,6 +633,36 @@ T = {
               "téléchargez le format choisi avec le bouton ci-dessous."},
     "descargar_v": {
         "es": "Descargar video", "en": "Download video", "fr": "Télécharger la vidéo"},
+
+    # ---- aviso SeedVR2 lento en Mac ----
+    "n_seedvr2_mac_lento": {
+        "es": "⚠️ **En Mac (MPS) SeedVR2 es MUY lento** — minutos por cada segundo "
+              "de video; un clip de varios segundos puede tardar horas y parecer "
+              "«atascado» (no lo está, está procesando). Para uso normal usa "
+              "**Real-ESRGAN**; deja SeedVR2 para clips muy cortos.",
+        "en": "⚠️ **On Mac (MPS), SeedVR2 is VERY slow** — minutes per second of "
+              "video; a few-second clip can take hours and look “stuck” (it isn't, "
+              "it's processing). For everyday use pick **Real-ESRGAN**; keep SeedVR2 "
+              "for very short clips.",
+        "fr": "⚠️ **Sur Mac (MPS), SeedVR2 est TRÈS lent** — des minutes par seconde "
+              "de vidéo ; un clip de quelques secondes peut prendre des heures et "
+              "sembler « bloqué » (il ne l'est pas). Pour un usage courant, choisissez "
+              "**Real-ESRGAN** ; réservez SeedVR2 aux clips très courts."},
+
+    # ---- mantenimiento de motores (pestaña Sistema) ----
+    "mant_titulo": {
+        "es": "Mantenimiento de motores", "en": "Engine maintenance",
+        "fr": "Maintenance des moteurs"},
+    "mant_intro": {
+        "es": "Re-descarga un motor si se corrompió, o comprueba si hay una versión más nueva.",
+        "en": "Re-download an engine if it got corrupted, or check for a newer version.",
+        "fr": "Re-téléchargez un moteur s'il est corrompu, ou vérifiez s'il existe une version plus récente."},
+    "mant_redescargar": {
+        "es": "🔄 Re-descargar", "en": "🔄 Re-download", "fr": "🔄 Re-télécharger"},
+    "mant_comprobar": {
+        "es": "🔍 Comprobar versión", "en": "🔍 Check version", "fr": "🔍 Vérifier la version"},
+    "mant_log": {
+        "es": "Mantenimiento", "en": "Maintenance", "fr": "Maintenance"},
 }
 
 

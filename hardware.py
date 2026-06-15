@@ -117,12 +117,11 @@ def _recomendar_seedvr2(cuda, vram, mps, ram):
             return "seedvr2_ema_7b-Q4_K_M.gguf", 5, 16
         return "seedvr2_ema_3b-Q8_0.gguf", 5, 24
     if mps:
-        # En Apple Silicon la memoria es unificada: sin BlockSwap (no aplica) y sin fp8.
-        if ram >= 48:
-            return "seedvr2_ema_7b_fp16.safetensors", 9, 0
-        if ram >= 24:
-            return "seedvr2_ema_3b_fp16.safetensors", 5, 0
-        return "seedvr2_ema_3b_fp16.safetensors", 1, 0
+        # En Apple Silicon la memoria es unificada (sin BlockSwap ni fp8). El
+        # cuello de botella NO es la RAM sino la velocidad: el 7B en MPS es
+        # impracticablemente lento, así que recomendamos el 3B aunque sobre RAM
+        # (el usuario puede subir al 7B a mano si quiere esperar mucho más).
+        return "seedvr2_ema_3b_fp16.safetensors", (5 if ram >= 24 else 1), 0
     return "seedvr2_ema_3b-Q4_K_M.gguf", 1, 32
 
 

@@ -22,7 +22,7 @@ import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import (color, faces, faithdiff, filtros, flashvsr, grano,
-                     instantir, luts, seedvr2, vulkan)
+                     instantir, luts, mantenimiento, seedvr2, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -571,11 +571,12 @@ def texto_sistema(lang):
 
 
 def motores_video():
-    m = []
-    if HW["seedvr2"]:
-        m.append("seedvr2")
-    if HW["vulkan"]:
-        m += ["realesrgan", "realcugan", "waifu2x", "rife"]
+    sv2 = ["seedvr2"] if HW["seedvr2"] else []
+    vk = ["realesrgan", "realcugan", "waifu2x", "rife"] if HW["vulkan"] else []
+    # En NVIDIA SeedVR2 es rápido → va primero (mejor calidad por defecto).
+    # En Mac (MPS) SeedVR2 es lentísimo → Real-ESRGAN va primero (default usable);
+    # SeedVR2 sigue disponible, pero no como opción por defecto.
+    m = (sv2 + vk) if HW["cuda"] else (vk + sv2)
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
     if HW["ffmpeg"]:
@@ -624,6 +625,14 @@ def _hay_mejorador_imagen() -> bool:
 
 def _como_instalar(lang) -> str:
     return t("como_instalar_nvidia" if HW["cuda"] else "como_instalar_mac", lang)
+
+
+def _nota_video(motor, lang):
+    """Nota del motor; antepone un aviso si SeedVR2 va a correr en Mac (MPS)."""
+    nota = t(MOTORES_VIDEO_NOTAS[motor], lang)
+    if motor == "seedvr2" and HW["mps"] and not HW["cuda"]:
+        nota = t("n_seedvr2_mac_lento", lang) + "\n\n" + nota
+    return nota
 
 
 # ---------------------------------------------------------------- interfaz
@@ -805,7 +814,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     motor_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_v],
                                        value=ids_v[0], label=t("motor", lang),
                                        elem_classes="engine-picker")
-                    nota_v = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_v[0]], lang),
+                    nota_v = gr.Markdown(_nota_video(ids_v[0], lang),
                                          elem_classes="engine-note")
                     escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                        visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x"))
@@ -857,7 +866,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
             def controles_v(motor):
                 return (
-                    gr.update(value=t(MOTORES_VIDEO_NOTAS[motor], lang)),
+                    gr.update(value=_nota_video(motor, lang)),
                     gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x")),
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
                     gr.update(visible=motor == "rife"),
@@ -1065,6 +1074,42 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
         with gr.Tab(t("tab_sistema", lang)):
             gr.Markdown(texto_sistema(lang), elem_classes="sys-card")
+
+            # --- Mantenimiento: re-descargar / comprobar versión por motor ---
+            _MANT_NOMBRES = {
+                "seedvr2": "SeedVR2 — restauración IA",
+                "vulkan": "Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)",
+                "codeformer": "CodeFormer — caras",
+                "ddcolor": "DDColor — color",
+            }
+
+            def _mant_aplica(m):
+                if m == "seedvr2":
+                    return HW["mps"] or HW["cuda"]
+                return True  # vulkan, codeformer, ddcolor sirven en cualquier equipo
+
+            _gestionables = [m for m in mantenimiento.MOTORES if _mant_aplica(m)]
+            if _gestionables:
+                gr.Markdown(f"### {t('mant_titulo', lang)}\n{t('mant_intro', lang)}")
+                mant_log = gr.Textbox(label=t("mant_log", lang), lines=8, max_lines=8,
+                                      elem_classes="console", visible=False)
+
+                def _hacer_mant(funcion, motor):
+                    def correr_mant():
+                        log = []
+                        yield gr.update(value="", visible=True)
+                        for linea in funcion(motor):
+                            log.append(linea)
+                            yield gr.update(value="\n".join(log[-200:]), visible=True)
+                    return correr_mant
+
+                for _m in _gestionables:
+                    with gr.Row():
+                        gr.Markdown(f"**{_MANT_NOMBRES[_m]}**")
+                        _btn_re = gr.Button(t("mant_redescargar", lang), size="sm")
+                        _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
+                    _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
+                    _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
 
 
 if __name__ == "__main__":
