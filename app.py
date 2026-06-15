@@ -730,7 +730,7 @@ def filtros_video():
     if not HW["ffmpeg"]:
         return []
     f = ["lut", "grano", "desentrelazar", "denoise"]
-    if _VIDSTAB_OK:
+    if filtros.ESTABILIZA_OK:   # vidstab (2 pasadas) o deshake (integrado)
         f.append("estabilizar")
     return f
 

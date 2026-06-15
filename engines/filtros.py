@@ -24,7 +24,9 @@ def _tiene_filtro(nombre: str) -> bool:
 
 
 # Cacheado al cargar el módulo para no repetir la llamada en cada render
-VIDSTAB_OK: bool = _tiene_filtro("vidstabdetect")
+VIDSTAB_OK: bool = _tiene_filtro("vidstabdetect")          # 2 pasadas, mejor (libvidstab)
+DESHAKE_OK: bool = _tiene_filtro("deshake")                # 1 pasada, integrado (cualquier ffmpeg)
+ESTABILIZA_OK: bool = VIDSTAB_OK or DESHAKE_OK             # ¿se puede estabilizar?
 
 
 def desentrelazar(entrada):
@@ -77,17 +79,30 @@ def estabilizar(entrada, suavidad: int = 10, zoom: float = 0.3):
     suavidad — suavidad de la transformación (1–30, default 10)
     zoom     — zoom de entrada para ocultar bordes (0.0–1.0, default 0.3)
 
-    Requiere que FFmpeg esté compilado con --enable-libvidstab.
+    Usa libvidstab (2 pasadas, mejor) si está disponible; si no, recurre al
+    filtro integrado `deshake` (1 pasada), que funciona en cualquier FFmpeg.
     Generador: cede líneas de log; retorna la ruta del archivo de salida.
     """
-    if not VIDSTAB_OK:
-        raise RuntimeError(
-            "Tu FFmpeg no incluye libvidstab. Instala un FFmpeg completo "
-            "(p. ej. `brew install ffmpeg` en Mac o el build de BtbN en Windows) "
-            "y vuelve a intentarlo."
-        )
     entrada = Path(entrada)
     salida = SALIDAS / (entrada.stem + "_estabilizado.mp4")
+
+    # --- Fallback universal: deshake (1 pasada, sin libvidstab) ---
+    if not VIDSTAB_OK:
+        if not DESHAKE_OK:
+            raise RuntimeError(
+                "Tu FFmpeg no incluye ni libvidstab ni el filtro deshake. "
+                "Instala un FFmpeg más completo y vuelve a intentarlo."
+            )
+        cmd = [
+            ffmpeg(), "-y", "-i", str(entrada),
+            "-vf", "deshake=edge=mirror:rx=16:ry=16",
+            "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+            "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+        ]
+        yield ("▶ estabilizar (deshake, 1 pasada — tu FFmpeg no trae libvidstab, "
+               "así que uso el estabilizador integrado)")
+        yield from correr(cmd)
+        return str(salida)
 
     # Archivo temporal para los datos de análisis de movimiento
     with tempfile.NamedTemporaryFile(suffix=".trf", delete=False) as tf:
