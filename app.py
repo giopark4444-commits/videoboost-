@@ -999,6 +999,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         cmp_msg = gr.Markdown("", elem_classes="size-preview")
                         cmp_estado = gr.State([])
                         cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
+                    # Vista previa del filtro (botón + ventana) EN EL CENTRO,
+                    # debajo de "Comparar otros frames".
+                    boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
+                    preview_filtro = gr.HTML(label=t("filtros_preview", lang))
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
 
@@ -1020,10 +1024,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
                     grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
-                    with gr.Row():
-                        boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
-                        boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
-                                                 elem_classes="cta")
+                    boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
+                                             elem_classes="cta")
 
             def controles_v(motor):
                 return (
@@ -1061,12 +1063,12 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
             _prev_in = [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
                         den_luma, den_croma, *rev_v]
-            # La vista previa del filtro se muestra en el COMPARADOR del centro.
-            boton_preview.click(hacer_preview_filtro(lang), _prev_in, comparador_v)
+            # La vista previa del filtro se muestra en la ventana del CENTRO.
+            boton_preview.click(hacer_preview_filtro(lang), _prev_in, preview_filtro)
             # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
-            filtro_v.change(hacer_preview_filtro(lang), _prev_in, comparador_v)
+            filtro_v.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
             for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
-                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, comparador_v)
+                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
 
             boton_filtro.click(
                 hacer_aplicar_filtros(lang),
