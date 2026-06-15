@@ -772,6 +772,38 @@ T = {
               "téléchargez le format choisi avec le bouton ci-dessous."},
     "descargar_v": {
         "es": "Descargar video", "en": "Download video", "fr": "Télécharger la vidéo"},
+    # ---- filtros de post-proceso (columna derecha) ----
+    "filtros_titulo": {
+        "es": "🎨 Filtros y ajustes", "en": "🎨 Filters & adjustments",
+        "fr": "🎨 Filtres et réglages"},
+    "filtros_intro": {
+        "es": "Se aplican AL RESULTADO ya mejorado (o al video original), antes de "
+              "descargar. Puedes encadenar varios. Mira la vista previa antes de aplicar.",
+        "en": "Applied to the ENHANCED result (or the original video), before downloading. "
+              "You can chain several. Check the preview before applying.",
+        "fr": "Appliqués au RÉSULTAT amélioré (ou à la vidéo d'origine), avant le "
+              "téléchargement. Vous pouvez en enchaîner plusieurs. Voyez l'aperçu avant."},
+    "filtros_picker": {
+        "es": "Filtro", "en": "Filter", "fr": "Filtre"},
+    "filtros_preview": {
+        "es": "Vista previa (un frame)", "en": "Preview (one frame)",
+        "fr": "Aperçu (une image)"},
+    "filtros_ver_preview": {
+        "es": "👁 Vista previa", "en": "👁 Preview", "fr": "👁 Aperçu"},
+    "filtros_aplicar": {
+        "es": "Aplicar al resultado", "en": "Apply to result",
+        "fr": "Appliquer au résultat"},
+    "filtros_sin_base": {
+        "es": "⚠️ Primero mejora un video (o sube uno); el filtro se aplica sobre ese resultado.",
+        "en": "⚠️ Enhance a video first (or upload one); the filter applies to that result.",
+        "fr": "⚠️ Améliorez d'abord une vidéo (ou téléversez-en une) ; le filtre s'applique au résultat."},
+    "preview_temporal": {
+        "es": "Este filtro es temporal (necesita movimiento entre frames): no tiene vista "
+              "previa de un solo frame. Aplícalo y mira el resultado.",
+        "en": "This filter is temporal (needs motion across frames): no single-frame preview. "
+              "Apply it and check the result.",
+        "fr": "Ce filtre est temporel (mouvement entre images) : pas d'aperçu d'une seule "
+              "image. Appliquez-le et regardez le résultat."},
 
     # ---- aviso SeedVR2 lento en Mac ----
     "n_seedvr2_mac_lento": {

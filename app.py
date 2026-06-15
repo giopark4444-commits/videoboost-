@@ -254,10 +254,7 @@ def _consumir(gen, log):
 
 
 def hacer_procesar_video(lang):
-    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch,
-                 g_preset, g_int, g_tam, g_color,
-                 formato, den_luma, den_croma, est_suav, est_zoom,
-                 *rev):
+    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato):
         oculto = gr.update(visible=False)
         if not video:
             yield t("sube_video", lang), None, "", oculto
@@ -275,18 +272,6 @@ def hacer_procesar_video(lang):
                 gen = vulkan.interpolar_video(video, mult=int(mult))
             elif motor == "flashvsr":
                 gen = flashvsr.mejorar(video)
-            elif motor == "grano":
-                gen = grano.aplicar(video, es_video=True, preset=g_preset,
-                                    intensidad=float(g_int), tamano=int(g_tam),
-                                    grano_color=bool(g_color))
-            elif motor == "lut":
-                gen = _revelar(video, es_video=True, rev=rev)
-            elif motor == "desentrelazar":
-                gen = filtros.desentrelazar(video)
-            elif motor == "denoise":
-                gen = filtros.denoise(video, luma=float(den_luma), chroma=float(den_croma))
-            elif motor == "estabilizar":
-                gen = filtros.estabilizar(video, suavidad=int(est_suav), zoom=float(est_zoom))
             else:
                 gen = vulkan.mejorar_video(video, motor=motor, escala=int(escala),
                                            ruido=int(ruido))
@@ -333,6 +318,105 @@ def hacer_procesar_video(lang):
             yield "\n".join(log[-400:]), None, "", oculto
 
     return procesar
+
+
+def hacer_aplicar_filtros(lang):
+    """Aplica un filtro de post-proceso (revelado/grano/limpieza) AL RESULTADO ya
+    mejorado (o al video original si aún no se mejoró), y actualiza el reproductor,
+    el comparador y la descarga. Permite encadenar (aplicar uno tras otro)."""
+    def aplicar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam, g_color,
+                den_luma, den_croma, est_suav, est_zoom, formato, *rev):
+        oculto = gr.update(visible=False)
+        base = salida_actual or video_orig
+        if not base:
+            yield t("filtros_sin_base", lang), None, "", oculto
+            return
+        log = [f"▶ {t('m_' + filtro, lang).split(' — ')[0]}"]
+        try:
+            if filtro == "lut":
+                gen = _revelar(base, es_video=True, rev=rev)
+            elif filtro == "grano":
+                gen = grano.aplicar(base, es_video=True, preset=g_preset,
+                                    intensidad=float(g_int), tamano=int(g_tam),
+                                    grano_color=bool(g_color))
+            elif filtro == "desentrelazar":
+                gen = filtros.desentrelazar(base)
+            elif filtro == "denoise":
+                gen = filtros.denoise(base, luma=float(den_luma), chroma=float(den_croma))
+            elif filtro == "estabilizar":
+                gen = filtros.estabilizar(base, suavidad=int(est_suav), zoom=float(est_zoom))
+            else:
+                yield t("filtros_sin_base", lang), salida_actual, "", oculto
+                return
+            consumo = _consumir(gen, log)
+            salida = None
+            while True:
+                try:
+                    yield next(consumo), None, "", oculto
+                except StopIteration as fin:
+                    salida = fin.value
+                    break
+
+            descarga = salida
+            if salida and formato and formato != "h264":
+                descarga = _transcodificar_video(salida, formato, log)
+            log.append(f"{t('listo', lang)}: {Path(salida).name if salida else '?'}")
+
+            cmp_html = ""
+            if salida:
+                fa = fd = None
+                try:
+                    fa = ff.extraer_frame_preview(base, 0.3)
+                    fd = ff.extraer_frame_preview(salida, 0.3)
+                    if fa and fd:
+                        cmp_html = comparador_html(fa, fd, lang)
+                except Exception:
+                    pass
+                finally:
+                    for f in (fa, fd):
+                        if f:
+                            Path(f).unlink(missing_ok=True)
+            dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
+            yield "\n".join(log[-400:]), salida, cmp_html, dl
+        except Exception as e:
+            log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
+            yield "\n".join(log[-400:]), None, "", oculto
+
+    return aplicar
+
+
+def hacer_preview_filtro(lang):
+    """Vista previa rápida (un frame) de cómo quedará el filtro, sin aplicarlo."""
+    from engines import preview as _prev
+
+    def previsualizar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
+                      g_color, den_luma, den_croma, *rev):
+        base = salida_actual or video_orig
+        if not base:
+            return f"<p class='size-preview'>{t('filtros_sin_base', lang)}</p>"
+        try:
+            antes, despues, soporta = _prev.previsualizar(
+                base, filtro, pos=0.3, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
+                g_color=g_color, den_luma=float(den_luma), den_croma=float(den_croma),
+                rev=rev)
+            if not soporta:
+                html = f"<p class='size-preview'>{t('preview_temporal', lang)}</p>"
+            else:
+                html = comparador_html(antes, despues, lang)
+        except Exception as e:
+            return f"<p class='size-preview'>⚠️ {e}</p>"
+        finally:
+            pass
+        # limpiar frames temporales tras incrustarlos
+        for f in (antes, despues):
+            try:
+                if f and "salidas" not in str(f):
+                    Path(f).unlink(missing_ok=True)
+            except Exception:
+                pass
+        return html
+
+    return previsualizar
 
 
 def hacer_procesar_imagen(lang):
@@ -615,11 +699,18 @@ def motores_video():
     m = (sv2 + vk) if HW["cuda"] else (vk + mlx + mfx + sv2)
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
-    if HW["ffmpeg"]:
-        m += ["lut", "grano", "desentrelazar", "denoise"]
-        if _VIDSTAB_OK:
-            m.append("estabilizar")
     return m or ["realesrgan"]  # que la UI nunca quede vacía
+
+
+def filtros_video():
+    """Filtros de post-proceso (FFmpeg) que se aplican AL RESULTADO ya mejorado,
+    antes de descargar: revelado/LUT, grano, desentrelazar, ruido, estabilizar."""
+    if not HW["ffmpeg"]:
+        return []
+    f = ["lut", "grano", "desentrelazar", "denoise"]
+    if _VIDSTAB_OK:
+        f.append("estabilizar")
+    return f
 
 
 def motores_imagen():
@@ -876,24 +967,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                  label=t("modelo_auto", lang))
                         batch_sv2 = gr.Dropdown(seedvr2.BATCHES, value=HW["seedvr2_batch"],
                                                 label=t("batch", lang))
-                    grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(
-                        ids_v[0] == "grano")
-
-                    # Denoise sliders
-                    with gr.Group(visible=ids_v[0] == "denoise") as grupo_den:
-                        den_luma = gr.Slider(0.0, 10.0, value=3.0, step=0.5,
-                                             label=t("den_luma", lang))
-                        den_croma = gr.Slider(0.0, 10.0, value=2.0, step=0.5,
-                                              label=t("den_chroma", lang))
-
-                    # Stabilize sliders
-                    with gr.Group(visible=ids_v[0] == "estabilizar") as grupo_est:
-                        est_suav = gr.Slider(1, 30, value=10, step=1,
-                                             label=t("est_suavidad", lang))
-                        est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05,
-                                             label=t("est_zoom", lang))
-
-                    grupo_l_v, rev_v = grupo_revelado(ids_v[0] == "lut")
                     formato_v = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
                         value="h264",
@@ -927,11 +1000,32 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         cmp_msg = gr.Markdown("", elem_classes="size-preview")
                         cmp_estado = gr.State([])
                         cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
-
-                # --- Derecha: progreso (consola de estado) ---
-                with gr.Column(elem_classes="col-aside"):
-                    log_v = gr.Textbox(label=t("progreso", lang), lines=22, max_lines=22,
+                    log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
+
+                # --- Derecha: filtros y ajustes (post-proceso del resultado) ---
+                with gr.Column(elem_classes="col-aside"):
+                    ids_f = filtros_video()
+                    gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",
+                                elem_classes="filtros-head")
+                    filtro_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_f],
+                                        value=ids_f[0], label=t("filtros_picker", lang),
+                                        elem_classes="engine-picker")
+                    nota_filtro = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_f[0]], lang),
+                                              elem_classes="engine-note")
+                    grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(ids_f[0] == "grano")
+                    with gr.Group(visible=ids_f[0] == "denoise") as grupo_den:
+                        den_luma = gr.Slider(0.0, 10.0, value=3.0, step=0.5, label=t("den_luma", lang))
+                        den_croma = gr.Slider(0.0, 10.0, value=2.0, step=0.5, label=t("den_chroma", lang))
+                    with gr.Group(visible=ids_f[0] == "estabilizar") as grupo_est:
+                        est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
+                        est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
+                    grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
+                    preview_filtro = gr.HTML(label=t("filtros_preview", lang))
+                    with gr.Row():
+                        boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
+                        boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
+                                                 elem_classes="cta")
 
             def controles_v(motor):
                 return (
@@ -940,26 +1034,46 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
                     gr.update(visible=motor == "rife"),
                     gr.update(visible=motor in ("seedvr2", "seedvr2_mlx")),
-                    gr.update(visible=motor == "grano"),
-                    gr.update(visible=motor == "denoise"),
-                    gr.update(visible=motor == "estabilizar"),
-                    gr.update(visible=motor == "lut"),
                 )
 
             motor_v.change(controles_v, motor_v,
-                           [nota_v, escala, ruido, mult, grupo_sv2,
-                            grupo_g_v, grupo_den, grupo_est, grupo_l_v])
+                           [nota_v, escala, ruido, mult, grupo_sv2])
             for comp in (video_in, motor_v, escala, mult, resolucion):
                 comp.change(hacer_vista_previa(lang),
                             [video_in, motor_v, escala, mult, resolucion], preview)
             ev_v = boton_v.click(
                 hacer_procesar_video(lang),
                 [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
-                 batch_sv2, gpre_v, gint_v, gtam_v, gcol_v,
-                 formato_v, den_luma, den_croma, est_suav, est_zoom,
-                 *rev_v],
+                 batch_sv2, formato_v],
                 [log_v, video_out, comparador_v, descarga_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
+
+            # --- Filtros (post-proceso): controles, vista previa y aplicar ---
+            def controles_filtro(filtro):
+                return (
+                    gr.update(value=t(MOTORES_VIDEO_NOTAS[filtro], lang)),
+                    gr.update(visible=filtro == "grano"),
+                    gr.update(visible=filtro == "denoise"),
+                    gr.update(visible=filtro == "estabilizar"),
+                    gr.update(visible=filtro == "lut"),
+                )
+
+            filtro_v.change(controles_filtro, filtro_v,
+                            [nota_filtro, grupo_g_v, grupo_den, grupo_est, grupo_l_v])
+
+            _prev_in = [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
+                        den_luma, den_croma, *rev_v]
+            boton_preview.click(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
+            filtro_v.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
+                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+
+            boton_filtro.click(
+                hacer_aplicar_filtros(lang),
+                [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
+                 den_luma, den_croma, est_suav, est_zoom, formato_v, *rev_v],
+                [log_v, video_out, comparador_v, descarga_v])
 
             # --- Comparador avanzado: añadir/limpiar frames por la línea de tiempo ---
             def _frame_a_cmp(video, salida, pos):
