@@ -949,6 +949,12 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             with gr.Row():
                 with gr.Column(elem_classes="col-controls"):
                     video_in = gr.Video(label=t("video_entrada", lang))
+                    # Botón de mejorar ARRIBA del selector de motores.
+                    with gr.Row():
+                        boton_v = gr.Button(t("boton_video", lang), variant="primary",
+                                            elem_classes="cta")
+                        cancelar_v = gr.Button(t("cancelar", lang), variant="stop",
+                                               size="sm")
                     motor_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_v],
                                        value=ids_v[0], label=t("motor", lang),
                                        elem_classes="engine-picker")
@@ -971,11 +977,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         label=t("formato_salida_v", lang))
                     gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
-                    with gr.Row():
-                        boton_v = gr.Button(t("boton_video", lang), variant="primary",
-                                            elem_classes="cta")
-                        cancelar_v = gr.Button(t("cancelar", lang), variant="stop",
-                                               size="sm")
                 # --- Centro: el resultado y la comparación (el «escenario») ---
                 with gr.Column(elem_classes="col-stage"):
                     video_out = gr.Video(label=t("resultado", lang))
@@ -998,9 +999,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         cmp_msg = gr.Markdown("", elem_classes="size-preview")
                         cmp_estado = gr.State([])
                         cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
-                    # Vista previa del filtro (post-proceso) — bajo el comparador.
-                    gr.Markdown(f"**{t('filtros_preview', lang)}**", elem_classes="size-preview")
-                    preview_filtro = gr.HTML()
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
 
@@ -1063,11 +1061,12 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
             _prev_in = [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
                         den_luma, den_croma, *rev_v]
-            boton_preview.click(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            # La vista previa del filtro se muestra en el COMPARADOR del centro.
+            boton_preview.click(hacer_preview_filtro(lang), _prev_in, comparador_v)
             # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
-            filtro_v.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            filtro_v.change(hacer_preview_filtro(lang), _prev_in, comparador_v)
             for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
-                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, comparador_v)
 
             boton_filtro.click(
                 hacer_aplicar_filtros(lang),
