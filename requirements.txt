@@ -1,6 +1,6 @@
 # Dependencias de la app (los motores pesados se instalan con los scripts de install/)
 gradio>=4.44
-huggingface_hub>=0.24
+huggingface_hub>=0.24,<0.26   # <0.26: a partir de 0.26 se quitó HfFolder y rompe gradio
 cryptography>=41        # licencias firmadas Ed25519 (verificación offline)
 imageio-ffmpeg>=0.5    # ffmpeg incluido por pip: instalación sin Homebrew/manual
 pillow>=10             # comparador antes/después y grano sobre imágenes

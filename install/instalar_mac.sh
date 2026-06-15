@@ -11,8 +11,30 @@ echo "== VideoBoost · instalador para Mac (Apple Silicon) =="
 #    ffprobe), pero NO bloqueamos la instalación si falta.
 
 # 2. Entorno Python principal (app + SeedVR2)
+#    La app usa sintaxis de tipos de Python 3.10+ (p.ej. `dict | None`), así que
+#    necesitamos un intérprete 3.10 o superior. macOS trae 3.9 de fábrica, por eso
+#    buscamos uno válido (preferimos python@3.12 de Homebrew) y lo instalamos si falta.
+echo "🐍 Buscando Python 3.10+…"
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)' 2>/dev/null; then
+    PY="$c"; break
+  fi
+done
+if [ -z "$PY" ]; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "   No hay Python 3.10+. Instalando python@3.12 con Homebrew…"
+    brew install python@3.12
+    PY="$(brew --prefix)/opt/python@3.12/bin/python3.12"
+  else
+    echo "❌ Necesitas Python 3.10 o superior (tienes solo el 3.9 del sistema) y no encuentro Homebrew."
+    echo "   Instala Homebrew (https://brew.sh) o Python 3.12 (https://www.python.org/downloads/macos/) y reintenta."
+    exit 1
+  fi
+fi
+echo "   Usando: $("$PY" --version 2>&1)"
 echo "🐍 Creando entorno .venv…"
-python3 -m venv .venv
+"$PY" -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt

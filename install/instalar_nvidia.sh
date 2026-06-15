@@ -10,8 +10,22 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
   exit 1
 fi
 
+# La app usa sintaxis de tipos de Python 3.10+ (p.ej. `dict | None`).
+echo "🐍 Buscando Python 3.10+…"
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)' 2>/dev/null; then
+    PY="$c"; break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "❌ Necesitas Python 3.10 o superior. Instálalo con tu gestor de paquetes"
+  echo "   (ej.: sudo apt install python3.12 python3.12-venv) y reintenta."
+  exit 1
+fi
+echo "   Usando: $("$PY" --version 2>&1)"
 echo "🐍 Creando entorno .venv…"
-python3 -m venv .venv
+"$PY" -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
