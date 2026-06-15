@@ -865,16 +865,17 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                        [(n, k) for k, n in luts.NOMBRES.items()]
             comps = []  # 24 componentes en orden plano (_PRESET_KEYS)
             with gr.Group(visible=visible) as g:
-                # ---- presets en UNA sola fila compacta: cargar · nombre · guardar ----
-                with gr.Row(equal_height=True):
+                # ---- presets: en un acordeón colapsado para no estorbar ----
+                with gr.Accordion(t("preset_seccion", lang), open=False):
                     preset_selector = gr.Dropdown(
                         _listar_presets_revelado(), label=t("preset_cargar", lang),
-                        value=None, interactive=True, scale=5, container=True)
-                    preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
-                                               scale=4, container=True)
-                    preset_guardar_btn = gr.Button(t("preset_guardar", lang),
-                                                   scale=2, size="sm")
-                preset_msg = gr.Markdown("", elem_classes="size-preview")
+                        value=None, interactive=True, container=True)
+                    with gr.Row(equal_height=True):
+                        preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
+                                                   scale=3, container=True)
+                        preset_guardar_btn = gr.Button(t("preset_guardar", lang),
+                                                       scale=1, size="sm")
+                    preset_msg = gr.Markdown("", elem_classes="size-preview")
 
                 # ---- looks ----
                 with gr.Accordion(t("l_sec_looks", lang), open=True):

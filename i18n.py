@@ -620,6 +620,10 @@ T = {
     "cmp_frame_en": {
         "es": "Frame al", "en": "Frame at", "fr": "Image à"},
     # ---- presets de revelado ----
+    "preset_seccion": {
+        "es": "💾 Presets (guardar/cargar este look)",
+        "en": "💾 Presets (save/load this look)",
+        "fr": "💾 Préréglages (enregistrer/charger ce look)"},
     "preset_nombre": {
         "es": "Nombre del preset", "en": "Preset name", "fr": "Nom du préréglage"},
     "preset_guardar": {
