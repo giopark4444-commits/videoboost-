@@ -88,6 +88,10 @@ T = {
     "boton_video": {"es": "Mejorar video", "en": "Enhance video", "fr": "Améliorer la vidéo"},
     "progreso": {"es": "Progreso", "en": "Progress", "fr": "Progression"},
     "resultado": {"es": "Resultado", "en": "Result", "fr": "Résultat"},
+    "resultado_preview": {
+        "es": "Resultado / preview (mueve la barra y elige el frame)",
+        "en": "Result / preview (scrub and pick the frame)",
+        "fr": "Résultat / aperçu (déplace la barre et choisis l'image)"},
     "antes": {"es": "Antes", "en": "Before", "fr": "Avant"},
     "despues": {"es": "Después", "en": "After", "fr": "Après"},
     "descargar": {"es": "Descargar resultado", "en": "Download result",
@@ -692,6 +696,30 @@ T = {
     "cmp_este_frame": {
         "es": "📸 Comparar este frame", "en": "📸 Compare this frame",
         "fr": "📸 Comparer cette image"},
+    # ---- comparador de LUTs sobre el medio ya cargado (dentro de los looks) ----
+    "cmp_luts_intro": {
+        "es": "Compara los **LUT 1/2/3** de arriba sobre el frame del video ya cargado "
+              "(el que dejaste en la barra). No subas nada.",
+        "en": "Compare the **LUT 1/2/3** above on the loaded video's current frame "
+              "(where you left the bar). No upload needed.",
+        "fr": "Compare les **LUT 1/2/3** ci-dessus sur l'image actuelle de la vidéo "
+              "chargée (là où tu as laissé la barre). Aucun envoi."},
+    "cmp_luts_boton": {
+        "es": "🎞️ Comparar LUTs en este frame", "en": "🎞️ Compare LUTs on this frame",
+        "fr": "🎞️ Comparer les LUT sur cette image"},
+    "cmp_luts_galeria": {
+        "es": "Este frame con cada LUT", "en": "This frame with each LUT",
+        "fr": "Cette image avec chaque LUT"},
+    "cmp_luts_sin_medio": {
+        "es": "⚠️ Carga primero un video (o imagen) en el preview.",
+        "en": "⚠️ Load a video (or image) in the preview first.",
+        "fr": "⚠️ Charge d'abord une vidéo (ou image) dans l'aperçu."},
+    "cmp_luts_elige": {
+        "es": "⚠️ Elige al menos un LUT en LUT 1/2/3 arriba.",
+        "en": "⚠️ Pick at least one LUT in LUT 1/2/3 above.",
+        "fr": "⚠️ Choisis au moins un LUT dans LUT 1/2/3 ci-dessus."},
+    "cmp_luts_trab": {
+        "es": "Revelando looks…", "en": "Rendering looks…", "fr": "Rendu des looks…"},
     "cmp_sin_resultado": {
         "es": "⚠️ Primero mejora el video; luego mueve la barra y compara cualquier frame.",
         "en": "⚠️ Enhance the video first; then scrub and compare any frame.",
@@ -885,8 +913,7 @@ T = {
         "es": "Descargar video", "en": "Download video", "fr": "Télécharger la vidéo"},
     # ---- filtros de post-proceso (columna derecha) ----
     "filtros_titulo": {
-        "es": "🎨 Filtros y ajustes", "en": "🎨 Filters & adjustments",
-        "fr": "🎨 Filtres et réglages"},
+        "es": "🎨 Imagen", "en": "🎨 Image", "fr": "🎨 Image"},
     "filtros_intro": {
         "es": "Se aplican AL RESULTADO ya mejorado (o al video original), antes de "
               "descargar. Puedes encadenar varios. Mira la vista previa antes de aplicar.",
@@ -895,16 +922,16 @@ T = {
         "fr": "Appliqués au RÉSULTAT amélioré (ou à la vidéo d'origine), avant le "
               "téléchargement. Vous pouvez en enchaîner plusieurs. Voyez l'aperçu avant."},
     "filtros_picker": {
-        "es": "Filtro", "en": "Filter", "fr": "Filtre"},
+        "es": "Ajuste de imagen", "en": "Image adjustment", "fr": "Réglage d'image"},
     "filtros_preview": {
         "es": "Vista previa (un frame)", "en": "Preview (one frame)",
         "fr": "Aperçu (une image)"},
     "filtros_ver_preview": {
         "es": "👁 Vista previa", "en": "👁 Preview", "fr": "👁 Aperçu"},
     "filtros_aplicar": {
-        "es": "Aplicar filtro al video mejorado",
-        "en": "Apply filter to the enhanced video",
-        "fr": "Appliquer le filtre à la vidéo améliorée"},
+        "es": "Aplicar al video mejorado",
+        "en": "Apply to the enhanced video",
+        "fr": "Appliquer à la vidéo améliorée"},
     "filtros_aplicar_nota": {
         "es": "Se aplica al video de **«Resultado»** (el ya mejorado). Si aún no has "
               "mejorado nada, se aplica al video de entrada.",

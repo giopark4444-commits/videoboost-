@@ -161,6 +161,19 @@ footer{display:none !important;}
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace !important; font-size:12.5px !important;
   line-height:1.65 !important; border-radius:12px !important; border:none !important;}
 
+/* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
+.vb-bar-wrap{padding:6px 2px 0 !important;}
+.vb-bar{height:5px; border-radius:999px; background:rgba(0,0,0,.10); overflow:hidden;}
+.dark .vb-bar{background:rgba(255,255,255,.12);}
+.vb-bar-fill{height:100%; border-radius:999px; background:var(--vb-accent);
+  transition:width .25s cubic-bezier(.22,1,.36,1);}
+.vb-bar-pct{font-size:11px; opacity:.6; text-align:right; margin-top:3px;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em;}
+
+/* Galería del comparador de LUTs (dentro de los looks): miniaturas compactas */
+.vb-frame-cmp{margin-top:6px;}
+.vb-frame-cmp .grid-wrap{max-height:none !important;}
+
 /* Botón de acción a ancho completo */
 .cta button{width:100% !important; padding:13px !important; font-size:15px !important;
   font-weight:600 !important;}

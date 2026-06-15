@@ -301,15 +301,27 @@ def _pct_de_linea(linea, total_frames, total_seg):
     return None
 
 
+def _barra(frac=None):
+    """Actualiza la barra de avance minimalista (HTML) DEBAJO de la consola.
+
+    `frac` None → oculta (no hay proceso). 0–1 → visible con ese porcentaje.
+    """
+    if frac is None:
+        return gr.update(visible=False, value="")
+    pct = max(0, min(100, round(frac * 100)))
+    return gr.update(
+        visible=True,
+        value=(f"<div class='vb-bar'><div class='vb-bar-fill' style='width:{pct}%'>"
+               f"</div></div><div class='vb-bar-pct'>{pct}%</div>"))
+
+
 def hacer_procesar_video(lang):
-    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato,
-                 progress=gr.Progress()):
+    def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato):
         oculto = gr.update(visible=False)
         if not video:
-            yield t("sube_video", lang), None, "", oculto
+            yield t("sube_video", lang), None, "", oculto, _barra(None)
             return
         total_f, total_s = _totales_video(video)
-        progress(0.0, desc=t("progreso", lang))
         log = [f"▶ {t('m_' + motor, lang).split(' — ')[0]}"]
         try:
             if motor == "seedvr2":
@@ -328,17 +340,17 @@ def hacer_procesar_video(lang):
                                            ruido=int(ruido))
             consumo = _consumir(gen, log)
             salida = None
+            pct = 0.0
             while True:
                 try:
                     texto = next(consumo)
                     frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
                     if frac is not None:
-                        progress(frac, desc=t("progreso", lang))
-                    yield texto, None, "", oculto
+                        pct = frac
+                    yield texto, None, "", oculto, _barra(pct)
                 except StopIteration as fin:
                     salida = fin.value
                     break
-            progress(1.0, desc=t("listo", lang))
 
             # `salida` es H.264 (siempre reproducible en el navegador): es lo que
             # alimenta el reproductor y el comparador. El formato elegido (ProRes,
@@ -368,10 +380,10 @@ def hacer_procesar_video(lang):
                             Path(f).unlink(missing_ok=True)
 
             dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
-            yield "\n".join(log[-400:]), salida, cmp_html, dl
+            yield "\n".join(log[-400:]), salida, cmp_html, dl, _barra(None)
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None, "", oculto
+            yield "\n".join(log[-400:]), None, "", oculto, _barra(None)
 
     return procesar
 
@@ -380,21 +392,14 @@ def hacer_aplicar_filtros(lang):
     """Aplica un filtro de post-proceso (revelado/grano/limpieza) AL RESULTADO ya
     mejorado (o al video original si aún no se mejoró), y actualiza el reproductor,
     el comparador y la descarga. Permite encadenar (aplicar uno tras otro)."""
-    # progress va PRIMERO (con defaults en el resto) a propósito: Gradio solo
-    # detecta gr.Progress entre los parámetros posicionales y deja de buscar al
-    # llegar a *rev; colocándolo al frente lo inserta en el índice 0 y todo lo
-    # demás (incluido *rev con los LUTs) queda alineado.
-    def aplicar(progress=gr.Progress(), salida_actual=None, video_orig=None,
-                filtro=None, g_preset=None, g_int=None, g_tam=None, g_color=None,
-                den_luma=None, den_croma=None, est_suav=None, est_zoom=None,
-                formato=None, *rev):
+    def aplicar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam, g_color,
+                den_luma, den_croma, est_suav, est_zoom, formato, *rev):
         oculto = gr.update(visible=False)
         base = salida_actual or video_orig
         if not base:
-            yield t("filtros_sin_base", lang), None, "", oculto
+            yield t("filtros_sin_base", lang), None, "", oculto, _barra(None)
             return
         total_f, total_s = _totales_video(base)
-        progress(0.0, desc=t("progreso", lang))
         log = [f"▶ {t('m_' + filtro, lang).split(' — ')[0]}"]
         try:
             if filtro == "lut":
@@ -410,21 +415,21 @@ def hacer_aplicar_filtros(lang):
             elif filtro == "estabilizar":
                 gen = filtros.estabilizar(base, suavidad=int(est_suav), zoom=float(est_zoom))
             else:
-                yield t("filtros_sin_base", lang), salida_actual, "", oculto
+                yield t("filtros_sin_base", lang), salida_actual, "", oculto, _barra(None)
                 return
             consumo = _consumir(gen, log)
             salida = None
+            pct = 0.0
             while True:
                 try:
                     texto = next(consumo)
                     frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
                     if frac is not None:
-                        progress(frac, desc=t("progreso", lang))
-                    yield texto, None, "", oculto
+                        pct = frac
+                    yield texto, None, "", oculto, _barra(pct)
                 except StopIteration as fin:
                     salida = fin.value
                     break
-            progress(1.0, desc=t("listo", lang))
 
             descarga = salida
             if salida and formato and formato != "h264":
@@ -446,10 +451,10 @@ def hacer_aplicar_filtros(lang):
                         if f:
                             Path(f).unlink(missing_ok=True)
             dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
-            yield "\n".join(log[-400:]), salida, cmp_html, dl
+            yield "\n".join(log[-400:]), salida, cmp_html, dl, _barra(None)
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None, "", oculto
+            yield "\n".join(log[-400:]), None, "", oculto, _barra(None)
 
     return aplicar
 
@@ -510,36 +515,34 @@ def hacer_comparar_frame(lang):
     return comparar
 
 
-def hacer_comparar_luts(lang):
-    """Aplica TODOS los LUTs al mismo frame y los muestra juntos en una rejilla,
-    para comparar de un vistazo cuál queda mejor."""
-    import shutil
-    import tempfile
+def hacer_comparar_looks(lang, es_video):
+    """Compara los LUTs SELECCIONADOS (LUT 1/2/3) sobre el frame del medio YA
+    cargado en el preview, sin subir nada. En video toma el frame donde el usuario
+    paró la barra (pos la rellena el JS); en imagen usa la imagen cargada.
 
-    def comparar(imagen):
-        if not imagen:
-            yield [], t("luts_sube", lang)
+    Streaming de (galeria, mensaje); galeria = [(ruta, etiqueta)…] con el Original
+    primero. Reutiliza engines.preview_multi.comparar_looks."""
+    from engines import preview_multi
+
+    def comparar(*args):
+        # Video: (pos, medio, l1,m1,l2,m2,l3,m3) · Imagen: (medio, l1,m1,l2,m2,l3,m3)
+        if es_video:
+            pos, medio, l1, m1, l2, m2, l3, m3 = args
+        else:
+            medio, l1, m1, l2, m2, l3, m3 = args
+            pos = 0.3
+        if not medio:
+            yield [], t("cmp_luts_sin_medio", lang)
             return
-        tmp = Path(tempfile.mkdtemp(prefix="vb_luts_"))
-        galeria = [(imagen, "Original")]
-        yield galeria, ""
-        nombres = list(luts.NOMBRES.items())
-        for n, (lut, nombre) in enumerate(nombres, 1):
-            try:
-                gen = luts.etalonar(imagen, es_video=False, looks=[(lut, 1.0)])
-                salida = None
-                try:
-                    while True:
-                        next(gen)
-                except StopIteration as fin:
-                    salida = fin.value
-                if salida:
-                    dest = tmp / f"{lut}.png"
-                    shutil.copy(salida, dest)
-                    galeria.append((str(dest), nombre))
-            except Exception:
-                pass
-            yield galeria, t("luts_progreso", lang).format(n=n, total=len(nombres))
+        looks = [(lid, float(mz), luts.NOMBRES.get(lid, lid))
+                 for lid, mz in ((l1, m1), (l2, m2), (l3, m3))
+                 if lid and lid != "ninguno"]
+        if not looks:
+            yield [], t("cmp_luts_elige", lang)
+            return
+        galeria = []
+        for galeria, _msg in preview_multi.comparar_looks(medio, pos, looks):
+            yield galeria, t("cmp_luts_trab", lang) if galeria else _msg
         yield galeria, ""
 
     return comparar
@@ -742,6 +745,14 @@ _JS_CARGA = """() => {
   } catch(e) {}
 }""" % _JS_APLICAR
 
+# Lee el tiempo ACTUAL del reproductor de resultado/preview (#vb-result) y lo
+# convierte en fracción 0–1, para que "este frame" sea justo donde el usuario paró
+# la barra. Constante de módulo: la usan los botones de comparación y el comparador
+# de LUTs que vive dentro del panel de looks.
+_JS_POS = ("(pos, ...rest) => { const v = document.querySelector('#vb-result video') "
+           "|| document.querySelector('#vb-input video'); "
+           "if (v && v.duration) pos = v.currentTime / v.duration; "
+           "return [pos, ...rest]; }")
 _JS_MODO = "(m) => { window.vbModo(m); }"
 _JS_ACENTO = "(c) => { window.vbAcento(c); localStorage.setItem('vb_acento', c); }"
 _JS_FONDO = "(c) => { window.vbFondo(c); localStorage.setItem('vb_fondo', c); }"
@@ -1006,11 +1017,15 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             preset.change(sincronizar, preset, [inten, tam, col])
             return g, preset, inten, tam, col
 
-        def grupo_revelado(visible):
+        def grupo_revelado(visible, fuente=None, pos=None, es_video=False):
             """Panel de revelado estilo Lumetri con presets save/load.
 
             Devuelve el grupo y la lista plana de 24 componentes
             (orden: lut1,mix1,lut2,mix2,lut3,mix3 + 18 ajustes Lumetri).
+
+            Si `fuente` (el medio ya cargado: video_out o img_in) se pasa, dentro de
+            los looks se añade el comparador de LUTs sobre ese medio (sin subir nada):
+            en video usa el frame donde el usuario paró la barra (`pos` + JS).
             """
             opciones = [(t("l_ninguno", lang), "ninguno")] + \
                        [(n, k) for k, n in luts.NOMBRES.items()]
@@ -1038,6 +1053,25 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                            label=t("l_mezcla", lang))
                         comps += [lk, mz]
 
+                    # ---- Comparar los LUTs elegidos sobre el medio YA cargado ----
+                    # (sin subir nada; en video, el frame donde paraste la barra)
+                    if fuente is not None:
+                        gr.Markdown(t("cmp_luts_intro", lang), elem_classes="size-preview")
+                        _cmp_btn = gr.Button(t("cmp_luts_boton", lang), size="sm",
+                                             elem_classes="cta")
+                        _cmp_msg = gr.Markdown("", elem_classes="size-preview")
+                        _cmp_gal = gr.Gallery(label=t("cmp_luts_galeria", lang), columns=2,
+                                              height="auto", object_fit="contain",
+                                              show_label=True, elem_classes="vb-frame-cmp")
+                        _luts3 = [comps[0], comps[1], comps[2], comps[3], comps[4], comps[5]]
+                        if es_video:
+                            _cmp_btn.click(hacer_comparar_looks(lang, True),
+                                           [pos, fuente] + _luts3,
+                                           [_cmp_gal, _cmp_msg], js=_JS_POS)
+                        else:
+                            _cmp_btn.click(hacer_comparar_looks(lang, False),
+                                           [fuente] + _luts3, [_cmp_gal, _cmp_msg])
+
                 def sl(lo, hi, v, paso, clave):
                     comps.append(gr.Slider(lo, hi, value=v, step=paso,
                                            label=t(clave, lang)))
@@ -1063,20 +1097,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     sl(0.0, 1.5, 0.0, 0.05, "l_claridad")
                     sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
                     sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
-
-                # ---- Comparar LUTs: ventana desprendible dentro de la zona de LUTs ----
-                # (acordeón que se abre y muestra el mismo frame con todos los LUTs)
-                with gr.Accordion("🎞️ " + t("tab_comparar_luts", lang), open=False):
-                    gr.Markdown(t("luts_intro", lang), elem_classes="size-preview")
-                    _cmp_img = gr.Image(type="filepath", label=t("luts_entrada", lang))
-                    _cmp_btn = gr.Button(t("luts_comparar", lang), variant="primary",
-                                         elem_classes="cta")
-                    _cmp_msg = gr.Markdown("", elem_classes="size-preview")
-                    _cmp_gal = gr.Gallery(label=t("luts_galeria", lang), columns=3,
-                                          height="auto", object_fit="contain",
-                                          show_label=True)
-                    _cmp_btn.click(hacer_comparar_luts(lang), _cmp_img,
-                                   [_cmp_gal, _cmp_msg])
 
             # ---- lógica presets ----
             def _guardar(nombre, *vals):
@@ -1144,7 +1164,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     preview = gr.Markdown(elem_classes="size-preview")
                 # --- Centro: resultado + comparación por el frame del propio video ---
                 with gr.Column(elem_classes="col-stage", min_width=320):
-                    video_out = gr.Video(label=t("resultado", lang), elem_id="vb-result")
+                    video_out = gr.Video(label=t("resultado_preview", lang),
+                                         elem_id="vb-result")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
                     gr.Markdown(t("cmp_scrub_ayuda", lang), elem_classes="size-preview")
@@ -1157,6 +1178,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     pos_frac = gr.Number(0.3, visible=False)
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
+                    # Barra de avance minimalista, DEBAJO de la consola; solo visible
+                    # mientras un proceso corre (la ceden procesar/aplicar).
+                    barra_v = gr.HTML("", visible=False, elem_classes="vb-bar-wrap")
 
                 # --- Columna 3: elegir filtro (botón Aplicar ARRIBA) ---
                 ids_f = filtros_video()
@@ -1194,7 +1218,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                     elem_classes="filtros-head")
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
-                    grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
+                    grupo_l_v, rev_v = grupo_revelado(
+                        ids_f[0] == "lut", fuente=video_out, pos=pos_frac, es_video=True)
 
             def controles_v(motor):
                 return (
@@ -1210,11 +1235,15 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             for comp in (video_in, motor_v, escala, mult, resolucion):
                 comp.change(hacer_vista_previa(lang),
                             [video_in, motor_v, escala, mult, resolucion], preview)
+            # Al cargar un video, vuélcalo al reproductor central (#vb-result) para
+            # que SIEMPRE haya un video con barra que mover y elegir el frame, aun
+            # antes de mejorar. Tras mejorar, el resultado lo reemplaza.
+            video_in.change(lambda v: v, video_in, video_out)
             ev_v = boton_v.click(
                 hacer_procesar_video(lang),
                 [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
                  batch_sv2, formato_v],
-                [log_v, video_out, comparador_v, descarga_v])
+                [log_v, video_out, comparador_v, descarga_v, barra_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
 
             # --- Filtros (post-proceso): controles, vista previa y aplicar ---
@@ -1228,14 +1257,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
             filtro_v.change(controles_filtro, filtro_v,
                             [nota_filtro, grupo_simples, grupo_l_v, col_revelado])
-
-            # JS: rellena pos_frac (fracción 0-1) con el tiempo ACTUAL del
-            # reproductor de resultado (o de entrada si aún no hay resultado),
-            # así "este frame" = el frame donde el usuario pausó el video.
-            _JS_POS = ("(pos, ...rest) => { const v = document.querySelector('#vb-result video') "
-                       "|| document.querySelector('#vb-input video'); "
-                       "if (v && v.duration) pos = v.currentTime / v.duration; "
-                       "return [pos, ...rest]; }")
 
             # "📸 Comparar este frame": entrada vs resultado en el frame pausado.
             boton_cmp_frame.click(hacer_comparar_frame(lang),
@@ -1265,7 +1286,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 hacer_aplicar_filtros(lang),
                 [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
                  den_luma, den_croma, est_suav, est_zoom, formato_v, *rev_v],
-                [log_v, video_out, comparador_v, descarga_v])
+                [log_v, video_out, comparador_v, descarga_v, barra_v])
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
@@ -1311,7 +1332,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         visible=ids_i[0] == "restormer")
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
-                    grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
+                    grupo_l_i, rev_i = grupo_revelado(
+                        ids_i[0] == "lut", fuente=img_in, es_video=False)
                     formato_i = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_IMG],
                         value="png",
