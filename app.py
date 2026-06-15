@@ -22,8 +22,8 @@ import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import (color, diffbir, faces, faithdiff, filtros, flashvsr, grano,
-                     instantir, luts, mantenimiento, osdface, pmrf, seedvr2,
-                     seedvr2_mlx, vulkan)
+                     instantir, luts, mantenimiento, metalfx, osdface, pmrf,
+                     realesrgan_mlx, seedvr2, seedvr2_mlx, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -32,7 +32,7 @@ HW = hardware.info_sistema()
 
 # ids internos estables; las etiquetas visibles salen de i18n
 MOTORES_VIDEO_NOTAS = {
-    "seedvr2": "n_seedvr2", "seedvr2_mlx": "n_seedvr2_mlx",
+    "seedvr2": "n_seedvr2", "seedvr2_mlx": "n_seedvr2_mlx", "metalfx": "n_metalfx",
     "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
     "grano": "n_grano", "lut": "n_lut",
@@ -45,6 +45,7 @@ MOTORES_IMG_NOTAS = {
     "instantir": "n_instantir", "ddcolor": "n_ddcolor", "grano": "n_grano",
     "lut": "n_lut", "diffbir": "n_diffbir", "pmrf": "n_pmrf",
     "osdface": "n_osdface", "seedvr2_mlx_img": "n_seedvr2_mlx",
+    "realesrgan_mlx_img": "n_realesrgan_mlx",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
@@ -268,6 +269,8 @@ def hacer_procesar_video(lang):
                                       batch_size=int(batch), es_video=True)
             elif motor == "seedvr2_mlx":
                 gen = seedvr2_mlx.mejorar(video, es_video=True, resolucion=int(resolucion))
+            elif motor == "metalfx":
+                gen = metalfx.mejorar(video, escala=int(escala))
             elif motor == "rife":
                 gen = vulkan.interpolar_video(video, mult=int(mult))
             elif motor == "flashvsr":
@@ -353,6 +356,8 @@ def hacer_procesar_imagen(lang):
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "seedvr2_mlx_img":
                 gen = seedvr2_mlx.mejorar(imagen, es_video=False, resolucion=int(resolucion))
+            elif motor == "realesrgan_mlx_img":
+                gen = realesrgan_mlx.mejorar(imagen, es_video=False)
             elif motor == "codeformer":
                 gen = faces.restaurar_caras(imagen, fidelidad=float(fidelidad), escala=int(escala))
             elif motor == "instantir":
@@ -548,9 +553,13 @@ def texto_sistema(lang):
         (f"SeedVR2 — restauración IA{sv2_extra}", HW["seedvr2"], inst_base, False),
         ("Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)", HW["vulkan"], inst_base, False),
     ]
-    if HW["mps"]:  # SeedVR2 en MLX: solo Apple Silicon
+    if HW["mps"]:  # nativos de Apple Silicon (MLX / MetalFX)
         motores.insert(1, ("SeedVR2 (MLX) — nativo Apple Silicon, rápido",
                            seedvr2_mlx.disponible(), "bash install/extras_mlx.sh", False))
+        motores.insert(2, ("Real-ESRGAN x4 (MLX) — rápido (BSD)",
+                           realesrgan_mlx.disponible(), "bash install/extras_realesrgan_mlx.sh", False))
+        motores.insert(3, ("MetalFX — escalado rápido de video (Apple)",
+                           metalfx.disponible(), "bash install/extras_metalfx.sh", False))
     motores += [
         ("CodeFormer — restaurar caras", faces.disponible(), "bash install/extras_caras.sh", False),
         ("DDColor — colorizar B/N", color.disponible(), "bash install/extras_color.sh", False),
@@ -597,12 +606,13 @@ def texto_sistema(lang):
 def motores_video():
     sv2 = ["seedvr2"] if HW["seedvr2"] else []
     mlx = ["seedvr2_mlx"] if (seedvr2_mlx.disponible() and HW["mps"]) else []
+    mfx = ["metalfx"] if (metalfx.disponible() and HW["mps"]) else []
     vk = ["realesrgan", "realcugan", "waifu2x", "rife"] if HW["vulkan"] else []
     # En NVIDIA SeedVR2 (PyTorch) es rápido → va primero (mejor calidad por defecto).
     # En Mac (MPS) SeedVR2-PyTorch es lentísimo → Real-ESRGAN va primero (default
-    # usable); luego SeedVR2-MLX (calidad alta, nativo Apple Silicon) y el
-    # SeedVR2-PyTorch lento queda al final.
-    m = (sv2 + vk) if HW["cuda"] else (vk + mlx + sv2)
+    # usable); luego SeedVR2-MLX (calidad alta), MetalFX (escalado rápido no-IA) y
+    # el SeedVR2-PyTorch lento queda al final.
+    m = (sv2 + vk) if HW["cuda"] else (vk + mlx + mfx + sv2)
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
     if HW["ffmpeg"]:
@@ -618,6 +628,8 @@ def motores_imagen():
         m.append("faithdiff")  # recomendado por defecto (MIT, supera a SUPIR)
     if seedvr2_mlx.disponible() and HW["mps"]:
         m.append("seedvr2_mlx_img")  # SeedVR2 nativo Apple Silicon (MLX)
+    if realesrgan_mlx.disponible() and HW["mps"]:
+        m.append("realesrgan_mlx_img")  # Real-ESRGAN x4 nativo MLX (BSD)
     if diffbir.disponible():
         m.append("diffbir")    # caras + escena, Apache-2.0
     if pmrf.disponible():
@@ -645,10 +657,11 @@ def motores_imagen():
 _MEJORADORES_VIDEO = {"seedvr2", "seedvr2_mlx", "realesrgan", "realcugan",
                       "waifu2x", "flashvsr"}
 _MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
-                    "realesrgan_img", "diffbir", "pmrf", "osdface", "seedvr2_mlx_img"}
+                    "realesrgan_img", "diffbir", "pmrf", "osdface", "seedvr2_mlx_img",
+                    "realesrgan_mlx_img"}
 # Motores que escalan a una resolución/escala (para la vista previa de tamaño).
 _ESCALADORES = {"seedvr2", "seedvr2_mlx", "flashvsr", "realesrgan", "realcugan",
-                "waifu2x"}
+                "waifu2x", "metalfx"}
 
 
 def _hay_mejorador_video() -> bool:
@@ -853,7 +866,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     nota_v = gr.Markdown(_nota_video(ids_v[0], lang),
                                          elem_classes="engine-note")
                     escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
-                                       visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x"))
+                                       visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x", "metalfx"))
                     ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
                     mult = gr.Slider(2, 4, value=2, step=1, label=t("mult_fps", lang), visible=False)
                     with gr.Group(visible=ids_v[0] in ("seedvr2", "seedvr2_mlx")) as grupo_sv2:
@@ -923,7 +936,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             def controles_v(motor):
                 return (
                     gr.update(value=_nota_video(motor, lang)),
-                    gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x")),
+                    gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x", "metalfx")),
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
                     gr.update(visible=motor == "rife"),
                     gr.update(visible=motor in ("seedvr2", "seedvr2_mlx")),
@@ -990,7 +1003,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                            "codeformer": "i_codeformer", "instantir": "i_instantir",
                            "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut",
                            "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface",
-                           "seedvr2_mlx_img": "i_seedvr2_mlx"}
+                           "seedvr2_mlx_img": "i_seedvr2_mlx",
+                           "realesrgan_mlx_img": "i_realesrgan_mlx"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -1008,7 +1022,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                          visible=ids_i[0] not in ("seedvr2_img", "instantir",
                                                                   "ddcolor", "grano", "lut",
                                                                   "pmrf", "osdface",
-                                                                  "seedvr2_mlx_img"))
+                                                                  "seedvr2_mlx_img",
+                                                                  "realesrgan_mlx_img"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] in ("seedvr2_img", "seedvr2_mlx_img"))
@@ -1045,7 +1060,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=motor in IMG_CON_PROMPT),
                     gr.update(visible=motor not in ("seedvr2_img", "instantir",
                                                     "ddcolor", "grano", "lut",
-                                                    "pmrf", "osdface", "seedvr2_mlx_img")),
+                                                    "pmrf", "osdface", "seedvr2_mlx_img",
+                                                    "realesrgan_mlx_img")),
                     gr.update(visible=motor in ("seedvr2_img", "seedvr2_mlx_img")),
                     gr.update(visible=motor == "codeformer"),
                     gr.update(visible=motor == "grano"),
@@ -1181,6 +1197,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 "codeformer": "CodeFormer — caras",
                 "ddcolor": "DDColor — color",
                 "seedvr2_mlx": "SeedVR2 (MLX) — Apple Silicon",
+                "realesrgan_mlx": "Real-ESRGAN x4 (MLX) — Apple Silicon",
+                "metalfx": "MetalFX — escalado rápido (Apple)",
                 "diffbir": "DiffBIR — caras + escena (Apache-2.0)",
                 "pmrf": "PMRF — caras (MIT)",
                 "osdface": "OSDFace — caras ⚠️ sin licencia (pruebas)",
@@ -1193,8 +1211,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
             def _mant_aplica(m):
                 if m == "seedvr2":
                     return HW["mps"] or HW["cuda"]
-                if m == "seedvr2_mlx":
-                    return HW["mps"]  # MLX solo en Apple Silicon
+                if m in ("seedvr2_mlx", "realesrgan_mlx", "metalfx"):
+                    return HW["mps"]  # MLX / MetalFX solo en Apple Silicon
                 if m in _MANT_NVIDIA:
                     return HW["cuda"] or mantenimiento.ubicacion(m)["existe"]
                 return True  # vulkan, codeformer, ddcolor sirven en cualquier equipo

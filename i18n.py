@@ -140,6 +140,42 @@ T = {
               "version PyTorch/MPS. **Image par image** (sans cohérence temporelle native) → "
               "léger scintillement possible en vidéo ; graine fixe pour l'atténuer. MIT. "
               "Premier lancement : téléchargement des poids (plusieurs Go)."},
+    "m_metalfx": {
+        "es": "MetalFX — escalado rápido (Apple Silicon)",
+        "en": "MetalFX — fast upscale (Apple Silicon)",
+        "fr": "MetalFX — upscale rapide (Apple Silicon)"},
+    "n_metalfx": {
+        "es": "Escalado de video **nativo de Apple Silicon** con MetalFX (la tecnología de "
+              "Apple para juegos). Muy rápido (casi en tiempo real) y consciente de bordes, "
+              "pero **NO inventa detalle nuevo** como la IA (SeedVR2/Real-ESRGAN): reconstruye "
+              "y afila lo que ya hay. Ideal para escalar material decente en segundos o para "
+              "previsualizar. Solo Mac con chip M (macOS 13+).",
+        "en": "**Native Apple Silicon** video upscaling with MetalFX (Apple's gaming tech). "
+              "Very fast (near real-time) and edge-aware, but **does NOT synthesize new detail** "
+              "like AI (SeedVR2/Real-ESRGAN): it reconstructs and sharpens what's there. Great "
+              "for scaling decent footage in seconds or for previewing. Apple Silicon Mac only "
+              "(macOS 13+).",
+        "fr": "Upscaling vidéo **natif Apple Silicon** avec MetalFX (la techno de jeu d'Apple). "
+              "Très rapide (quasi temps réel) et sensible aux contours, mais **n'invente PAS de "
+              "détail** comme l'IA : il reconstruit et affine l'existant. Idéal pour agrandir un "
+              "métrage correct en quelques secondes ou prévisualiser. Mac Apple Silicon (macOS 13+)."},
+    "i_realesrgan_mlx": {
+        "es": "Real-ESRGAN x4 (MLX) — rápido, nativo Apple",
+        "en": "Real-ESRGAN x4 (MLX) — fast, native Apple",
+        "fr": "Real-ESRGAN x4 (MLX) — rapide, natif Apple"},
+    "n_realesrgan_mlx": {
+        "es": "El clásico Real-ESRGAN x4 corriendo en **MLX nativo de Apple Silicon**: escalado "
+              "GAN rápido y determinista, escala **fija x4**. Misma familia que el Real-ESRGAN "
+              "Vulkan pero por MLX. Tier ligero que complementa a SeedVR2 (difusión, más lento "
+              "pero con más detalle). Licencia BSD-3 (uso comercial OK).",
+        "en": "Classic Real-ESRGAN x4 running on **native Apple Silicon MLX**: fast, "
+              "deterministic GAN upscaling, **fixed x4**. Same family as the Vulkan Real-ESRGAN "
+              "but via MLX. Lightweight tier that complements SeedVR2 (diffusion, slower but "
+              "more detail). BSD-3 license (commercial use OK).",
+        "fr": "Le classique Real-ESRGAN x4 sur **MLX natif Apple Silicon** : upscaling GAN "
+              "rapide et déterministe, **x4 fixe**. Même famille que le Real-ESRGAN Vulkan mais "
+              "via MLX. Tier léger qui complète SeedVR2 (diffusion, plus lent mais plus de "
+              "détail). Licence BSD-3 (usage commercial OK)."},
     "m_realesrgan": {
         "es": "Real-ESRGAN — video real (Vulkan)",
         "en": "Real-ESRGAN — real-world video (Vulkan)",

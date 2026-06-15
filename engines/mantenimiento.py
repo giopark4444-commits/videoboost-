@@ -73,6 +73,18 @@ _GESTION = {
         borrar=[RAIZ / ".venv-mlx" / ".ok"],
         instalador=["bash", "install/extras_mlx.sh"],
     ),
+    "realesrgan_mlx": dict(
+        repo=None,  # pesos MLX descargados de HuggingFace al vendor
+        carpeta=VENDOR / "realesrgan-mlx",
+        borrar=[VENDOR / "realesrgan-mlx"],
+        instalador=["bash", "install/extras_realesrgan_mlx.sh"],
+    ),
+    "metalfx": dict(
+        repo=VENDOR / "fx-upscale",   # checkout git → se puede comprobar versión
+        carpeta=VENDOR / "fx-upscale",
+        borrar=[VENDOR / "fx-upscale" / ".build"],
+        instalador=["bash", "install/extras_metalfx.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)
