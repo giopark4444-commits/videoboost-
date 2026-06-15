@@ -865,19 +865,16 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                        [(n, k) for k, n in luts.NOMBRES.items()]
             comps = []  # 24 componentes en orden plano (_PRESET_KEYS)
             with gr.Group(visible=visible) as g:
-                # ---- fila de presets ----
-                with gr.Row():
+                # ---- presets en UNA sola fila compacta: cargar · nombre · guardar ----
+                with gr.Row(equal_height=True):
+                    preset_selector = gr.Dropdown(
+                        _listar_presets_revelado(), label=t("preset_cargar", lang),
+                        value=None, interactive=True, scale=5, container=True)
                     preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
-                                               scale=2, container=True)
+                                               scale=4, container=True)
                     preset_guardar_btn = gr.Button(t("preset_guardar", lang),
-                                                   scale=1, size="sm")
-                preset_selector = gr.Dropdown(
-                    _listar_presets_revelado(),
-                    label=t("preset_cargar", lang),
-                    value=None,
-                    interactive=True,
-                )
-                preset_msg = gr.Markdown("")
+                                                   scale=2, size="sm")
+                preset_msg = gr.Markdown("", elem_classes="size-preview")
 
                 # ---- looks ----
                 with gr.Accordion(t("l_sec_looks", lang), open=True):
@@ -1000,6 +997,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         cmp_msg = gr.Markdown("", elem_classes="size-preview")
                         cmp_estado = gr.State([])
                         cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
+                    # Vista previa del filtro (post-proceso) — bajo el comparador.
+                    gr.Markdown(f"**{t('filtros_preview', lang)}**", elem_classes="size-preview")
+                    preview_filtro = gr.HTML()
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
 
@@ -1021,7 +1021,6 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
                     grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
-                    preview_filtro = gr.HTML(label=t("filtros_preview", lang))
                     with gr.Row():
                         boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
                         boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
