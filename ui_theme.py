@@ -1,9 +1,11 @@
-"""Sistema de diseño de VideoBoost — estética cálida y minimalista inspirada en
+"""Sistema de diseño de PixelBooster — estética cálida y minimalista inspirada en
 la app de Claude: fondo crema, acento arcilla, mucho aire, tipografía de sistema
 (sin fuentes externas, para seguir 100% local), tarjetas limpias y responsive.
 
 Exporta TEMA (gr.themes.Base configurado) y CSS (string que se inyecta en Blocks).
 """
+
+import json
 
 import gradio as gr
 from gradio.themes.utils import colors, sizes
@@ -62,24 +64,134 @@ TEMA = gr.themes.Base(
     border_color_primary_dark="#3c3b38",
 )
 
+
+# --- Galería de temas (3 claros + 3 oscuros) ---------------------------------
+# Cada tema define una paleta COMPLETA que se aplica en cliente (vía JS) sobre
+# document.body, sobreescribiendo tanto las variables propias (--vb-*) como las
+# de Gradio (fondo, texto, bordes, botones). Los temas oscuros además activan la
+# clase .dark para que los componentes nativos de Gradio se adapten.
+# Contraste texto/fondo verificado ≥ 12:1 y texto-tenue/fondo ≥ 5:1 (WCAG AA+):
+# las letras nunca se pierden con el fondo.
+
+def _paleta(bg, bg2, surface, surface_hover, elev, border, border_strong,
+            text, muted, accent, accent_hover, accent_text, accent_soft):
+    return {
+        "--vb-bg": bg, "--body-background-fill": bg,
+        "--background-fill-primary": bg, "--background-fill-secondary": bg2,
+        "--vb-surface": surface, "--block-background-fill": surface,
+        "--panel-background-fill": surface, "--input-background-fill": surface,
+        "--vb-surface-hover": surface_hover, "--vb-elev": elev,
+        "--vb-border": border, "--border-color-primary": border,
+        "--block-border-color": border, "--input-border-color": border,
+        "--vb-border-strong": border_strong,
+        "--vb-text": text, "--body-text-color": text,
+        "--vb-muted": muted, "--block-label-text-color": muted,
+        "--block-title-text-color": muted, "--body-text-color-subdued": muted,
+        "--vb-accent": accent, "--color-accent": accent, "--primary-500": accent,
+        "--button-primary-background-fill": accent,
+        "--input-border-color-focus": accent,
+        "--primary-600": accent_hover,
+        "--button-primary-background-fill-hover": accent_hover,
+        "--button-primary-text-color": accent_text,
+        "--button-primary-border-color": accent,
+        "--vb-accent-soft": accent_soft,
+    }
+
+
+TEMAS = {
+    # Claros                bg        bg2       surface   surf.hover elev      border    bord.str  text      muted     accent    acc.hover acc.text  acc.soft
+    "arcilla":    {"dark": False, "vars": _paleta("#faf9f5","#f3f1ea","#ffffff","#fbfaf7","#f6f4ee","#ece7dd","#ddd5c7","#23211d","#6f6a60","#c96442","#b5512f","#ffffff","#fbf2ee")},
+    "niebla":     {"dark": False, "vars": _paleta("#f4f6fa","#e9eef5","#ffffff","#f7f9fc","#eef2f8","#e0e6ef","#cfd8e4","#1b2330","#5a6677","#2f6df0","#2257cf","#ffffff","#e9f0fe")},
+    "menta":      {"dark": False, "vars": _paleta("#f2f6f2","#e6efe8","#ffffff","#f6faf6","#ebf3ed","#dde8e0","#cadbcf","#182519","#566b5b","#1f9e63","#16804f","#ffffff","#e6f5ec")},
+    # Oscuros
+    "noche":      {"dark": True,  "vars": _paleta("#262624","#1f1f1d","#30302e","#383836","#2b2b29","#3c3b38","#4a4844","#ece9e1","#a8a39a","#e08a63","#ce744c","#2a1109","#3a322c")},
+    "medianoche": {"dark": True,  "vars": _paleta("#0f1626","#0a0f1c","#18223a","#1f2b48","#141d33","#283450","#354465","#e7ecf6","#93a1bd","#5b8dff","#4070ec","#ffffff","#1c2944")},
+    "carbon":     {"dark": True,  "vars": _paleta("#18181d","#121216","#232330","#2b2b3a","#1e1e28","#33333f","#42424f","#eae8f2","#a29fb2","#b692f5","#a074ee","#1a1320","#2a2440")},
+}
+
+TEMAS_CLAROS = ["arcilla", "niebla", "menta"]
+TEMAS_OSCUROS = ["noche", "medianoche", "carbon"]
+TEMA_DEFECTO = "arcilla"
+
+
+def temas_js():
+    """JS que define window.VB_TEMAS y window.vbTema(id): aplica la paleta sobre
+    body, marca el tema activo (atributo data-vbtema, que sobrevive a los
+    re-render de @gr.render) y lo persiste en localStorage."""
+    data = {tid: {"dark": v["dark"], "vars": v["vars"]} for tid, v in TEMAS.items()}
+    return ("window.VB_TEMAS = %s;\n" % json.dumps(data)) + """
+window.vbTema = (id) => {
+  const t = window.VB_TEMAS[id]; if (!t) return;
+  const s = document.body.style;
+  Object.values(window.VB_TEMAS).forEach(o =>
+    Object.keys(o.vars).forEach(k => s.removeProperty(k)));
+  document.body.classList.toggle('dark', !!t.dark);
+  for (const k in t.vars) s.setProperty(k, t.vars[k]);
+  document.body.setAttribute('data-vbtema', id);
+  try { localStorage.setItem('vb_tema', id); } catch (e) {}
+};"""
+
+
+# --- Tipografías (solo fuentes del sistema, sin descargas → 100% local) -------
+FUENTES = {
+    "sistema":  ["-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto",
+                 "Helvetica", "Arial", "sans-serif"],
+    "grotesca": ['"Avenir Next"', '"Helvetica Neue"', "Helvetica", "Arial",
+                 "sans-serif"],
+    "redonda":  ['"SF Pro Rounded"', '"Hiragino Maru Gothic ProN"',
+                 '"Varela Round"', "system-ui", "sans-serif"],
+    "serif":    ['"Iowan Old Style"', "Georgia", '"Times New Roman"', "serif"],
+    "mono":     ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas",
+                 "monospace"],
+}
+FUENTES_ORDEN = ["sistema", "grotesca", "redonda", "serif", "mono"]
+FUENTE_DEFECTO = "sistema"
+
+
+def fuentes_js():
+    """JS: window.vbFuente(id) cambia la tipografía de toda la app (variable
+    --font de Gradio + body), marca la activa y la persiste."""
+    data = {fid: ", ".join(stack) for fid, stack in FUENTES.items()}
+    return ("window.VB_FUENTES = %s;\n" % json.dumps(data)) + """
+window.vbFuente = (id) => {
+  const f = window.VB_FUENTES[id]; if (!f) return;
+  document.body.style.setProperty('--font', f);
+  document.body.style.fontFamily = f;
+  document.body.setAttribute('data-vbfuente', id);
+  try { localStorage.setItem('vb_fuente', id); } catch (e) {}
+};"""
+
+
+# Resalta el botón del tema/fuente activos según el atributo del body (CSS puro,
+# así no depende de clases que se pierden al reconstruir la UI al cambiar idioma).
+_TEMAS_ACTIVOS_CSS = "\n".join(
+    f'body[data-vbtema="{tid}"] .vb-tema[data-tema="{tid}"]{{'
+    f'border-color:var(--vb-accent) !important;'
+    f'box-shadow:inset 0 0 0 1.5px var(--vb-accent);}}'
+    for tid in TEMAS) + "\n" + "\n".join(
+    f'body[data-vbfuente="{fid}"] .vb-fuente[data-fuente="{fid}"]{{'
+    f'border-color:var(--vb-accent) !important;'
+    f'box-shadow:inset 0 0 0 1.5px var(--vb-accent); color:var(--vb-accent) !important;}}'
+    for fid in FUENTES)
+
+
 CSS = """
 :root{
-  --vb-bg:#faf9f5; --vb-surface:#ffffff; --vb-border:#ece7dd;
-  --vb-border-strong:#ddd5c7; --vb-text:#23211d; --vb-muted:#7c776d;
+  --vb-bg:#faf9f5; --vb-surface:#ffffff; --vb-surface-hover:#fbfaf7;
+  --vb-elev:#f6f4ee; --vb-border:#ece7dd;
+  --vb-border-strong:#ddd5c7; --vb-text:#23211d; --vb-muted:#6f6a60;
   --vb-accent:#c96442; --vb-accent-soft:#fbf2ee;
 }
 /* Modo oscuro: Gradio añade la clase .dark al body; las variables cascada
-   y todos los elementos propios se adaptan solos. */
+   y todos los elementos propios se adaptan solos. (Los 6 temas inyectan su
+   paleta completa por JS sobre body; esto es solo el respaldo inicial.) */
 body.dark, .dark{
-  --vb-bg:#262624; --vb-surface:#30302e; --vb-border:#3c3b38;
+  --vb-bg:#262624; --vb-surface:#30302e; --vb-surface-hover:#383836;
+  --vb-elev:#2b2b29; --vb-border:#3c3b38;
   --vb-border-strong:#4a4844; --vb-text:#ece9e1; --vb-muted:#a8a39a;
   --vb-accent:#e08a63; --vb-accent-soft:#3a322c;
 }
-.dark .engine-picker label{background:var(--vb-surface) !important;}
-.dark .engine-picker label:hover{background:#363533 !important;}
-.dark .engine-note{background:#2b2b29 !important;}
-.dark #vb-header .vb-pill{background:var(--vb-surface);}
-.dark .sys-card{background:var(--vb-surface);}
+.dark .engine-picker label:hover{background:var(--vb-surface-hover) !important;}
 /* Lienzo a pantalla completa: ocupa todo el ancho disponible, con un margen
    lateral cómodo que escala (no los ~400px de hueco que dejaba el tope de
    1140px en monitores grandes). */
@@ -103,33 +215,47 @@ footer{display:none !important;}
 .aviso-sin-motor p, .cmp-cap{max-width:72ch;}
 .sys-card{max-width:80ch;}
 
-/* Cabecera */
-#vb-header{padding:30px 0 22px; border-bottom:1px solid var(--vb-border); margin-bottom:22px;}
-#vb-header .vb-title{font-size:30px; font-weight:650; letter-spacing:-.01em;
-  color:var(--vb-text); margin:0;}
-#vb-header .vb-sub-text{margin:8px 0 14px; color:var(--vb-muted); font-size:14.5px;}
-#vb-header .vb-sub{margin:0; color:var(--vb-muted); font-size:14.5px;
-  display:flex; flex-wrap:wrap; align-items:center; gap:10px;}
-#vb-header .vb-pill{display:inline-flex; align-items:center; gap:7px;
-  background:#fff; border:1px solid var(--vb-border); border-radius:999px;
-  padding:5px 13px; font-size:13px; color:var(--vb-text);}
-#vb-header .vb-pill .vb-dot{width:7px; height:7px; border-radius:50%;
-  background:var(--vb-accent);}
-#vb-header .vb-tier{color:var(--vb-muted); font-size:13.5px;}
+/* Selector de idioma: ahora vive dentro de ⚙️ Ajustes (tarjeta «Idioma»). El
+   selector real es el disparador de @gr.render y queda oculto arriba, sigue
+   funcionando como espejo del visible. */
+#vb-lang{display:none !important;}
+.aj-idioma{margin-bottom:2px;}
 
-/* Selector de idioma minimalista (arriba a la derecha) */
-#vb-lang{position:absolute; top:34px; right:20px; z-index:5; max-width:300px;}
-#vb-lang fieldset{border:none; padding:0;}
-#vb-lang .wrap{gap:0 !important;}
-#vb-lang label{padding:6px 13px !important; font-size:13px !important;
-  border:1px solid var(--vb-border) !important; background:#fff !important;}
+/* Pestañas (Gradio 5: .tab-wrapper › .tab-container[role=tablist] › button).
+   Logo a la izquierda + pestañas grandes en negrilla, todo en una fila. */
+/* El logo queda alineado con el margen de las columnas/tarjetas de abajo (sin
+   sangre): la fila vive dentro del padding lateral del contenedor. */
+.tab-wrapper{display:flex !important; align-items:center !important;
+  justify-content:flex-start !important; gap:16px !important; height:auto !important;
+  padding:8px 0 0 !important;
+  border-bottom:1px solid var(--vb-border) !important;}
+.tab-container::after{display:none !important;}  /* quitamos el subrayado nativo */
+/* el contenedor nativo fija altura y recorta: lo liberamos para los botones grandes */
+.tab-container{gap:4px !important; height:auto !important; overflow:visible !important;}
+.tab-container button{font-weight:800 !important; color:var(--vb-muted) !important;
+  padding:6px 18px !important; font-size:19px !important; letter-spacing:-.01em;}
+.tab-container button.selected{color:var(--vb-text) !important;
+  box-shadow:inset 0 -2px 0 var(--vb-accent) !important;}
+/* Wordmark "PixelBooster": color de acento sólido (siempre visible), con un
+   separador fino. Primer ítem flex del contenedor de pestañas. */
+.tab-wrapper::before{
+  content:"✦ PixelBooster"; flex:0 0 auto; align-self:center; white-space:nowrap;
+  font-size:20px; font-weight:800; letter-spacing:-.02em; line-height:1;
+  padding-right:16px; border-right:1px solid var(--vb-border);
+  color:var(--vb-accent) !important; -webkit-text-fill-color:var(--vb-accent);
+  cursor:pointer;}
 
-/* Pestañas: subrayado fino, calmado */
-.tab-nav{border-bottom:1px solid var(--vb-border) !important; gap:2px !important;}
-.tab-nav button{font-weight:600 !important; color:var(--vb-muted) !important;
-  padding:11px 16px !important;}
-.tab-nav button.selected{color:var(--vb-text) !important;
-  border-bottom:2px solid var(--vb-accent) !important;}
+/* ⚙️ Ajustes: tres columnas siempre desplegadas, cada sección en su tarjeta */
+.aj-cols{align-items:flex-start !important; gap:18px !important;}
+.aj-card{background:var(--vb-surface) !important; border:1px solid var(--vb-border) !important;
+  border-radius:16px !important; padding:16px 18px 18px !important;
+  margin-bottom:16px !important; box-shadow:none !important;}
+.aj-card > .md:first-child h3, .aj-card h3:first-child{margin-top:0 !important;}
+.aj-card h3{font-size:16px !important; font-weight:650 !important;
+  color:var(--vb-text) !important; margin:0 0 12px !important;}
+.aj-card h4{font-size:14.5px !important; color:var(--vb-text) !important;
+  margin:2px 0 6px !important;}
+.aj-card p, .aj-card li{font-size:13.5px !important; line-height:1.55 !important;}
 
 /* Selector de motores como tarjetas */
 .engine-picker fieldset{display:flex; flex-direction:column; gap:8px;
@@ -138,17 +264,17 @@ footer{display:none !important;}
 .engine-picker label{display:flex !important; align-items:center; gap:11px;
   margin:0 !important; padding:13px 15px !important; width:100%;
   border:1px solid var(--vb-border) !important; border-radius:12px !important;
-  background:#fff !important; cursor:pointer; transition:border-color .15s, background .15s;}
+  background:var(--vb-surface) !important; cursor:pointer; transition:border-color .15s, background .15s;}
 .engine-picker label:hover{border-color:var(--vb-border-strong) !important;
-  background:#fdfcfa !important;}
+  background:var(--vb-surface-hover) !important;}
 .engine-picker label:has(input:checked){border-color:var(--vb-accent) !important;
   background:var(--vb-accent-soft) !important; box-shadow:inset 0 0 0 1px var(--vb-accent);}
 .engine-picker input[type=radio]{accent-color:var(--vb-accent);}
 
 /* Nota del motor: callout suave */
-.engine-note{background:#f6f4ee !important; border:1px solid var(--vb-border) !important;
+.engine-note{background:var(--vb-elev) !important; border:1px solid var(--vb-border) !important;
   border-radius:12px !important; padding:13px 15px !important;}
-.engine-note p{margin:0 !important; color:#54514a !important; font-size:13.5px !important;
+.engine-note p{margin:0 !important; color:var(--vb-text) !important; font-size:13.5px !important;
   line-height:1.55 !important;}
 
 /* Vista previa de resolución */
@@ -224,7 +350,7 @@ footer{display:none !important;}
 .ba-cmp .ba-l{left:11px;} .ba-cmp .ba-r{right:11px;}
 
 /* Pestaña Sistema más legible */
-.sys-card{background:#fff; border:1px solid var(--vb-border); border-radius:14px; padding:6px 20px;}
+.sys-card{background:var(--vb-surface); border:1px solid var(--vb-border); border-radius:14px; padding:6px 20px;}
 
 /* Mantenimiento: nombre del motor + ruta de descarga */
 .mant-info p{margin:0 !important; font-size:14px !important; line-height:1.5 !important;}
@@ -232,11 +358,42 @@ footer{display:none !important;}
   background:var(--vb-accent-soft) !important; padding:1px 6px !important;
   border-radius:6px !important; word-break:break-all;}
 
+/* Selector de temas (galería de swatches) */
+.vb-temas{display:flex; flex-direction:column; gap:18px; padding:4px 2px 2px;}
+.vb-temas-tit{display:block; font-size:11.5px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--vb-muted); margin:0 0 10px;}
+.vb-temas-row{display:flex; flex-wrap:wrap; gap:10px;}
+.vb-tema{display:inline-flex; align-items:center; gap:11px; padding:9px 15px 9px 9px;
+  border:1px solid var(--vb-border); border-radius:13px; background:var(--vb-surface);
+  cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600;
+  color:var(--vb-text); transition:border-color .15s, box-shadow .15s, transform .12s;}
+.vb-tema:hover{border-color:var(--vb-border-strong); transform:translateY(-1px);}
+.vb-tema:focus-visible{outline:2px solid var(--vb-accent); outline-offset:2px;}
+.vb-tema-sw{position:relative; width:36px; height:36px; border-radius:9px; flex:0 0 auto;
+  overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.10);
+  background:linear-gradient(135deg, var(--c1) 0 52%, var(--c2) 52% 100%);}
+.vb-tema-sw::after{content:""; position:absolute; right:5px; bottom:5px; width:12px; height:12px;
+  border-radius:50%; background:var(--c3); box-shadow:0 0 0 2px var(--c2);}
+.vb-tema-nom{white-space:nowrap;}
+
+/* Selector de tipografía: cada botón se muestra EN su propia fuente (preview) */
+.vb-tipo-tit{display:block; font-size:11.5px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--vb-muted); margin:18px 0 10px;}
+.vb-fuentes{display:flex; flex-wrap:wrap; gap:8px;}
+.vb-fuente{padding:9px 15px; border:1px solid var(--vb-border); border-radius:11px;
+  background:var(--vb-surface); color:var(--vb-text); cursor:pointer; font-size:15px;
+  font-weight:600; transition:border-color .15s, box-shadow .15s, transform .12s;}
+.vb-fuente:hover{border-color:var(--vb-border-strong); transform:translateY(-1px);}
+.vb-fuente:focus-visible{outline:2px solid var(--vb-accent); outline-offset:2px;}
+
 /* Responsive */
 @media (max-width:760px){
   .gradio-container{padding:0 14px 40px !important;}
-  #vb-lang{position:static; max-width:none; margin-top:14px;}
-  #vb-header{padding-top:22px;}
-  #vb-header .vb-title{font-size:25px;}
+  .tab-wrapper{gap:10px !important;}
+  .tab-wrapper::before{font-size:17px; padding-right:10px;}
+  .tab-container button{font-size:16px !important; padding:10px 13px !important;}
 }
 """
+
+# Reglas que resaltan el tema activo (generadas a partir de TEMAS).
+CSS += "\n\n/* Tema activo */\n" + _TEMAS_ACTIVOS_CSS + "\n"
