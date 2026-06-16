@@ -1400,7 +1400,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             with gr.Row():
                 with gr.Column(elem_classes="col-controls", min_width=300):
                     video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input",
-                                        sources=["upload"])
+                                        sources=["upload", "webcam"],
+                                        elem_classes="vb-upload")
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
                         boton_v = gr.Button(t("boton_video", lang), variant="primary",
@@ -1436,7 +1437,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 # --- Centro: resultado + comparación por el frame del propio video ---
                 with gr.Column(elem_classes="col-stage", min_width=320):
                     video_out = gr.Video(label=t("resultado_preview", lang),
-                                         elem_id="vb-result", sources=["upload"])
+                                         elem_id="vb-result", sources=["upload", "webcam"],
+                                         elem_classes="vb-upload")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
@@ -1585,7 +1587,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             with gr.Row():
                 with gr.Column(elem_classes="col-controls"):
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang),
-                                      sources=["upload", "clipboard"])
+                                      sources=["upload", "webcam", "clipboard"],
+                                      elem_classes="vb-upload")
                     motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
                                        value=ids_i[0], label=t("motor", lang),
                                        elem_classes="engine-picker")

@@ -299,6 +299,14 @@ footer{display:none !important;}
 .engine-otros strong{color:#8c857a !important;}
 .dark .engine-otros, .dark .engine-otros p{color:#8b8478 !important;}
 
+/* Recuadro de carga compacto: el botón de soltar vacío medía ~240px y malgastaba
+   espacio; lo bajamos y dejamos los iconos subir/webcam centrados justo debajo.
+   Solo afecta al estado VACÍO (cuando hay video/imagen cargado, el reproductor
+   mantiene su tamaño normal). */
+.vb-upload button.boundedheight{min-height:96px !important; height:96px !important;}
+.vb-upload .upload-container{min-height:0 !important;}
+.vb-upload .source-selection{margin-top:2px !important;}
+
 /* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
 .vb-bar-wrap{padding:6px 2px 0 !important;}
 .vb-bar{height:5px; border-radius:999px; background:rgba(0,0,0,.10); overflow:hidden;}
