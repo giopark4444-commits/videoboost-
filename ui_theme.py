@@ -305,7 +305,9 @@ footer{display:none !important;}
    mantiene su tamaño normal). */
 .vb-upload button.boundedheight{min-height:96px !important; height:96px !important;}
 .vb-upload .upload-container{min-height:0 !important;}
-.vb-upload .source-selection{margin-top:2px !important;}
+/* La fila de iconos (subir/webcam) traía un borde superior de 1px que cruzaba el
+   recuadro: lo quitamos (es solo estético). */
+.vb-upload .source-selection{margin-top:2px !important; border-top:none !important;}
 
 /* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
 .vb-bar-wrap{padding:6px 2px 0 !important;}
