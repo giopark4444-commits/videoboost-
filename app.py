@@ -632,12 +632,17 @@ def texto_niveles(lang):
         f"### {t('aj_niveles_tit', lang)}",
         t("aj_niveles_intro", lang),
         "",
-        f"- **{niv(3)}** — {t('aj_nivel3', lang)}",
+        f"- **{niv(1)}** _({t('aj_nivel_min', lang)})_ — {t('aj_nivel1', lang)}",
         f"- **{niv(2)}** — {t('aj_nivel2', lang)}",
-        f"- **{niv(1)}** — {t('aj_nivel1', lang)}",
+        f"- **{niv(3)}** _({t('aj_nivel_max', lang)})_ — {t('aj_nivel3', lang)}",
         "",
         f"**{t('aj_nivel_tuyo', lang)}: {niv(n)}** — {porque}",
     ])
+
+
+def texto_requisitos(lang):
+    """Tarjeta gráfica mínima e ideal para PC y Mac."""
+    return t("req_txt", lang)
 
 
 # --- Tema + tipografía: JS de cliente (aplicación y persistencia) -------------
@@ -1391,10 +1396,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
 
             # Tres columnas siempre desplegadas; cada sección muestra todo.
             with gr.Row(elem_classes="aj-cols", equal_height=False):
-                # ───────── Columna 1: Guía + Apariencia ─────────
+                # ───────── Columna IZQUIERDA: Idioma · Apariencia · Salida · Equipo ─────────
                 with gr.Column():
-                    with _seccion("📖 " + t("aj_guia", lang)):
-                        gr.Markdown(t("aj_guia_txt", lang))
                     with _seccion("🌐 " + t("aj_idioma", lang)):
                         idioma_sel = gr.Radio(IDIOMAS, value=lang, show_label=False,
                                               container=False, elem_classes="aj-idioma")
@@ -1404,16 +1407,38 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     with _seccion(t("ap_titulo", lang)):
                         gr.HTML(picker_temas_html(lang))
                         gr.HTML(picker_fuentes_html(lang))
+                    with _seccion("📁 " + t("aj_salida", lang)):
+                        gr.Markdown(t("aj_salida_intro", lang))
+                        aj_fmt_v = gr.Dropdown(
+                            [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
+                            value=ajustes.formato_video(), label=t("formato_salida_v", lang))
+                        aj_fmt_i = gr.Dropdown(
+                            [(lbl, val) for lbl, val in _FORMATOS_IMG],
+                            value=ajustes.formato_img(), label=t("formato_salida_i", lang))
+                        aj_msg = gr.Markdown(elem_classes="formato-nota")
 
-                # ───────── Columna 2: Equipo y niveles ─────────
-                with gr.Column():
+                        def _guardar_fmt_v(v):
+                            ajustes.guardar(formato_video=v)
+                            return "✓ " + t("aj_guardado", lang)
+
+                        def _guardar_fmt_i(v):
+                            ajustes.guardar(formato_img=v)
+                            return "✓ " + t("aj_guardado", lang)
+
+                        aj_fmt_v.change(_guardar_fmt_v, aj_fmt_v, aj_msg)
+                        aj_fmt_i.change(_guardar_fmt_i, aj_fmt_i, aj_msg)
+
                     with _seccion("🖥️ " + t("aj_equipo", lang)):
                         gr.Markdown(f"#### {gpu_resumen(lang)}")
                         gr.Markdown(texto_sistema(lang))
                         gr.Markdown(texto_niveles(lang))
+                        gr.Markdown(texto_requisitos(lang))
 
-                # ───────── Columna 3: Mantenimiento + Salida + Licencia + Acerca ─────────
+                # ───────── Columna DERECHA: Guía · Mantenimiento · Licencia · Acerca ─────────
                 with gr.Column():
+                    with _seccion("📖 " + t("aj_guia", lang)):
+                        gr.Markdown(t("aj_guia_txt", lang))
+
                     if _gestionables:
                         with _seccion("🔧 " + t("mant_titulo", lang)):
                             gr.Markdown(t("mant_intro", lang))
@@ -1451,27 +1476,6 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                 _btn_open.click(_hacer_abrir(_m), None, mant_log)
                                 _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
                                 _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
-
-                    with _seccion("📁 " + t("aj_salida", lang)):
-                        gr.Markdown(t("aj_salida_intro", lang))
-                        aj_fmt_v = gr.Dropdown(
-                            [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
-                            value=ajustes.formato_video(), label=t("formato_salida_v", lang))
-                        aj_fmt_i = gr.Dropdown(
-                            [(lbl, val) for lbl, val in _FORMATOS_IMG],
-                            value=ajustes.formato_img(), label=t("formato_salida_i", lang))
-                        aj_msg = gr.Markdown(elem_classes="formato-nota")
-
-                        def _guardar_fmt_v(v):
-                            ajustes.guardar(formato_video=v)
-                            return "✓ " + t("aj_guardado", lang)
-
-                        def _guardar_fmt_i(v):
-                            ajustes.guardar(formato_img=v)
-                            return "✓ " + t("aj_guardado", lang)
-
-                        aj_fmt_v.change(_guardar_fmt_v, aj_fmt_v, aj_msg)
-                        aj_fmt_i.change(_guardar_fmt_i, aj_fmt_i, aj_msg)
 
                     if licencias.requiere_licencia():
                         with _seccion("🔑 " + t("aj_licencia", lang)):

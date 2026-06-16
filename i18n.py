@@ -369,13 +369,63 @@ T = {
     "aj_niveles_tit": {"es": "Sobre los niveles", "en": "About the tiers",
                        "fr": "À propos des niveaux"},
     "aj_niveles_intro": {
-        "es": "PixelBooster asigna tu **nivel** automáticamente según tu GPU y "
-              "memoria; indica qué tan pesados pueden ser los motores de IA:",
-        "en": "PixelBooster assigns your **tier** automatically from your GPU and "
-              "memory; it reflects how heavy the AI engines can be:",
-        "fr": "PixelBooster attribue votre **niveau** automatiquement selon votre "
-              "GPU et votre mémoire ; il indique la lourdeur possible des "
-              "moteurs d'IA :"},
+        "es": "Hay **3 niveles**, de menor a mayor potencia. PixelBooster te "
+              "asigna uno automáticamente según tu GPU y memoria:",
+        "en": "There are **3 tiers**, from lowest to highest power. PixelBooster "
+              "assigns you one automatically from your GPU and memory:",
+        "fr": "Il y a **3 niveaux**, du plus faible au plus puissant. PixelBooster "
+              "vous en attribue un automatiquement selon votre GPU et mémoire :"},
+    "aj_nivel_min": {"es": "más bajo", "en": "lowest", "fr": "le plus bas"},
+    "aj_nivel_max": {"es": "más alto", "en": "highest", "fr": "le plus haut"},
+    "req_txt": {
+        "es": (
+            "### Tarjeta gráfica recomendada\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Mínima para usar la app:** cualquier GPU con Vulkan (Intel, AMD "
+            "o NVIDIA GTX) — mejora con Real-ESRGAN (Nivel 1).\n"
+            "- **Mínima para IA (SeedVR2):** NVIDIA con 8 GB de VRAM (p. ej. "
+            "RTX 3060) — Nivel 2.\n"
+            "- **Ideal:** NVIDIA con 16 GB+ de VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Nivel 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Mínima:** cualquier chip M (M1) — Real-ESRGAN (Nivel 1).\n"
+            "- **Recomendada:** chip M con 16 GB+ de RAM unificada — SeedVR2 3B "
+            "(Nivel 2).\n"
+            "- **Ideal:** M Pro / Max / Ultra con 32–64 GB+ — SeedVR2 a máxima "
+            "calidad. *(En Mac el tope es Nivel 2: el Nivel 3 es exclusivo de "
+            "NVIDIA.)*"),
+        "en": (
+            "### Recommended graphics card\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Minimum to run the app:** any Vulkan-capable GPU (Intel, AMD or "
+            "NVIDIA GTX) — enhances with Real-ESRGAN (Tier 1).\n"
+            "- **Minimum for AI (SeedVR2):** NVIDIA with 8 GB VRAM (e.g. "
+            "RTX 3060) — Tier 2.\n"
+            "- **Ideal:** NVIDIA with 16 GB+ VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Tier 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Minimum:** any M chip (M1) — Real-ESRGAN (Tier 1).\n"
+            "- **Recommended:** M chip with 16 GB+ unified RAM — SeedVR2 3B "
+            "(Tier 2).\n"
+            "- **Ideal:** M Pro / Max / Ultra with 32–64 GB+ — SeedVR2 at top "
+            "quality. *(On Mac the ceiling is Tier 2: Tier 3 is NVIDIA-only.)*"),
+        "fr": (
+            "### Carte graphique recommandée\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Minimum pour utiliser l'app :** tout GPU compatible Vulkan "
+            "(Intel, AMD ou NVIDIA GTX) — améliore avec Real-ESRGAN (Niveau 1).\n"
+            "- **Minimum pour l'IA (SeedVR2) :** NVIDIA avec 8 Go de VRAM (ex. "
+            "RTX 3060) — Niveau 2.\n"
+            "- **Idéal :** NVIDIA avec 16 Go+ de VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Niveau 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Minimum :** toute puce M (M1) — Real-ESRGAN (Niveau 1).\n"
+            "- **Recommandé :** puce M avec 16 Go+ de RAM unifiée — SeedVR2 3B "
+            "(Niveau 2).\n"
+            "- **Idéal :** M Pro / Max / Ultra avec 32–64 Go+ — SeedVR2 en "
+            "qualité maximale. *(Sur Mac le plafond est le Niveau 2 : le Niveau "
+            "3 est réservé à NVIDIA.)*"),
+    },
     "aj_nivel3": {
         "es": "NVIDIA con 16 GB+ de VRAM (ej. RTX 4080): SeedVR2 7B + FlashVSR.",
         "en": "NVIDIA with 16 GB+ VRAM (e.g. RTX 4080): SeedVR2 7B + FlashVSR.",
