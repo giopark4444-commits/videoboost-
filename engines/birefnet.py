@@ -33,18 +33,13 @@ HF_MODELO = "ZhengPeng7/BiRefNet-matting"
 
 
 def disponible() -> bool:
-    """Hay matting si transformers está importable en su venv propio."""
+    """Hay matting si el venv tiene el marcador .ok del instalador."""
+    from engines import RAIZ
     try:
-        py = python_venv(".venv-birefnet", "install/extras_birefnet.sh")
+        python_venv(".venv-birefnet", "install/extras_birefnet.sh")
     except RuntimeError:
         return False
-    import subprocess
-
-    r = subprocess.run(
-        [py, "-c", "import torch, transformers"],
-        capture_output=True, text=True,
-    )
-    return r.returncode == 0
+    return (RAIZ / ".venv-birefnet" / ".ok").exists()
 
 
 def mejorar(entrada):

@@ -20,18 +20,13 @@ from engines import SALIDAS, correr, python_venv
 
 
 def disponible() -> bool:
-    """Hay matting si el paquete está importable en su venv propio."""
+    """Hay matting si el venv tiene el marcador .ok del instalador."""
+    from engines import RAIZ
     try:
-        py = python_venv(".venv-inspyrenet", "install/extras_inspyrenet.sh")
+        python_venv(".venv-inspyrenet", "install/extras_inspyrenet.sh")
     except RuntimeError:
         return False
-    import subprocess
-
-    r = subprocess.run(
-        [py, "-c", "import transparent_background"],
-        capture_output=True, text=True,
-    )
-    return r.returncode == 0
+    return (RAIZ / ".venv-inspyrenet" / ".ok").exists()
 
 
 def mejorar(entrada, modo="base"):

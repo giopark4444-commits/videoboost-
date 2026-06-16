@@ -2174,10 +2174,21 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                         visible=True)
                                 return abrir
 
+                            # Pre-calcular ubicación e instalación en paralelo
+                            # para no bloquear el render con I/O secuencial.
+                            import concurrent.futures as _cf
+                            def _get_u(m):
+                                return m, mantenimiento.ubicacion(m)
+                            def _get_inst(m):
+                                fn = _MANT_DISP.get(m)
+                                return m, bool(fn()) if fn else False
+                            with _cf.ThreadPoolExecutor(max_workers=8) as _pool:
+                                _us = dict(_pool.map(lambda m: _get_u(m), _gestionables))
+                                _insts = dict(_pool.map(lambda m: _get_inst(m), _gestionables))
+
                             for _m in _gestionables:
-                                _u = mantenimiento.ubicacion(_m)
-                                _disp_fn = _MANT_DISP.get(_m)
-                                _inst = bool(_disp_fn()) if _disp_fn else _u["existe"]
+                                _u = _us[_m]
+                                _inst = _insts[_m] if _insts[_m] else _u["existe"]
                                 _badge_cls = "mant-ok" if _inst else "mant-no"
                                 _badge_txt = ("✅ " + t("mant_instalado", lang)
                                               if _inst else "❌ " + t("mant_no_inst", lang))

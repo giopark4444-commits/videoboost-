@@ -6,12 +6,34 @@ borrar al re-descargar, con qué instalador se vuelve a bajar, y (si aplica) su
 repo git para comparar versiones con el remoto.
 """
 
+import json
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from engines import BIN, MODELS, RAIZ, VENDOR, correr
+
+# Caché de tamaños en disco: evita hacer rglob en cada arranque.
+_CACHE_PATH = RAIZ / "presets" / ".mant_sizes.json"
+_cache: dict = {}
+
+def _load_cache():
+    global _cache
+    try:
+        _cache = json.loads(_CACHE_PATH.read_text()) if _CACHE_PATH.exists() else {}
+    except Exception:
+        _cache = {}
+
+def _save_cache():
+    try:
+        _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_PATH.write_text(json.dumps(_cache))
+    except Exception:
+        pass
+
+_load_cache()
 
 # id → cómo gestionarlo.
 #   repo:        carpeta de un repo git (para comprobar versión), o None.
@@ -226,12 +248,38 @@ MOTORES = list(_GESTION)
 
 
 def _tamano_dir(p: Path) -> int:
-    """Bytes totales de un archivo o carpeta (0 si no existe)."""
+    """Bytes totales de un archivo o carpeta, con caché persistente entre reinicios."""
     if not p.exists():
         return 0
     if p.is_file():
         return p.stat().st_size
-    return sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+
+    key = str(p)
+    # Invalidar caché si el mtime del directorio cambió (nueva instalación).
+    try:
+        mtime = p.stat().st_mtime
+    except OSError:
+        return 0
+    entry = _cache.get(key)
+    if entry and entry.get("mtime") == mtime:
+        return entry["bytes"]
+
+    # Calcular: `du -sk` en Mac/Linux es mucho más rápido que rglob+stat.
+    total = 0
+    try:
+        if sys.platform in ("darwin", "linux"):
+            r = subprocess.run(["du", "-sk", str(p)],
+                               capture_output=True, text=True, timeout=10)
+            if r.returncode == 0:
+                total = int(r.stdout.split()[0]) * 1024
+        else:
+            total = sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+    except Exception:
+        total = sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+
+    _cache[key] = {"mtime": mtime, "bytes": total}
+    _save_cache()
+    return total
 
 
 def _humano(n: int) -> str:

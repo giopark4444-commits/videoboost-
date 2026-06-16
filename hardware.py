@@ -6,13 +6,18 @@ Niveles:
   1 · Compatible — cualquier GPU con Vulkan (GTX 1660, AMD, Intel, Mac): Real-ESRGAN etc.
 """
 
+import json
 import platform
 import shutil
 import subprocess
 import sys
 from functools import lru_cache
+from pathlib import Path
 
-from engines import BIN, VENDOR
+from engines import BIN, RAIZ, VENDOR
+
+# Caché de hardware en disco: el hardware no cambia entre reinicios.
+_HW_CACHE = RAIZ / "presets" / ".hw_cache.json"
 
 
 def es_mac() -> bool:
@@ -126,7 +131,8 @@ def _recomendar_seedvr2(cuda, vram, mps, ram):
 
 
 @lru_cache(maxsize=1)
-def info_sistema() -> dict:
+def _info_sistema_calcular() -> dict:
+    """Detecta hardware real (lento: importa torch y corre subprocesos)."""
     cuda, gpu_nombre, vram = detectar_cuda()
     mps = detectar_mps()
     ram = ram_total_gb()
@@ -159,6 +165,40 @@ def info_sistema() -> dict:
         "seedvr2_batch": batch,
         "seedvr2_swap": swap,
     }
+
+
+@lru_cache(maxsize=1)
+def info_sistema() -> dict:
+    """Detección de hardware con caché en disco (evita importar torch en cada arranque).
+
+    El caché se invalida si cambian: SO, arquitectura, si hay/no hay vulkan/ffmpeg,
+    o si el modelo SeedVR2 aparece/desaparece. Suficiente para detectar instalaciones nuevas.
+    """
+    # Huella ligera para invalidar el caché (solo comprobaciones rápidas sin torch)
+    _stamp = {
+        "so": platform.system(),
+        "arch": platform.machine(),
+        "vulkan": vulkan_disponible(),
+        "ffmpeg": ffmpeg_disponible(),
+        "seedvr2": (VENDOR / "seedvr2" / "inference_cli.py").exists(),
+        "flashvsr": (VENDOR / "FlashVSR").exists(),
+    }
+    try:
+        if _HW_CACHE.exists():
+            cached = json.loads(_HW_CACHE.read_text())
+            if cached.get("_stamp") == _stamp:
+                cached.pop("_stamp", None)
+                return cached
+    except Exception:
+        pass
+
+    hw = _info_sistema_calcular()
+    try:
+        _HW_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        _HW_CACHE.write_text(json.dumps({**hw, "_stamp": _stamp}))
+    except Exception:
+        pass
+    return hw
 
 
 def resumen() -> str:
