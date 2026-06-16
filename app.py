@@ -41,6 +41,56 @@ HW = hardware.info_sistema()
 INCLUIR_NO_COMERCIAL = os.environ.get("VB_NO_COMERCIAL") == "1"
 MOTORES_NO_COMERCIALES = {"codeformer", "osdface"}
 
+# Catálogo COMPLETO de motores de IA por plataforma, para MOSTRARLOS TODOS aunque la
+# máquina no pueda usarlos: "mac" = solo Apple Silicon, "nvidia" = solo CUDA, "ambas".
+# Los que no aplican a esta máquina se listan atenuados (🔒) bajo el selector.
+_CAT_IMG = [
+    ("faithdiff", "nvidia"), ("diffbir", "nvidia"), ("pmrf", "nvidia"),
+    ("instantir", "nvidia"), ("restormer", "nvidia"), ("retinexformer", "nvidia"),
+    ("fftformer", "nvidia"), ("hat", "nvidia"), ("dreamclear", "nvidia"),
+    ("iclight", "nvidia"),
+    ("seedvr2_mlx_img", "mac"), ("realesrgan_mlx_img", "mac"),
+    ("seedvr2_img", "ambas"), ("nafnet", "ambas"), ("scunet", "ambas"),
+    ("fbcnn", "ambas"), ("dehazeformer", "ambas"), ("hvi_cidnet", "ambas"),
+    ("darkir", "ambas"), ("dsrnet", "ambas"), ("shadowformer", "ambas"),
+    ("restoreformerpp", "ambas"), ("inspyrenet", "ambas"), ("birefnet", "ambas"),
+]
+_CAT_VIDEO = [
+    ("flashvsr", "nvidia"), ("film", "nvidia"), ("ema_vfi", "nvidia"),
+    ("dut_stab", "nvidia"),
+    ("seedvr2_mlx", "mac"), ("metalfx", "mac"),
+    ("seedvr2", "ambas"), ("practical_rife", "ambas"),
+]
+
+
+def _apto_plataforma(plat: str) -> bool:
+    """¿Esta máquina puede correr un motor de la plataforma dada?"""
+    if plat == "nvidia":
+        return HW["cuda"]
+    if plat == "mac":
+        return HW["mps"]
+    return True  # "ambas"
+
+
+def _otros_motores_md(catalogo, activos, etiqueta_fn, lang):
+    """Markdown atenuado con los motores del catálogo que NO están en el selector:
+    marca 🔒 los que requieren una GPU que no tienes (CUDA o Apple) y ⬇ los que sí
+    podrías usar pero están sin instalar. Devuelve "" si no hay ninguno."""
+    activos = set(activos)
+    lineas = []
+    for mid, plat in catalogo:
+        if mid in activos:
+            continue
+        nombre = etiqueta_fn(mid).split(" (")[0]
+        if not _apto_plataforma(plat):
+            tag = t("req_nvidia", lang) if plat == "nvidia" else t("req_apple", lang)
+            lineas.append(f"🔒 {nombre} · <b>{tag}</b>")
+        else:
+            lineas.append(f"⬇ {nombre} · <i>{t('req_instalar', lang)}</i>")
+    if not lineas:
+        return ""
+    return f"**{t('otros_motores', lang)}**<br>" + "<br>".join(lineas)
+
 # ---------------------------------------------------------------- constantes
 
 # ids internos estables; las etiquetas visibles salen de i18n
@@ -1317,6 +1367,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                        elem_classes="engine-picker")
                     nota_v = gr.Markdown(_nota_video(ids_v[0], lang),
                                          elem_classes="engine-note")
+                    _otros_v = _otros_motores_md(_CAT_VIDEO, ids_v,
+                                                 lambda m: t("m_" + m, lang), lang)
+                    if _otros_v:
+                        gr.Markdown(_otros_v, elem_classes="engine-otros")
                     escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                        visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x", "metalfx"))
                     ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
@@ -1495,6 +1549,10 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                        elem_classes="engine-picker")
                     nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang),
                                          elem_classes="engine-note")
+                    _otros_i = _otros_motores_md(
+                        _CAT_IMG, ids_i, lambda m: t(etiquetas_i.get(m, m), lang), lang)
+                    if _otros_i:
+                        gr.Markdown(_otros_i, elem_classes="engine-otros")
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),

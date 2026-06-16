@@ -1023,6 +1023,16 @@ T = {
         "es": "⚠️ Escribe un nombre para el preset", "en": "⚠️ Enter a preset name",
         "fr": "⚠️ Entrez un nom pour le préréglage"},
     # ---- galería ----
+    "otros_motores": {
+        "es": "Otros motores (no disponibles en este equipo)",
+        "en": "Other engines (not available on this machine)",
+        "fr": "Autres moteurs (indisponibles sur cette machine)"},
+    "req_nvidia": {"es": "requiere NVIDIA (CUDA)", "en": "needs NVIDIA (CUDA)",
+                   "fr": "nécessite NVIDIA (CUDA)"},
+    "req_apple": {"es": "requiere Apple Silicon", "en": "needs Apple Silicon",
+                  "fr": "nécessite Apple Silicon"},
+    "req_instalar": {"es": "instalar en Sistema", "en": "install in System",
+                     "fr": "installer dans Système"},
     "tab_borrar": {"es": "🧹 Borrar objetos", "en": "🧹 Remove objects",
                    "fr": "🧹 Effacer objets"},
     "borrar_intro": {

@@ -161,6 +161,18 @@ footer{display:none !important;}
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace !important; font-size:12.5px !important;
   line-height:1.65 !important; border-radius:12px !important; border:none !important;}
 
+/* Catálogo atenuado de motores no disponibles en este equipo (🔒 NVIDIA / ⬇ instalar) */
+.engine-otros{margin:4px 0 10px !important; padding:9px 12px !important;
+  border-radius:10px !important; background:rgba(0,0,0,.025) !important;
+  border:1px dashed rgba(0,0,0,.12) !important;}
+.dark .engine-otros{background:rgba(255,255,255,.03) !important;
+  border-color:rgba(255,255,255,.13) !important;}
+.engine-otros, .engine-otros p, .engine-otros span{color:#a79f93 !important;
+  font-size:12px !important; line-height:1.7 !important;}
+.engine-otros b{color:#b9714e !important; font-weight:600 !important;}
+.engine-otros strong{color:#8c857a !important;}
+.dark .engine-otros, .dark .engine-otros p{color:#8b8478 !important;}
+
 /* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
 .vb-bar-wrap{padding:6px 2px 0 !important;}
 .vb-bar{height:5px; border-radius:999px; background:rgba(0,0,0,.10); overflow:hidden;}
