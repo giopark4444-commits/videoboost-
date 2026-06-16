@@ -1001,6 +1001,32 @@ T = {
         "es": "⚠️ Escribe un nombre para el preset", "en": "⚠️ Enter a preset name",
         "fr": "⚠️ Entrez un nom pour le préréglage"},
     # ---- galería ----
+    "tab_borrar": {"es": "🧹 Borrar objetos", "en": "🧹 Remove objects",
+                   "fr": "🧹 Effacer objets"},
+    "borrar_intro": {
+        "es": "Sube una imagen, **pinta de blanco lo que quieras borrar** (una persona, un "
+              "objeto, una marca…) y pulsa «Borrar». LaMa rellena el hueco de forma coherente.",
+        "en": "Upload an image, **paint white over whatever you want to remove** (a person, an "
+              "object, a watermark…) and press “Remove”. LaMa fills the gap seamlessly.",
+        "fr": "Charge une image, **peins en blanc ce que tu veux effacer** (une personne, un "
+              "objet, un filigrane…) puis « Effacer ». LaMa comble le trou de façon cohérente."},
+    "borrar_lienzo": {
+        "es": "Imagen — pinta lo que sobra", "en": "Image — paint what to remove",
+        "fr": "Image — peins ce qui gêne"},
+    "borrar_boton": {"es": "🧹 Borrar lo pintado", "en": "🧹 Remove painted area",
+                     "fr": "🧹 Effacer la zone peinte"},
+    "borrar_sube": {
+        "es": "⚠️ Sube primero una imagen al lienzo.",
+        "en": "⚠️ Upload an image to the canvas first.",
+        "fr": "⚠️ Charge d'abord une image dans le canevas."},
+    "borrar_sin_mascara": {
+        "es": "⚠️ Pinta de blanco la zona a borrar antes de pulsar «Borrar».",
+        "en": "⚠️ Paint the area to remove white before pressing “Remove”.",
+        "fr": "⚠️ Peins en blanc la zone à effacer avant « Effacer »."},
+    "borrar_instalar": {
+        "es": "Para borrar objetos instala IOPaint+LaMa (Apache-2.0):",
+        "en": "To remove objects, install IOPaint+LaMa (Apache-2.0):",
+        "fr": "Pour effacer des objets, installe IOPaint+LaMa (Apache-2.0) :"},
     "tab_galeria": {"es": "Galería", "en": "Gallery", "fr": "Galerie"},
     "galeria_imagenes": {
         "es": "Imágenes guardadas", "en": "Saved images", "fr": "Images enregistrées"},

@@ -580,6 +580,59 @@ def hacer_comparar_looks(lang, es_video):
     return comparar
 
 
+def hacer_borrar(lang):
+    """Borrar objetos: el usuario pinta de blanco lo que sobra en el lienzo
+    (gr.ImageEditor) y LaMa (IOPaint) rellena el hueco. Construye la máscara desde
+    las capas pintadas y llama a engines.iopaint_lama.borrar."""
+    import numpy as np
+    from PIL import Image
+
+    def borrar_obj(editor):
+        oculto = gr.update(visible=False)
+        if not editor or editor.get("background") is None:
+            yield t("borrar_sube", lang), "", oculto
+            return
+        fondo = np.asarray(editor["background"])[:, :, :3]
+        capas = editor.get("layers") or []
+        # Máscara = blanco donde el usuario pintó (alpha>0 en cualquier capa).
+        mascara = np.zeros(fondo.shape[:2], dtype=np.uint8)
+        for capa in capas:
+            capa = np.asarray(capa)
+            if capa.ndim == 3 and capa.shape[2] == 4:
+                mascara[capa[:, :, 3] > 10] = 255
+            elif capa.ndim == 3:
+                mascara[capa.sum(axis=2) > 20] = 255
+        if not mascara.any():
+            yield t("borrar_sin_mascara", lang), "", oculto
+            return
+        tmp = Path(tempfile.mkdtemp(prefix="vb_borrar_"))
+        img_p, msk_p = tmp / "img.png", tmp / "mask.png"
+        Image.fromarray(fondo).save(img_p)
+        Image.fromarray(mascara).save(msk_p)
+        log = ["▶ borrar objeto (IOPaint · LaMa)"]
+        try:
+            gen = iopaint_lama.borrar(str(img_p), str(msk_p))
+            consumo = _consumir(gen, log)
+            salida = None
+            while True:
+                try:
+                    yield next(consumo), "", oculto
+                except StopIteration as fin:
+                    salida = fin.value
+                    break
+            html = (f"<img src='{_data_uri(salida)}' style='max-width:100%;border-radius:8px'>"
+                    if salida else "")
+            dl = (gr.update(value=salida, visible=True) if salida else oculto)
+            yield "\n".join(log[-400:]), html, dl
+        except Exception as e:
+            log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
+            yield "\n".join(log[-400:]), "", oculto
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    return borrar_obj
+
+
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
                  tarea_rest, g_preset, g_int, g_tam, g_color, formato_img, *rev):
@@ -1531,6 +1584,35 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 [log_i, img_out, descarga_i])
             cancelar_i.click(fn=None, cancels=[ev_i])
 
+
+        # ---------------------------------------------------------------- Borrar objetos
+        with gr.Tab(t("tab_borrar", lang)):
+            if not iopaint_lama.disponible():
+                gr.Markdown(f"{t('borrar_instalar', lang)}\n\n"
+                            f"`bash install/extras_iopaint_lama.sh`",
+                            elem_classes="aviso-sin-motor")
+            gr.Markdown(t("borrar_intro", lang))
+            with gr.Row():
+                with gr.Column(elem_classes="col-controls", min_width=420):
+                    borrar_editor = gr.ImageEditor(
+                        label=t("borrar_lienzo", lang), type="numpy",
+                        brush=gr.Brush(colors=["#ffffff"], default_size=28,
+                                       color_mode="fixed"),
+                        layers=True, sources=["upload", "clipboard"])
+                    with gr.Row():
+                        boton_borrar = gr.Button(t("borrar_boton", lang),
+                                                 variant="primary", elem_classes="cta")
+                        cancelar_borrar = gr.Button(t("cancelar", lang),
+                                                    variant="stop", size="sm")
+                with gr.Column(elem_classes="col-stage", min_width=320):
+                    borrar_out = gr.HTML()
+                    descarga_borrar = gr.DownloadButton(t("descargar", lang),
+                                                        visible=False, elem_classes="cta")
+                    log_borrar = gr.Textbox(label=t("progreso", lang), lines=10,
+                                            max_lines=10, elem_classes="console")
+            ev_b = boton_borrar.click(hacer_borrar(lang), borrar_editor,
+                                      [log_borrar, borrar_out, descarga_borrar])
+            cancelar_borrar.click(fn=None, cancels=[ev_b])
 
         # ---------------------------------------------------------------- Galería
         with gr.Tab(t("tab_galeria", lang)):
