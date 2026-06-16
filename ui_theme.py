@@ -203,11 +203,13 @@ footer{display:none !important;}
    El escenario (resultado + comparador) se lleva todo el espacio sobrante; los
    laterales quedan a un ancho cómodo y estable. Por debajo de 1180px todo se
    reacomoda en una sola columna. */
-.col-controls{flex:0 0 360px !important; max-width:360px;}
-.col-aside{flex:0 0 330px !important; max-width:330px;}
+/* 4 columnas: controles · escenario · filtros · revelado(LUTs/presets) */
+.col-controls{flex:0 0 320px !important; max-width:320px;}
+.col-aside{flex:0 0 250px !important; max-width:250px;}
+.col-revelado{flex:0 0 330px !important; max-width:330px;}
 .col-stage{flex:1 1 0 !important; min-width:0;}
-@media (max-width:1180px){
-  .col-controls, .col-aside, .col-stage{
+@media (max-width:1280px){
+  .col-controls, .col-aside, .col-revelado, .col-stage{
     flex:1 1 100% !important; max-width:none !important;}
 }
 /* Topes de longitud de línea: el texto no se estira en monitores anchos */
@@ -284,6 +286,31 @@ footer{display:none !important;}
 .console textarea{background:#1f1e1c !important; color:#d6d2c7 !important;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace !important; font-size:12.5px !important;
   line-height:1.65 !important; border-radius:12px !important; border:none !important;}
+
+/* Catálogo atenuado de motores no disponibles en este equipo (🔒 NVIDIA / ⬇ instalar) */
+.engine-otros{margin:4px 0 10px !important; padding:9px 12px !important;
+  border-radius:10px !important; background:rgba(0,0,0,.025) !important;
+  border:1px dashed rgba(0,0,0,.12) !important;}
+.dark .engine-otros{background:rgba(255,255,255,.03) !important;
+  border-color:rgba(255,255,255,.13) !important;}
+.engine-otros, .engine-otros p, .engine-otros span{color:#a79f93 !important;
+  font-size:12px !important; line-height:1.7 !important;}
+.engine-otros b{color:#b9714e !important; font-weight:600 !important;}
+.engine-otros strong{color:#8c857a !important;}
+.dark .engine-otros, .dark .engine-otros p{color:#8b8478 !important;}
+
+/* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
+.vb-bar-wrap{padding:6px 2px 0 !important;}
+.vb-bar{height:5px; border-radius:999px; background:rgba(0,0,0,.10); overflow:hidden;}
+.dark .vb-bar{background:rgba(255,255,255,.12);}
+.vb-bar-fill{height:100%; border-radius:999px; background:var(--vb-accent);
+  transition:width .25s cubic-bezier(.22,1,.36,1);}
+.vb-bar-pct{font-size:11px; opacity:.6; text-align:right; margin-top:3px;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em;}
+
+/* Galería del comparador de LUTs (dentro de los looks): miniaturas compactas */
+.vb-frame-cmp{margin-top:6px;}
+.vb-frame-cmp .grid-wrap{max-height:none !important;}
 
 /* Botón de acción a ancho completo */
 .cta button{width:100% !important; padding:13px !important; font-size:15px !important;

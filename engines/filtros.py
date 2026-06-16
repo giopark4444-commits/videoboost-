@@ -24,25 +24,120 @@ def _tiene_filtro(nombre: str) -> bool:
 
 
 # Cacheado al cargar el módulo para no repetir la llamada en cada render
-VIDSTAB_OK: bool = _tiene_filtro("vidstabdetect")
+VIDSTAB_OK: bool = _tiene_filtro("vidstabdetect")          # 2 pasadas, mejor (libvidstab)
+DESHAKE_OK: bool = _tiene_filtro("deshake")                # 1 pasada, integrado (cualquier ffmpeg)
+ESTABILIZA_OK: bool = VIDSTAB_OK or DESHAKE_OK             # ¿se puede estabilizar?
+BWDIF_OK: bool = _tiene_filtro("bwdif")                     # desentrelazado de más calidad (LGPL)
+DEBLOCK_OK: bool = _tiene_filtro("deblock")                # quitar bloques de compresión (LGPL)
 
 
 def desentrelazar(entrada):
-    """Desentrelaza el video usando yadif=mode=0.
+    """Desentrelaza el video.
 
+    Usa **bwdif** (BobWeaver, LGPL) si está disponible — reconstruye mejor las líneas
+    finas y maneja mejor el movimiento que yadif; si no, recurre a yadif=mode=0.
     Generador: cede líneas de log; retorna la ruta del archivo de salida.
     """
     entrada = Path(entrada)
     salida = SALIDAS / (entrada.stem + "_desentrelazado.mp4")
+    vf = "bwdif=mode=send_frame" if BWDIF_OK else "yadif=mode=0"
     cmd = [
         ffmpeg(), "-y", "-i", str(entrada),
-        "-vf", "yadif=mode=0",
+        "-vf", vf,
         "-c:v", "libx264", "-crf", "17", "-preset", "medium",
         "-pix_fmt", "yuv420p",
         "-c:a", "copy",
         str(salida),
     ]
-    yield f"▶ desentrelazar: {entrada.name} → {salida.name}"
+    yield f"▶ desentrelazar ({'bwdif' if BWDIF_OK else 'yadif'}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
+def limpiar(entrada, fuerza: str = "default"):
+    """Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y banding
+    / posterización en degradados (deband). Filtros nativos LGPL de FFmpeg, sin GPU.
+
+    fuerza — "weak" | "default" | "strong" (intensidad del deblock).
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_limpio.mp4")
+    cadena = []
+    if DEBLOCK_OK:
+        # el filtro deblock solo admite weak | strong
+        filtro_db = "weak" if fuerza == "weak" else "strong"
+        cadena.append(f"deblock=filter={filtro_db}:block=8")
+    # deband: 1thr..4thr = umbral por canal; range/blur por defecto van bien.
+    cadena.append("deband=1thr=0.015:2thr=0.015:3thr=0.015:4thr=0.015")
+    vf = ",".join(cadena)
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "16", "-preset", "medium",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "copy",
+        str(salida),
+    ]
+    yield f"▶ limpiar compresión ({vf}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
+def cine(entrada, intensidad: float = 0.5):
+    """Look de **película**: añade *halation* (resplandor rojizo alrededor de las
+    altas luces), *bloom* (difusión suave de los brillos) y un *viñeteado óptico*.
+    100% FFmpeg/CPU, sin GPU. Complementa al grano y a los LUTs.
+
+    intensidad — 0.0–1.0 (mezcla del resplandor; default 0.5).
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_cine.mp4")
+    op = max(0.0, min(1.0, float(intensidad)))
+    # 1) aislar las altas luces, 2) difuminarlas (bloom) y teñirlas de rojo/cálido
+    #    (halation del haluro de plata), 3) mezclarlas en "screen" sobre la base,
+    #    4) viñeteado óptico suave.
+    vf = (
+        "split=2[base][hi];"
+        "[hi]curves=master='0/0 0.55/0 0.75/0.5 1/1',"
+        "gblur=sigma=16,"
+        "colorbalance=rm=0.20:gm=0.02:bm=-0.08[glow];"
+        f"[base][glow]blend=all_mode=screen:all_opacity={op:.2f},"
+        "vignette=PI/4.5"
+    )
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+        "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+    ]
+    yield f"▶ cine (halation+bloom, intensidad={op:.2f}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
+def corregir_lente(entrada, k1: float = 0.0, k2: float = 0.0):
+    """Corrige la **distorsión de lente** (barril/cojín) con el filtro nativo
+    `lenscorrection` de FFmpeg (LGPL, sin GPU).
+
+    k1 — distorsión de 2º orden: **negativo corrige barril** (ojo de pez), positivo
+         corrige cojín. Rango útil ~ -0.5 … 0.5.
+    k2 — distorsión de 4º orden (ajuste fino), mismo rango.
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_lente.mp4")
+    k1 = max(-1.0, min(1.0, float(k1)))
+    k2 = max(-1.0, min(1.0, float(k2)))
+    vf = f"lenscorrection=k1={k1:.3f}:k2={k2:.3f}:i=bilinear"
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+        "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+    ]
+    yield f"▶ corregir lente (k1={k1:.3f}, k2={k2:.3f}): {entrada.name} → {salida.name}"
     yield from correr(cmd)
     return str(salida)
 
@@ -77,17 +172,30 @@ def estabilizar(entrada, suavidad: int = 10, zoom: float = 0.3):
     suavidad — suavidad de la transformación (1–30, default 10)
     zoom     — zoom de entrada para ocultar bordes (0.0–1.0, default 0.3)
 
-    Requiere que FFmpeg esté compilado con --enable-libvidstab.
+    Usa libvidstab (2 pasadas, mejor) si está disponible; si no, recurre al
+    filtro integrado `deshake` (1 pasada), que funciona en cualquier FFmpeg.
     Generador: cede líneas de log; retorna la ruta del archivo de salida.
     """
-    if not VIDSTAB_OK:
-        raise RuntimeError(
-            "Tu FFmpeg no incluye libvidstab. Instala un FFmpeg completo "
-            "(p. ej. `brew install ffmpeg` en Mac o el build de BtbN en Windows) "
-            "y vuelve a intentarlo."
-        )
     entrada = Path(entrada)
     salida = SALIDAS / (entrada.stem + "_estabilizado.mp4")
+
+    # --- Fallback universal: deshake (1 pasada, sin libvidstab) ---
+    if not VIDSTAB_OK:
+        if not DESHAKE_OK:
+            raise RuntimeError(
+                "Tu FFmpeg no incluye ni libvidstab ni el filtro deshake. "
+                "Instala un FFmpeg más completo y vuelve a intentarlo."
+            )
+        cmd = [
+            ffmpeg(), "-y", "-i", str(entrada),
+            "-vf", "deshake=edge=mirror:rx=16:ry=16",
+            "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+            "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+        ]
+        yield ("▶ estabilizar (deshake, 1 pasada — tu FFmpeg no trae libvidstab, "
+               "así que uso el estabilizador integrado)")
+        yield from correr(cmd)
+        return str(salida)
 
     # Archivo temporal para los datos de análisis de movimiento
     with tempfile.NamedTemporaryFile(suffix=".trf", delete=False) as tf:

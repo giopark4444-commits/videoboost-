@@ -10,6 +10,8 @@ import base64
 import contextlib
 import io
 import json
+import os
+import re
 import shutil
 import subprocess
 import time
@@ -23,13 +25,74 @@ import licencias
 import ajustes
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import (color, diffbir, faces, faithdiff, filtros, flashvsr, grano,
-                     instantir, luts, mantenimiento, metalfx, osdface, pmrf,
-                     realesrgan_mlx, seedvr2, seedvr2_mlx, vulkan)
+from engines import (birefnet, color, darkir, dehazeformer, diffbir, dreamclear,
+                     dsrnet, dut_stab, ema_vfi, faces, faithdiff, fbcnn, fftformer,
+                     film, filtros, flashvsr, grano, hat, hvi_cidnet, iclight,
+                     inspyrenet, instantir, iopaint_lama, luts, mantenimiento,
+                     metalfx, nafnet, osdface, pmrf, practical_rife, realesrgan_mlx,
+                     restoreformerpp, restormer, retinexformer, scunet, seedvr2,
+                     seedvr2_mlx, shadowformer, video_ia, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 VERSION = "1.0"
 HW = hardware.info_sistema()
+
+# Saneamiento legal del build que se VENDE: por defecto se EXCLUYEN los motores con
+# licencia no comercial / sin licencia (CodeFormer = S-Lab no comercial; OSDFace = sin
+# LICENSE). Para uso personal se reactivan con VB_NO_COMERCIAL=1. Reemplazos limpios de
+# caras: RestoreFormer++ (Apache) y PMRF (MIT), ya integrados.
+INCLUIR_NO_COMERCIAL = os.environ.get("VB_NO_COMERCIAL") == "1"
+MOTORES_NO_COMERCIALES = {"codeformer", "osdface"}
+
+# Catálogo COMPLETO de motores de IA por plataforma, para MOSTRARLOS TODOS aunque la
+# máquina no pueda usarlos: "mac" = solo Apple Silicon, "nvidia" = solo CUDA, "ambas".
+# Los que no aplican a esta máquina se listan atenuados (🔒) bajo el selector.
+_CAT_IMG = [
+    ("faithdiff", "nvidia"), ("diffbir", "nvidia"), ("pmrf", "nvidia"),
+    ("instantir", "nvidia"), ("restormer", "nvidia"), ("retinexformer", "nvidia"),
+    ("fftformer", "nvidia"), ("hat", "nvidia"), ("dreamclear", "nvidia"),
+    ("iclight", "nvidia"),
+    ("seedvr2_mlx_img", "mac"), ("realesrgan_mlx_img", "mac"),
+    ("seedvr2_img", "ambas"), ("nafnet", "ambas"), ("scunet", "ambas"),
+    ("fbcnn", "ambas"), ("dehazeformer", "ambas"), ("hvi_cidnet", "ambas"),
+    ("darkir", "ambas"), ("dsrnet", "ambas"), ("shadowformer", "ambas"),
+    ("restoreformerpp", "ambas"), ("inspyrenet", "ambas"), ("birefnet", "ambas"),
+]
+_CAT_VIDEO = [
+    ("flashvsr", "nvidia"), ("film", "nvidia"), ("ema_vfi", "nvidia"),
+    ("dut_stab", "nvidia"),
+    ("seedvr2_mlx", "mac"), ("metalfx", "mac"),
+    ("seedvr2", "ambas"), ("practical_rife", "ambas"),
+]
+
+
+def _apto_plataforma(plat: str) -> bool:
+    """¿Esta máquina puede correr un motor de la plataforma dada?"""
+    if plat == "nvidia":
+        return HW["cuda"]
+    if plat == "mac":
+        return HW["mps"]
+    return True  # "ambas"
+
+
+def _otros_motores_md(catalogo, activos, etiqueta_fn, lang):
+    """Markdown atenuado con los motores del catálogo que NO están en el selector:
+    marca 🔒 los que requieren una GPU que no tienes (CUDA o Apple) y ⬇ los que sí
+    podrías usar pero están sin instalar. Devuelve "" si no hay ninguno."""
+    activos = set(activos)
+    lineas = []
+    for mid, plat in catalogo:
+        if mid in activos:
+            continue
+        nombre = etiqueta_fn(mid).split(" (")[0]
+        if not _apto_plataforma(plat):
+            tag = t("req_nvidia", lang) if plat == "nvidia" else t("req_apple", lang)
+            lineas.append(f"🔒 {nombre} · <b>{tag}</b>")
+        else:
+            lineas.append(f"⬇ {nombre} · <i>{t('req_instalar', lang)}</i>")
+    if not lineas:
+        return ""
+    return f"**{t('otros_motores', lang)}**<br>" + "<br>".join(lineas)
 
 # ---------------------------------------------------------------- constantes
 
@@ -38,8 +101,11 @@ MOTORES_VIDEO_NOTAS = {
     "seedvr2": "n_seedvr2", "seedvr2_mlx": "n_seedvr2_mlx", "metalfx": "n_metalfx",
     "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
+    "practical_rife": "n_practical_rife", "film": "n_film", "ema_vfi": "n_ema_vfi",
+    "dut_stab": "n_dut_stab",
     "grano": "n_grano", "lut": "n_lut",
-    "desentrelazar": "n_desentrelazar", "denoise": "n_denoise",
+    "desentrelazar": "n_desentrelazar", "denoise": "n_denoise", "limpiar": "n_limpiar",
+    "cine": "n_cine", "lente": "n_lente", "ia": "n_ia",
     "estabilizar": "n_estabilizar",
 }
 MOTORES_IMG_NOTAS = {
@@ -49,17 +115,27 @@ MOTORES_IMG_NOTAS = {
     "lut": "n_lut", "diffbir": "n_diffbir", "pmrf": "n_pmrf",
     "osdface": "n_osdface", "seedvr2_mlx_img": "n_seedvr2_mlx",
     "realesrgan_mlx_img": "n_realesrgan_mlx",
+    "restormer": "n_restormer", "retinexformer": "n_retinexformer",
+    "dreamclear": "n_dreamclear", "hat": "n_hat",
+    "nafnet": "n_nafnet", "scunet": "n_scunet", "fbcnn": "n_fbcnn",
+    "fftformer": "n_fftformer", "dehazeformer": "n_dehazeformer",
+    "hvi_cidnet": "n_hvi_cidnet", "darkir": "n_darkir",
+    "inspyrenet": "n_inspyrenet", "birefnet": "n_birefnet",
+    "restoreformerpp": "n_restoreformerpp", "dsrnet": "n_dsrnet",
+    "shadowformer": "n_shadowformer", "iclight": "n_iclight",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
 # Motores de imagen que aceptan un prompt opcional.
-IMG_CON_PROMPT = ("faithdiff", "instantir")
+IMG_CON_PROMPT = ("faithdiff", "instantir", "iclight")
 
 # Formatos de salida
 _FORMATOS_VIDEO = [
     ("H.264 MP4", "h264"),
     ("H.265 HEVC", "h265"),
-    ("ProRes 422", "prores"),
+    ("ProRes 422 HQ", "prores"),
+    ("ProRes 4444 (10-bit + alfa)", "prores4444"),
+    ("ProRes 4444 XQ (máxima calidad)", "prores4444xq"),
     ("WebM VP9", "webm"),
 ]
 _FORMATOS_IMG = [
@@ -113,6 +189,13 @@ def _transcodificar_video(entrada: str, formato: str, log: list) -> str:
                     "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"], ".mp4"),
         "prores": (["-c:v", "prores_ks", "-profile:v", "3",
                     "-c:a", "pcm_s16le"], ".mov"),
+        # ProRes 4444 (perfil 4) y 4444 XQ (perfil 5): 4:4:4 a 10/12-bit con canal
+        # alfa. prores_ks lo soporta de sobra; ProRes RAW NO se puede codificar con
+        # FFmpeg (Apple no licencia el encoder), así que no se ofrece.
+        "prores4444": (["-c:v", "prores_ks", "-profile:v", "4",
+                        "-pix_fmt", "yuva444p10le", "-c:a", "pcm_s16le"], ".mov"),
+        "prores4444xq": (["-c:v", "prores_ks", "-profile:v", "5",
+                          "-pix_fmt", "yuva444p10le", "-c:a", "pcm_s16le"], ".mov"),
         "webm":   (["-c:v", "libvpx-vp9", "-crf", "32", "-b:v", "0",
                     "-c:a", "libopus", "-b:a", "128k"], ".webm"),
     }
@@ -256,12 +339,71 @@ def _consumir(gen, log):
         gen.close()
 
 
+# ---- barra de % de avance: leer el progreso del propio log del motor ----
+# correr() une stderr→stdout, así que el avance de FFmpeg (frame=/time=), de los
+# binarios Vulkan ncnn y de las barras tqdm (45%|…) llega como líneas de log.
+_RE_FRAME = re.compile(r"frame=\s*(\d+)")
+_RE_TIME = re.compile(r"time=\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
+# % SOLO cuando la línea ES un porcentaje (Vulkan ncnn: "12.50%" / "[12%]") o es una
+# barra tqdm ("45%|████"). Así NO confundimos con las estadísticas de x264, que
+# llevan muchos "%" sueltos en su resumen final.
+_RE_PCT_SOLO = re.compile(r"^\s*\[?\s*(\d{1,3}(?:\.\d+)?)\s*%\s*\]?\s*$")
+_RE_PCT_TQDM = re.compile(r"(\d{1,3}(?:\.\d+)?)\s*%\s*\|")
+
+
+def _totales_video(video):
+    """(frames, segundos) del video; (0, 0.0) si no se puede saber."""
+    try:
+        info = ff.info_video(video)
+        return int(info.get("frames") or 0), float(info.get("duracion") or 0)
+    except Exception:
+        return 0, 0.0
+
+
+def _pct_de_linea(linea, total_frames, total_seg):
+    """Avance 0–1 deducido de una línea de log; None si no hay ninguna señal.
+
+    Prioriza las señales fiables y monótonas de FFmpeg (time=, luego frame=) y deja
+    el porcentaje suelto (Vulkan/tqdm) como último recurso cuando no hay totales.
+    """
+    if total_seg > 0:
+        m = _RE_TIME.search(linea)
+        if m:
+            seg = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+            return max(0.0, min(1.0, seg / total_seg))
+    if total_frames > 0:
+        m = _RE_FRAME.search(linea)
+        if m:
+            return max(0.0, min(1.0, int(m.group(1)) / total_frames))
+    m = _RE_PCT_SOLO.match(linea) or _RE_PCT_TQDM.search(linea)
+    if m:
+        v = float(m.group(1))
+        if 0.0 <= v <= 100.0:
+            return v / 100.0
+    return None
+
+
+def _barra(frac=None):
+    """Actualiza la barra de avance minimalista (HTML) DEBAJO de la consola.
+
+    `frac` None → oculta (no hay proceso). 0–1 → visible con ese porcentaje.
+    """
+    if frac is None:
+        return gr.update(visible=False, value="")
+    pct = max(0, min(100, round(frac * 100)))
+    return gr.update(
+        visible=True,
+        value=(f"<div class='vb-bar'><div class='vb-bar-fill' style='width:{pct}%'>"
+               f"</div></div><div class='vb-bar-pct'>{pct}%</div>"))
+
+
 def hacer_procesar_video(lang):
     def procesar(video, motor, escala, ruido, mult, resolucion, modelo, batch, formato):
         oculto = gr.update(visible=False)
         if not video:
-            yield t("sube_video", lang), None, "", oculto
+            yield t("sube_video", lang), None, "", oculto, _barra(None)
             return
+        total_f, total_s = _totales_video(video)
         log = [f"▶ {t('m_' + motor, lang).split(' — ')[0]}"]
         try:
             if motor == "seedvr2":
@@ -273,6 +415,14 @@ def hacer_procesar_video(lang):
                 gen = metalfx.mejorar(video, escala=int(escala))
             elif motor == "rife":
                 gen = vulkan.interpolar_video(video, mult=int(mult))
+            elif motor == "practical_rife":
+                gen = practical_rife.interpolar(video, mult=int(mult))
+            elif motor == "film":
+                gen = film.interpolar(video, mult=int(mult))
+            elif motor == "ema_vfi":
+                gen = ema_vfi.interpolar(video, mult=int(mult))
+            elif motor == "dut_stab":
+                gen = dut_stab.estabilizar(video)
             elif motor == "flashvsr":
                 gen = flashvsr.mejorar(video)
             else:
@@ -280,9 +430,14 @@ def hacer_procesar_video(lang):
                                            ruido=int(ruido))
             consumo = _consumir(gen, log)
             salida = None
+            pct = 0.0
             while True:
                 try:
-                    yield next(consumo), None, "", oculto
+                    texto = next(consumo)
+                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    if frac is not None:
+                        pct = frac
+                    yield texto, None, "", oculto, _barra(pct)
                 except StopIteration as fin:
                     salida = fin.value
                     break
@@ -315,10 +470,10 @@ def hacer_procesar_video(lang):
                             Path(f).unlink(missing_ok=True)
 
             dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
-            yield "\n".join(log[-400:]), salida, cmp_html, dl
+            yield "\n".join(log[-400:]), salida, cmp_html, dl, _barra(None)
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None, "", oculto
+            yield "\n".join(log[-400:]), None, "", oculto, _barra(None)
 
     return procesar
 
@@ -328,12 +483,14 @@ def hacer_aplicar_filtros(lang):
     mejorado (o al video original si aún no se mejoró), y actualiza el reproductor,
     el comparador y la descarga. Permite encadenar (aplicar uno tras otro)."""
     def aplicar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam, g_color,
-                den_luma, den_croma, est_suav, est_zoom, formato, *rev):
+                den_luma, den_croma, est_suav, est_zoom, lente_k1, lente_k2,
+                ia_modelo, formato, *rev):
         oculto = gr.update(visible=False)
         base = salida_actual or video_orig
         if not base:
-            yield t("filtros_sin_base", lang), None, "", oculto
+            yield t("filtros_sin_base", lang), None, "", oculto, _barra(None)
             return
+        total_f, total_s = _totales_video(base)
         log = [f"▶ {t('m_' + filtro, lang).split(' — ')[0]}"]
         try:
             if filtro == "lut":
@@ -348,14 +505,27 @@ def hacer_aplicar_filtros(lang):
                 gen = filtros.denoise(base, luma=float(den_luma), chroma=float(den_croma))
             elif filtro == "estabilizar":
                 gen = filtros.estabilizar(base, suavidad=int(est_suav), zoom=float(est_zoom))
+            elif filtro == "limpiar":
+                gen = filtros.limpiar(base)
+            elif filtro == "cine":
+                gen = filtros.cine(base)
+            elif filtro == "lente":
+                gen = filtros.corregir_lente(base, k1=float(lente_k1), k2=float(lente_k2))
+            elif filtro == "ia":
+                gen = video_ia.mejorar(base, modelo=ia_modelo)
             else:
-                yield t("filtros_sin_base", lang), salida_actual, "", oculto
+                yield t("filtros_sin_base", lang), salida_actual, "", oculto, _barra(None)
                 return
             consumo = _consumir(gen, log)
             salida = None
+            pct = 0.0
             while True:
                 try:
-                    yield next(consumo), None, "", oculto
+                    texto = next(consumo)
+                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    if frac is not None:
+                        pct = frac
+                    yield texto, None, "", oculto, _barra(pct)
                 except StopIteration as fin:
                     salida = fin.value
                     break
@@ -380,10 +550,10 @@ def hacer_aplicar_filtros(lang):
                         if f:
                             Path(f).unlink(missing_ok=True)
             dl = (gr.update(value=descarga, visible=True) if descarga else oculto)
-            yield "\n".join(log[-400:]), salida, cmp_html, dl
+            yield "\n".join(log[-400:]), salida, cmp_html, dl, _barra(None)
         except Exception as e:
             log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
-            yield "\n".join(log[-400:]), None, "", oculto
+            yield "\n".join(log[-400:]), None, "", oculto, _barra(None)
 
     return aplicar
 
@@ -392,14 +562,15 @@ def hacer_preview_filtro(lang):
     """Vista previa rápida (un frame) de cómo quedará el filtro, sin aplicarlo."""
     from engines import preview as _prev
 
-    def previsualizar(salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
+    def previsualizar(pos, salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
                       g_color, den_luma, den_croma, *rev):
         base = salida_actual or video_orig
         if not base:
             return f"<p class='size-preview'>{t('filtros_sin_base', lang)}</p>"
         try:
+            pos = max(0.0, min(1.0, float(pos or 0.3)))
             antes, despues, soporta = _prev.previsualizar(
-                base, filtro, pos=0.3, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
+                base, filtro, pos=pos, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
                 g_color=g_color, den_luma=float(den_luma), den_croma=float(den_croma),
                 rev=rev)
             if not soporta:
@@ -422,9 +593,116 @@ def hacer_preview_filtro(lang):
     return previsualizar
 
 
+def hacer_comparar_frame(lang):
+    """Compara entrada vs resultado en el frame exacto donde el usuario pausó el
+    video (la posición la rellena el JS con el tiempo del reproductor)."""
+    def comparar(pos, video_in, video_out):
+        if not video_out:
+            return f"<p class='size-preview'>{t('cmp_sin_resultado', lang)}</p>"
+        pos = max(0.0, min(1.0, float(pos or 0.3)))
+        fa = ff.extraer_frame_preview(video_in, pos) if video_in else None
+        fd = ff.extraer_frame_preview(video_out, pos)
+        try:
+            if fa and fd:
+                return comparador_html(fa, fd, lang)
+            return f"<p class='size-preview'>{t('cmp_sin_resultado', lang)}</p>"
+        finally:
+            for f in (fa, fd):
+                if f:
+                    Path(f).unlink(missing_ok=True)
+
+    return comparar
+
+
+def hacer_comparar_looks(lang, es_video):
+    """Compara los LUTs SELECCIONADOS (LUT 1/2/3) sobre el frame del medio YA
+    cargado en el preview, sin subir nada. En video toma el frame donde el usuario
+    paró la barra (pos la rellena el JS); en imagen usa la imagen cargada.
+
+    Streaming de (galeria, mensaje); galeria = [(ruta, etiqueta)…] con el Original
+    primero. Reutiliza engines.preview_multi.comparar_looks."""
+    from engines import preview_multi
+
+    def comparar(*args):
+        # Video: (pos, medio, l1,m1,l2,m2,l3,m3) · Imagen: (medio, l1,m1,l2,m2,l3,m3)
+        if es_video:
+            pos, medio, l1, m1, l2, m2, l3, m3 = args
+        else:
+            medio, l1, m1, l2, m2, l3, m3 = args
+            pos = 0.3
+        if not medio:
+            yield [], t("cmp_luts_sin_medio", lang)
+            return
+        looks = [(lid, float(mz), luts.NOMBRES.get(lid, lid))
+                 for lid, mz in ((l1, m1), (l2, m2), (l3, m3))
+                 if lid and lid != "ninguno"]
+        if not looks:
+            yield [], t("cmp_luts_elige", lang)
+            return
+        galeria = []
+        for galeria, _msg in preview_multi.comparar_looks(medio, pos, looks):
+            yield galeria, t("cmp_luts_trab", lang) if galeria else _msg
+        yield galeria, ""
+
+    return comparar
+
+
+def hacer_borrar(lang):
+    """Borrar objetos: el usuario pinta de blanco lo que sobra en el lienzo
+    (gr.ImageEditor) y LaMa (IOPaint) rellena el hueco. Construye la máscara desde
+    las capas pintadas y llama a engines.iopaint_lama.borrar."""
+    import numpy as np
+    from PIL import Image
+
+    def borrar_obj(editor):
+        oculto = gr.update(visible=False)
+        if not editor or editor.get("background") is None:
+            yield t("borrar_sube", lang), "", oculto
+            return
+        fondo = np.asarray(editor["background"])[:, :, :3]
+        capas = editor.get("layers") or []
+        # Máscara = blanco donde el usuario pintó (alpha>0 en cualquier capa).
+        mascara = np.zeros(fondo.shape[:2], dtype=np.uint8)
+        for capa in capas:
+            capa = np.asarray(capa)
+            if capa.ndim == 3 and capa.shape[2] == 4:
+                mascara[capa[:, :, 3] > 10] = 255
+            elif capa.ndim == 3:
+                mascara[capa.sum(axis=2) > 20] = 255
+        if not mascara.any():
+            yield t("borrar_sin_mascara", lang), "", oculto
+            return
+        tmp = Path(tempfile.mkdtemp(prefix="vb_borrar_"))
+        img_p, msk_p = tmp / "img.png", tmp / "mask.png"
+        Image.fromarray(fondo).save(img_p)
+        Image.fromarray(mascara).save(msk_p)
+        log = ["▶ borrar objeto (IOPaint · LaMa)"]
+        try:
+            gen = iopaint_lama.borrar(str(img_p), str(msk_p))
+            consumo = _consumir(gen, log)
+            salida = None
+            while True:
+                try:
+                    yield next(consumo), "", oculto
+                except StopIteration as fin:
+                    salida = fin.value
+                    break
+            html = (f"<img src='{_data_uri(salida)}' style='max-width:100%;border-radius:8px'>"
+                    if salida else "")
+            dl = (gr.update(value=salida, visible=True) if salida else oculto)
+            yield "\n".join(log[-400:]), html, dl
+        except Exception as e:
+            log += ["", f"{t('error', lang)}: {e}", traceback.format_exc(limit=3)]
+            yield "\n".join(log[-400:]), "", oculto
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    return borrar_obj
+
+
 def hacer_procesar_imagen(lang):
     def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
-                 g_preset, g_int, g_tam, g_color, formato_img, *rev):
+                 tarea_rest, g_preset, g_int, g_tam, g_color, formato_img, *rev):
         oculto = gr.update(visible=False)
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
@@ -439,6 +717,40 @@ def hacer_procesar_imagen(lang):
                 gen = pmrf.mejorar(imagen)
             elif motor == "osdface":
                 gen = osdface.mejorar(imagen)
+            elif motor == "restormer":
+                gen = restormer.mejorar(imagen, tarea=tarea_rest or "Motion_Deblurring")
+            elif motor == "retinexformer":
+                gen = retinexformer.mejorar(imagen)
+            elif motor == "dreamclear":
+                gen = dreamclear.mejorar(imagen, escala=int(escala))
+            elif motor == "hat":
+                gen = hat.mejorar(imagen, escala=int(escala))
+            elif motor == "nafnet":
+                gen = nafnet.mejorar(imagen, tarea="denoise")
+            elif motor == "scunet":
+                gen = scunet.mejorar(imagen)
+            elif motor == "fbcnn":
+                gen = fbcnn.mejorar(imagen)
+            elif motor == "fftformer":
+                gen = fftformer.mejorar(imagen)
+            elif motor == "dehazeformer":
+                gen = dehazeformer.mejorar(imagen)
+            elif motor == "hvi_cidnet":
+                gen = hvi_cidnet.mejorar(imagen)
+            elif motor == "darkir":
+                gen = darkir.mejorar(imagen)
+            elif motor == "inspyrenet":
+                gen = inspyrenet.mejorar(imagen)
+            elif motor == "birefnet":
+                gen = birefnet.mejorar(imagen)
+            elif motor == "restoreformerpp":
+                gen = restoreformerpp.mejorar(imagen, escala=2)
+            elif motor == "dsrnet":
+                gen = dsrnet.mejorar(imagen)
+            elif motor == "shadowformer":
+                gen = shadowformer.mejorar(imagen)
+            elif motor == "iclight":
+                gen = iclight.relight(imagen, prompt=prompt or "", direccion="izquierda")
             elif motor == "seedvr2_img":
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "seedvr2_mlx_img":
@@ -679,6 +991,15 @@ _JS_CARGA = """() => {
 }""" % (ui_theme.temas_js(), ui_theme.fuentes_js(),
         ui_theme.TEMA_DEFECTO, ui_theme.FUENTE_DEFECTO)
 
+# Lee el tiempo ACTUAL del reproductor de resultado/preview (#vb-result) y lo
+# convierte en fracción 0–1, para que "este frame" sea justo donde el usuario paró
+# la barra. Constante de módulo: la usan los botones de comparación y el comparador
+# de LUTs que vive dentro del panel de looks.
+_JS_POS = ("(pos, ...rest) => { const v = document.querySelector('#vb-result video') "
+           "|| document.querySelector('#vb-input video'); "
+           "if (v && v.duration) pos = v.currentTime / v.duration; "
+           "return [pos, ...rest]; }")
+
 
 def texto_sistema(lang):
     # --- Resumen de hardware ---
@@ -706,7 +1027,6 @@ def texto_sistema(lang):
         motores.insert(3, ("MetalFX — escalado rápido de video (Apple)",
                            metalfx.disponible(), "bash install/extras_metalfx.sh", False))
     motores += [
-        ("CodeFormer — restaurar caras", faces.disponible(), "bash install/extras_caras.sh", False),
         ("DDColor — colorizar B/N", color.disponible(), "bash install/extras_color.sh", False),
         ("FaithDiff — restauración fiel (MIT)", faithdiff.disponible(),
          "bash install/extras_faithdiff.sh", True),
@@ -714,13 +1034,64 @@ def texto_sistema(lang):
          "bash install/extras_diffbir.sh", True),
         ("PMRF — caras (MIT)", pmrf.disponible(),
          "bash install/extras_pmrf.sh", True),
-        ("OSDFace — caras ⚠️ sin licencia (solo pruebas)", osdface.disponible(),
-         "bash install/extras_osdface.sh", True),
         ("InstantIR — restauración instantánea", instantir.disponible(),
          "bash install/extras_instantir.sh", True),
         ("FlashVSR — modo rápido", HW["flashvsr"] and flashvsr.disponible(),
          "bash install/extras_flashvsr.sh", True),
+        ("Restormer — deblur / lluvia / ruido (MIT)", restormer.disponible(),
+         "bash install/extras_restormer.sh", True),
+        ("Retinexformer — poca luz (MIT)", retinexformer.disponible(),
+         "bash install/extras_retinexformer.sh", True),
+        ("DreamClear — restauración real máx. (Apache-2.0)", dreamclear.disponible(),
+         "bash install/extras_dreamclear.sh", True),
+        ("HAT — super-resolución nítida (Apache-2.0)", hat.disponible(),
+         "bash install/extras_hat.sh", True),
+        ("Practical-RIFE — slow-mo / interpolación (MIT)", practical_rife.disponible(),
+         "bash install/extras_practical_rife.sh", False),
+        ("FILM — slow-mo movimiento grande (Apache-2.0)", film.disponible(),
+         "bash install/extras_film.sh", True),
+        ("EMA-VFI — interpolación SOTA (Apache-2.0)", ema_vfi.disponible(),
+         "bash install/extras_ema_vfi.sh", True),
+        ("NAFNet — denoise/deblur (MIT)", nafnet.disponible(),
+         "bash install/extras_nafnet.sh", False),
+        ("SCUNet — denoise ciego (Apache-2.0)", scunet.disponible(),
+         "bash install/extras_scunet.sh", False),
+        ("FBCNN — quitar artefactos JPEG (Apache-2.0)", fbcnn.disponible(),
+         "bash install/extras_fbcnn.sh", False),
+        ("FFTformer — deblur de movimiento (MIT)", fftformer.disponible(),
+         "bash install/extras_fftformer.sh", True),
+        ("DehazeFormer — quitar neblina (MIT)", dehazeformer.disponible(),
+         "bash install/extras_dehazeformer.sh", False),
+        ("HVI-CIDNet — poca luz premium (MIT)", hvi_cidnet.disponible(),
+         "bash install/extras_hvi_cidnet.sh", False),
+        ("DarkIR — noche extrema, luz+ruido+desenfoque (MIT)", darkir.disponible(),
+         "bash install/extras_darkir.sh", False),
+        ("InSPyReNet — quitar fondo / matting (MIT)", inspyrenet.disponible(),
+         "bash install/extras_inspyrenet.sh", False),
+        ("BiRefNet — quitar fondo alta resolución (MIT)", birefnet.disponible(),
+         "bash install/extras_birefnet.sh", False),
+        ("RestoreFormer++ — caras (Apache-2.0)", restoreformerpp.disponible(),
+         "bash install/extras_restoreformerpp.sh", False),
+        ("DSRNet — quitar reflejos (Apache-2.0)", dsrnet.disponible(),
+         "bash install/extras_dsrnet.sh", False),
+        ("ShadowFormer — quitar sombras (MIT)", shadowformer.disponible(),
+         "bash install/extras_shadowformer.sh", False),
+        ("DUT — estabilización por IA (MIT)", dut_stab.disponible(),
+         "bash install/extras_dut_stab.sh", True),
+        ("IC-Light — reiluminación / relighting (Apache-2.0)", iclight.disponible(),
+         "bash install/extras_iclight.sh", True),
+        ("IOPaint+LaMa — borrar objetos con máscara (Apache-2.0)", iopaint_lama.disponible(),
+         "bash install/extras_iopaint_lama.sh", False),
     ]
+    # Motores de caras NO comerciales: ocultos en el build que se vende; solo con
+    # VB_NO_COMERCIAL=1 (uso personal). Reemplazo comercial = RestoreFormer++/PMRF.
+    if INCLUIR_NO_COMERCIAL:
+        motores += [
+            ("CodeFormer — caras ⚠️ S-Lab NO comercial (uso personal)",
+             faces.disponible(), "bash install/extras_caras.sh", False),
+            ("OSDFace — caras ⚠️ sin licencia (uso personal)", osdface.disponible(),
+             "bash install/extras_osdface.sh", True),
+        ]
     listos, instalables, no_aplican = [], [], []
     for nombre, ok, inst, solo_nvidia in motores:
         if ok:
@@ -776,6 +1147,11 @@ def motores_video():
     m = (sv2 + vk) if HW["cuda"] else (vk + mlx + mfx + sv2)
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
+    # Motores de interpolación de frames (slow-mo); aparecen si están instalados.
+    for vfi, mod in (("practical_rife", practical_rife), ("film", film),
+                     ("ema_vfi", ema_vfi), ("dut_stab", dut_stab)):
+        if mod.disponible():
+            m.append(vfi)
     return m or ["realesrgan"]  # que la UI nunca quede vacía
 
 
@@ -784,8 +1160,8 @@ def filtros_video():
     antes de descargar: revelado/LUT, grano, desentrelazar, ruido, estabilizar."""
     if not HW["ffmpeg"]:
         return []
-    f = ["lut", "grano", "desentrelazar", "denoise"]
-    if _VIDSTAB_OK:
+    f = ["lut", "grano", "desentrelazar", "denoise", "limpiar", "cine", "lente", "ia"]
+    if filtros.ESTABILIZA_OK:   # vidstab (2 pasadas) o deshake (integrado)
         f.append("estabilizar")
     return f
 
@@ -806,10 +1182,27 @@ def motores_imagen():
         m.append("seedvr2_img")
     if instantir.disponible():
         m.append("instantir")
-    if faces.disponible():
-        m.append("codeformer")
-    if osdface.disponible():
-        m.append("osdface")    # ⚠️ sin licencia: solo pruebas
+    if faces.disponible() and INCLUIR_NO_COMERCIAL:
+        m.append("codeformer")  # S-Lab NO comercial → oculto salvo VB_NO_COMERCIAL=1
+    if osdface.disponible() and INCLUIR_NO_COMERCIAL:
+        m.append("osdface")    # ⚠️ sin licencia → oculto salvo VB_NO_COMERCIAL=1
+    if restormer.disponible():
+        m.append("restormer")  # deblur / lluvia / ruido real, MIT
+    if retinexformer.disponible():
+        m.append("retinexformer")  # poca luz / noche, MIT
+    if hat.disponible():
+        m.append("hat")        # super-resolución nítida no-difusión, Apache-2.0
+    if dreamclear.disponible():
+        m.append("dreamclear")  # restauración real máxima calidad, Apache-2.0
+    # Restauración / limpieza por imagen (roadmap; ambas salvo fftformer)
+    for mid, mod in (("nafnet", nafnet), ("scunet", scunet), ("fbcnn", fbcnn),
+                     ("fftformer", fftformer), ("dehazeformer", dehazeformer),
+                     ("hvi_cidnet", hvi_cidnet), ("darkir", darkir),
+                     ("inspyrenet", inspyrenet), ("birefnet", birefnet),
+                     ("restoreformerpp", restoreformerpp), ("dsrnet", dsrnet),
+                     ("shadowformer", shadowformer), ("iclight", iclight)):
+        if mod.disponible():
+            m.append(mid)
     if color.disponible():
         m.append("ddcolor")
     if HW["vulkan"]:
@@ -826,7 +1219,10 @@ _MEJORADORES_VIDEO = {"seedvr2", "seedvr2_mlx", "realesrgan", "realcugan",
                       "waifu2x", "flashvsr"}
 _MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
                     "realesrgan_img", "diffbir", "pmrf", "osdface", "seedvr2_mlx_img",
-                    "realesrgan_mlx_img"}
+                    "realesrgan_mlx_img", "restormer", "retinexformer", "dreamclear",
+                    "hat", "nafnet", "scunet", "fbcnn", "fftformer", "dehazeformer",
+                    "hvi_cidnet", "darkir", "inspyrenet", "birefnet",
+                    "restoreformerpp", "dsrnet", "shadowformer", "iclight"}
 # Motores que escalan a una resolución/escala (para la vista previa de tamaño).
 _ESCALADORES = {"seedvr2", "seedvr2_mlx", "flashvsr", "realesrgan", "realcugan",
                 "waifu2x", "metalfx"}
@@ -909,11 +1305,15 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             preset.change(sincronizar, preset, [inten, tam, col])
             return g, preset, inten, tam, col
 
-        def grupo_revelado(visible):
+        def grupo_revelado(visible, fuente=None, pos=None, es_video=False):
             """Panel de revelado estilo Lumetri con presets save/load.
 
             Devuelve el grupo y la lista plana de 24 componentes
             (orden: lut1,mix1,lut2,mix2,lut3,mix3 + 18 ajustes Lumetri).
+
+            Si `fuente` (el medio ya cargado: video_out o img_in) se pasa, dentro de
+            los looks se añade el comparador de LUTs sobre ese medio (sin subir nada):
+            en video usa el frame donde el usuario paró la barra (`pos` + JS).
             """
             opciones = [(t("l_ninguno", lang), "ninguno")] + \
                        [(n, k) for k, n in luts.NOMBRES.items()]
@@ -940,6 +1340,25 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                             mz = gr.Slider(0.0, 1.0, value=1.0, step=0.05, scale=1,
                                            label=t("l_mezcla", lang))
                         comps += [lk, mz]
+
+                    # ---- Comparar los LUTs elegidos sobre el medio YA cargado ----
+                    # (sin subir nada; en video, el frame donde paraste la barra)
+                    if fuente is not None:
+                        gr.Markdown(t("cmp_luts_intro", lang), elem_classes="size-preview")
+                        _cmp_btn = gr.Button(t("cmp_luts_boton", lang), size="sm",
+                                             elem_classes="cta")
+                        _cmp_msg = gr.Markdown("", elem_classes="size-preview")
+                        _cmp_gal = gr.Gallery(label=t("cmp_luts_galeria", lang), columns=2,
+                                              height="auto", object_fit="contain",
+                                              show_label=True, elem_classes="vb-frame-cmp")
+                        _luts3 = [comps[0], comps[1], comps[2], comps[3], comps[4], comps[5]]
+                        if es_video:
+                            _cmp_btn.click(hacer_comparar_looks(lang, True),
+                                           [pos, fuente] + _luts3,
+                                           [_cmp_gal, _cmp_msg], js=_JS_POS)
+                        else:
+                            _cmp_btn.click(hacer_comparar_looks(lang, False),
+                                           [fuente] + _luts3, [_cmp_gal, _cmp_msg])
 
                 def sl(lo, hi, v, paso, clave):
                     comps.append(gr.Slider(lo, hi, value=v, step=paso,
@@ -1001,8 +1420,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 gr.Markdown(f"{t('sin_mejorador_v', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
             with gr.Row():
-                with gr.Column(elem_classes="col-controls"):
-                    video_in = gr.Video(label=t("video_entrada", lang))
+                with gr.Column(elem_classes="col-controls", min_width=300):
+                    video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input")
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
                         boton_v = gr.Button(t("boton_video", lang), variant="primary",
@@ -1014,6 +1433,10 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                        elem_classes="engine-picker")
                     nota_v = gr.Markdown(_nota_video(ids_v[0], lang),
                                          elem_classes="engine-note")
+                    _otros_v = _otros_motores_md(_CAT_VIDEO, ids_v,
+                                                 lambda m: t("m_" + m, lang), lang)
+                    if _otros_v:
+                        gr.Markdown(_otros_v, elem_classes="engine-otros")
                     escala = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
                                        visible=ids_v[0] in ("realesrgan", "realcugan", "waifu2x", "metalfx"))
                     ruido = gr.Dropdown([-1, 0, 3], value=0, label=t("ruido", lang), visible=False)
@@ -1031,62 +1454,81 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                         label=t("formato_salida_v", lang))
                     gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
-                # --- Centro: el resultado y la comparación (el «escenario») ---
-                with gr.Column(elem_classes="col-stage"):
-                    video_out = gr.Video(label=t("resultado", lang))
+                # --- Centro: resultado + comparación por el frame del propio video ---
+                with gr.Column(elem_classes="col-stage", min_width=320):
+                    video_out = gr.Video(label=t("resultado_preview", lang),
+                                         elem_id="vb-result")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
+                    gr.Markdown(t("cmp_scrub_ayuda", lang), elem_classes="size-preview")
+                    with gr.Row():
+                        boton_cmp_frame = gr.Button(t("cmp_este_frame", lang), size="sm")
+                        boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
-
-                    # --- Comparador avanzado: elegir frame por la línea de tiempo
-                    #     y fijar hasta 4 para comparar a la vez (colapsado para
-                    #     no ocupar espacio hasta que se use). ---
-                    with gr.Accordion(t("cmp_avanzado", lang), open=False):
-                        gr.Markdown(t("cmp_ayuda", lang), elem_classes="size-preview")
-                        cmp_pos = gr.Slider(0, 100, value=30, step=1,
-                                            label=t("cmp_posicion", lang) + " (%)")
-                        with gr.Row():
-                            cmp_add = gr.Button(t("cmp_anadir", lang), size="sm",
-                                                variant="primary")
-                            cmp_clear = gr.Button(t("cmp_limpiar", lang), size="sm",
-                                                  variant="stop")
-                        cmp_msg = gr.Markdown("", elem_classes="size-preview")
-                        cmp_estado = gr.State([])
-                        cmp_slots = [gr.HTML(visible=False) for _ in range(4)]
-                    # Vista previa del filtro (botón + ventana) EN EL CENTRO,
-                    # debajo de "Comparar otros frames".
-                    boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
-                    preview_filtro = gr.HTML(label=t("filtros_preview", lang))
+                    # Posición (fracción 0-1) que el JS rellena con el tiempo actual
+                    # del reproductor de resultado/entrada.
+                    pos_frac = gr.Number(0.3, visible=False)
                     log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
                                        elem_classes="console")
+                    # Barra de avance minimalista, DEBAJO de la consola; solo visible
+                    # mientras un proceso corre (la ceden procesar/aplicar).
+                    barra_v = gr.HTML("", visible=False, elem_classes="vb-bar-wrap")
 
-                # --- Derecha: filtros y ajustes (post-proceso del resultado) ---
-                with gr.Column(elem_classes="col-aside"):
-                    ids_f = filtros_video()
+                # --- Columna 3: elegir filtro (botón Aplicar ARRIBA) ---
+                ids_f = filtros_video()
+                # Filtros "simples" (grano/desentrelazar/ruido/estabilizar): sus
+                # opciones van JUNTAS en un solo grupo. El revelado (lut) va aparte.
+                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar", "limpiar",
+                            "cine", "lente", "ia"}
+                _CON_CTRL = _SIMPLES | {"lut"}
+                with gr.Column(elem_classes="col-aside", min_width=220):
                     gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",
                                 elem_classes="filtros-head")
+                    boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
+                                             elem_classes="cta")
+                    gr.Markdown(t("filtros_aplicar_nota", lang), elem_classes="formato-nota")
                     filtro_v = gr.Radio([(t("m_" + i, lang), i) for i in ids_f],
                                         value=ids_f[0], label=t("filtros_picker", lang),
                                         elem_classes="engine-picker")
                     nota_filtro = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_f[0]], lang),
                                               elem_classes="engine-note")
-                    grupo_g_v, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(ids_f[0] == "grano")
-                    with gr.Group(visible=ids_f[0] == "denoise") as grupo_den:
+
+                # --- Columna 4 (derecha): los AJUSTES del filtro elegido ---
+                #     (revelado/LUTs/presets, grano, ruido o estabilizar; se abre
+                #     según el filtro seleccionado, igual que el revelado).
+                with gr.Column(elem_classes="col-revelado", min_width=300,
+                               visible=ids_f[0] in _CON_CTRL) as col_revelado:
+                    # Grupo único con TODAS las opciones de los filtros simples.
+                    with gr.Group(visible=ids_f[0] in _SIMPLES) as grupo_simples:
+                        gr.Markdown(f"**{t('m_grano', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
+                        _gg, gpre_v, gint_v, gtam_v, gcol_v = grupo_grano(True)
+                        gr.Markdown(f"**{t('m_denoise', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
                         den_luma = gr.Slider(0.0, 10.0, value=3.0, step=0.5, label=t("den_luma", lang))
                         den_croma = gr.Slider(0.0, 10.0, value=2.0, step=0.5, label=t("den_chroma", lang))
-                    with gr.Group(visible=ids_f[0] == "estabilizar") as grupo_est:
+                        gr.Markdown(f"**{t('m_estabilizar', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
                         est_suav = gr.Slider(1, 30, value=10, step=1, label=t("est_suavidad", lang))
                         est_zoom = gr.Slider(0.0, 1.0, value=0.3, step=0.05, label=t("est_zoom", lang))
-                    grupo_l_v, rev_v = grupo_revelado(ids_f[0] == "lut")
-                    boton_filtro = gr.Button(t("filtros_aplicar", lang), variant="primary",
-                                             elem_classes="cta")
+                        gr.Markdown(f"**{t('m_lente', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
+                        lente_k1 = gr.Slider(-0.5, 0.5, value=0.0, step=0.01, label=t("lente_k1", lang))
+                        lente_k2 = gr.Slider(-0.5, 0.5, value=0.0, step=0.01, label=t("lente_k2", lang))
+                        gr.Markdown(f"**{t('m_ia', lang).split(' — ')[0]}**",
+                                    elem_classes="filtros-head")
+                        ia_modelo = gr.Dropdown(
+                            [(t("ia_" + k, lang), k) for k in video_ia.MODELOS],
+                            value="ruido", label=t("ia_modelo", lang))
+                    grupo_l_v, rev_v = grupo_revelado(
+                        ids_f[0] == "lut", fuente=video_out, pos=pos_frac, es_video=True)
 
             def controles_v(motor):
                 return (
                     gr.update(value=_nota_video(motor, lang)),
                     gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x", "metalfx")),
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
-                    gr.update(visible=motor == "rife"),
+                    gr.update(visible=motor in ("rife", "practical_rife", "film", "ema_vfi")),
                     gr.update(visible=motor in ("seedvr2", "seedvr2_mlx")),
                 )
 
@@ -1095,75 +1537,59 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             for comp in (video_in, motor_v, escala, mult, resolucion):
                 comp.change(hacer_vista_previa(lang),
                             [video_in, motor_v, escala, mult, resolucion], preview)
+            # Al cargar un video, vuélcalo al reproductor central (#vb-result) para
+            # que SIEMPRE haya un video con barra que mover y elegir el frame, aun
+            # antes de mejorar. Tras mejorar, el resultado lo reemplaza.
+            video_in.change(lambda v: v, video_in, video_out)
             ev_v = boton_v.click(
                 hacer_procesar_video(lang),
                 [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
                  batch_sv2, formato_v],
-                [log_v, video_out, comparador_v, descarga_v])
+                [log_v, video_out, comparador_v, descarga_v, barra_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
 
             # --- Filtros (post-proceso): controles, vista previa y aplicar ---
             def controles_filtro(filtro):
                 return (
-                    gr.update(value=t(MOTORES_VIDEO_NOTAS[filtro], lang)),
-                    gr.update(visible=filtro == "grano"),
-                    gr.update(visible=filtro == "denoise"),
-                    gr.update(visible=filtro == "estabilizar"),
-                    gr.update(visible=filtro == "lut"),
+                    gr.update(value=t(MOTORES_VIDEO_NOTAS[filtro], lang)),  # nota
+                    gr.update(visible=filtro in _SIMPLES),  # grupo único grano/ruido/estabilizar
+                    gr.update(visible=filtro == "lut"),     # panel revelado
+                    gr.update(visible=filtro in _CON_CTRL), # 4ª columna (se abre si hay ajustes)
                 )
 
             filtro_v.change(controles_filtro, filtro_v,
-                            [nota_filtro, grupo_g_v, grupo_den, grupo_est, grupo_l_v])
+                            [nota_filtro, grupo_simples, grupo_l_v, col_revelado])
 
-            _prev_in = [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
-                        den_luma, den_croma, *rev_v]
-            # La vista previa del filtro se muestra en la ventana del CENTRO.
-            boton_preview.click(hacer_preview_filtro(lang), _prev_in, preview_filtro)
-            # Auto-preview al cambiar de filtro o elegir un LUT (rev_v[0/2/4]).
-            filtro_v.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
-            for _lut_dd in (rev_v[0], rev_v[2], rev_v[4]):
-                _lut_dd.change(hacer_preview_filtro(lang), _prev_in, preview_filtro)
+            # "📸 Comparar este frame": entrada vs resultado en el frame pausado.
+            boton_cmp_frame.click(hacer_comparar_frame(lang),
+                                  [pos_frac, video_in, video_out], comparador_v,
+                                  js=_JS_POS)
+
+            # "👁 Vista previa" del filtro en el frame actual → comparador central.
+            _prev_in = [pos_frac, video_out, video_in, filtro_v, gpre_v, gint_v,
+                        gtam_v, gcol_v, den_luma, den_croma, *rev_v]
+            _prev_fn = hacer_preview_filtro(lang)
+
+            def _auto_prev(componente, evento="change"):
+                """Engancha el auto-preview (en vivo) a un control del filtro."""
+                getattr(componente, evento)(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
+
+            boton_preview.click(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
+            _auto_prev(filtro_v)  # al cambiar de filtro
+            # LUTs en vivo: dropdowns (change) y mezclas (release, al soltar).
+            for _i, _c in enumerate(rev_v):
+                _auto_prev(_c, "change" if _i in (0, 2, 4) else "release")
+            # Grano y ruido también en vivo.
+            _auto_prev(gpre_v); _auto_prev(gcol_v)
+            for _c in (gint_v, gtam_v, den_luma, den_croma):
+                _auto_prev(_c, "release")
 
             boton_filtro.click(
                 hacer_aplicar_filtros(lang),
                 [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
-                 den_luma, den_croma, est_suav, est_zoom, formato_v, *rev_v],
-                [log_v, video_out, comparador_v, descarga_v])
-
-            # --- Comparador avanzado: añadir/limpiar frames por la línea de tiempo ---
-            def _frame_a_cmp(video, salida, pos):
-                fa = ff.extraer_frame_preview(video, pos / 100.0) if video else None
-                fd = ff.extraer_frame_preview(salida, pos / 100.0) if salida else None
-                html = ""
-                if fa and fd:
-                    cap = f"<p class='cmp-cap'>{t('cmp_frame_en', lang)} {int(pos)}%</p>"
-                    html = cap + comparador_html(fa, fd, lang)
-                for f in (fa, fd):
-                    if f:
-                        Path(f).unlink(missing_ok=True)
-                return html
-
-            def _render_slots(estado):
-                return [gr.update(value=(estado[i] if i < len(estado) else ""),
-                                  visible=i < len(estado)) for i in range(4)]
-
-            def _anadir_cmp(video, salida, pos, estado):
-                estado = list(estado or [])
-                if not video or not salida:
-                    return [estado, t("cmp_sin_video", lang)] + _render_slots(estado)
-                if len(estado) >= 4:
-                    return [estado, t("cmp_lleno", lang)] + _render_slots(estado)
-                html = _frame_a_cmp(video, salida, pos)
-                if html:
-                    estado.append(html)
-                return [estado, ""] + _render_slots(estado)
-
-            def _limpiar_cmp():
-                return [[], ""] + [gr.update(value="", visible=False) for _ in range(4)]
-
-            cmp_add.click(_anadir_cmp, [video_in, video_out, cmp_pos, cmp_estado],
-                          [cmp_estado, cmp_msg] + cmp_slots)
-            cmp_clear.click(_limpiar_cmp, None, [cmp_estado, cmp_msg] + cmp_slots)
+                 den_luma, den_croma, est_suav, est_zoom, lente_k1, lente_k2,
+                 ia_modelo, formato_v, *rev_v],
+                [log_v, video_out, comparador_v, descarga_v, barra_v])
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
@@ -1173,7 +1599,16 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                            "ddcolor": "i_ddcolor", "grano": "m_grano", "lut": "m_lut",
                            "diffbir": "i_diffbir", "pmrf": "i_pmrf", "osdface": "i_osdface",
                            "seedvr2_mlx_img": "i_seedvr2_mlx",
-                           "realesrgan_mlx_img": "i_realesrgan_mlx"}
+                           "realesrgan_mlx_img": "i_realesrgan_mlx",
+                           "restormer": "i_restormer", "retinexformer": "i_retinexformer",
+                           "dreamclear": "i_dreamclear", "hat": "i_hat",
+                           "nafnet": "i_nafnet", "scunet": "i_scunet",
+                           "fbcnn": "i_fbcnn", "fftformer": "i_fftformer",
+                           "dehazeformer": "i_dehazeformer", "hvi_cidnet": "i_hvi_cidnet",
+                           "darkir": "i_darkir", "inspyrenet": "i_inspyrenet",
+                           "birefnet": "i_birefnet", "restoreformerpp": "i_restoreformerpp",
+                           "dsrnet": "i_dsrnet", "shadowformer": "i_shadowformer",
+                           "iclight": "i_iclight"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -1185,6 +1620,10 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                        elem_classes="engine-picker")
                     nota_i = gr.Markdown(t(MOTORES_IMG_NOTAS[ids_i[0]], lang),
                                          elem_classes="engine-note")
+                    _otros_i = _otros_motores_md(
+                        _CAT_IMG, ids_i, lambda m: t(etiquetas_i.get(m, m), lang), lang)
+                    if _otros_i:
+                        gr.Markdown(_otros_i, elem_classes="engine-otros")
                     prompt_i = gr.Textbox(label=t("prompt", lang), placeholder=t("prompt_ej", lang),
                                           visible=ids_i[0] in IMG_CON_PROMPT)
                     escala_i = gr.Slider(2, 4, value=2, step=1, label=t("escala", lang),
@@ -1192,16 +1631,29 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                                                   "ddcolor", "grano", "lut",
                                                                   "pmrf", "osdface",
                                                                   "seedvr2_mlx_img",
-                                                                  "realesrgan_mlx_img"))
+                                                                  "realesrgan_mlx_img",
+                                                                  "restormer", "retinexformer",
+                                                                  "hat", "nafnet", "scunet",
+                                                                  "fbcnn", "fftformer",
+                                                                  "dehazeformer", "hvi_cidnet",
+                                                                  "darkir", "inspyrenet",
+                                                                  "birefnet", "restoreformerpp",
+                                                                  "dsrnet", "shadowformer",
+                                                                  "iclight"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] in ("seedvr2_img", "seedvr2_mlx_img"))
                     fidelidad_i = gr.Slider(0.0, 1.0, value=0.7, step=0.1,
                                             label=t("fidelidad", lang),
                                             visible=ids_i[0] == "codeformer")
+                    tarea_rest_i = gr.Dropdown(
+                        [(t(f"rest_{k.lower()}", lang), k) for k in restormer.TAREAS],
+                        value="Motion_Deblurring", label=t("rest_tarea", lang),
+                        visible=ids_i[0] == "restormer")
                     grupo_g_i, gpre_i, gint_i, gtam_i, gcol_i = grupo_grano(
                         ids_i[0] == "grano")
-                    grupo_l_i, rev_i = grupo_revelado(ids_i[0] == "lut")
+                    grupo_l_i, rev_i = grupo_revelado(
+                        ids_i[0] == "lut", fuente=img_in, es_video=False)
                     formato_i = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_IMG],
                         value=ajustes.formato_img(),
@@ -1230,16 +1682,23 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=motor not in ("seedvr2_img", "instantir",
                                                     "ddcolor", "grano", "lut",
                                                     "pmrf", "osdface", "seedvr2_mlx_img",
-                                                    "realesrgan_mlx_img")),
+                                                    "realesrgan_mlx_img", "restormer",
+                                                    "retinexformer", "hat", "nafnet",
+                                                    "scunet", "fbcnn", "fftformer",
+                                                    "dehazeformer", "hvi_cidnet", "darkir",
+                                                    "inspyrenet", "birefnet",
+                                                    "restoreformerpp", "dsrnet",
+                                                    "shadowformer", "iclight")),
                     gr.update(visible=motor in ("seedvr2_img", "seedvr2_mlx_img")),
                     gr.update(visible=motor == "codeformer"),
+                    gr.update(visible=motor == "restormer"),
                     gr.update(visible=motor == "grano"),
                     gr.update(visible=motor == "lut"),
                 )
 
             motor_i.change(controles_i, motor_i,
                            [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                            grupo_g_i, grupo_l_i])
+                            tarea_rest_i, grupo_g_i, grupo_l_i])
 
             _puede_8k_img = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
 
@@ -1259,9 +1718,39 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             ev_i = boton_i.click(
                 hacer_procesar_imagen(lang),
                 [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                 gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
+                 tarea_rest_i, gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
                 [log_i, img_out, descarga_i])
             cancelar_i.click(fn=None, cancels=[ev_i])
+
+
+        # ---------------------------------------------------------------- Borrar objetos
+        with gr.Tab(t("tab_borrar", lang)):
+            if not iopaint_lama.disponible():
+                gr.Markdown(f"{t('borrar_instalar', lang)}\n\n"
+                            f"`bash install/extras_iopaint_lama.sh`",
+                            elem_classes="aviso-sin-motor")
+            gr.Markdown(t("borrar_intro", lang))
+            with gr.Row():
+                with gr.Column(elem_classes="col-controls", min_width=420):
+                    borrar_editor = gr.ImageEditor(
+                        label=t("borrar_lienzo", lang), type="numpy",
+                        brush=gr.Brush(colors=["#ffffff"], default_size=28,
+                                       color_mode="fixed"),
+                        layers=True, sources=["upload", "clipboard"])
+                    with gr.Row():
+                        boton_borrar = gr.Button(t("borrar_boton", lang),
+                                                 variant="primary", elem_classes="cta")
+                        cancelar_borrar = gr.Button(t("cancelar", lang),
+                                                    variant="stop", size="sm")
+                with gr.Column(elem_classes="col-stage", min_width=320):
+                    borrar_out = gr.HTML()
+                    descarga_borrar = gr.DownloadButton(t("descargar", lang),
+                                                        visible=False, elem_classes="cta")
+                    log_borrar = gr.Textbox(label=t("progreso", lang), lines=10,
+                                            max_lines=10, elem_classes="console")
+            ev_b = boton_borrar.click(hacer_borrar(lang), borrar_editor,
+                                      [log_borrar, borrar_out, descarga_borrar])
+            cancelar_borrar.click(fn=None, cancels=[ev_b])
 
         # ---------------------------------------------------------------- Galería
         with gr.Tab(t("tab_galeria", lang)):
@@ -1371,10 +1860,34 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 "pmrf": "PMRF — caras (MIT)",
                 "osdface": "OSDFace — caras ⚠️ sin licencia (pruebas)",
                 "flashvsr": "FlashVSR — video rápido (Apache-2.0)",
+                "restormer": "Restormer — deblur / lluvia / ruido (MIT)",
+                "retinexformer": "Retinexformer — poca luz (MIT)",
+                "dreamclear": "DreamClear — restauración real (Apache-2.0)",
+                "hat": "HAT — super-resolución nítida (Apache-2.0)",
+                "practical_rife": "Practical-RIFE — slow-mo / interpolación (MIT)",
+                "film": "FILM — slow-mo movimiento grande (Apache-2.0)",
+                "ema_vfi": "EMA-VFI — interpolación SOTA (Apache-2.0)",
+                "nafnet": "NAFNet — denoise / deblur (MIT)",
+                "scunet": "SCUNet — denoise ciego (Apache-2.0)",
+                "fbcnn": "FBCNN — quitar artefactos JPEG (Apache-2.0)",
+                "fftformer": "FFTformer — deblur de movimiento (MIT)",
+                "dehazeformer": "DehazeFormer — quitar neblina (MIT)",
+                "hvi_cidnet": "HVI-CIDNet — poca luz premium (MIT)",
+                "darkir": "DarkIR — noche extrema (MIT)",
+                "inspyrenet": "InSPyReNet — quitar fondo (MIT)",
+                "birefnet": "BiRefNet — quitar fondo HR (MIT)",
+                "restoreformerpp": "RestoreFormer++ — caras (Apache-2.0)",
+                "dsrnet": "DSRNet — quitar reflejos (Apache-2.0)",
+                "shadowformer": "ShadowFormer — quitar sombras (MIT)",
+                "dut_stab": "DUT — estabilización por IA (MIT)",
+                "iclight": "IC-Light — reiluminación (Apache-2.0)",
+                "iopaint_lama": "IOPaint+LaMa — borrar objetos (Apache-2.0)",
             }
             # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
             # muestran en mantenimiento solo si ya están instalados.
-            _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr"}
+            _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr",
+                            "restormer", "retinexformer", "dreamclear", "hat",
+                            "film", "ema_vfi", "fftformer", "dut_stab", "iclight"}
 
             def _mant_aplica(m):
                 if m == "seedvr2":

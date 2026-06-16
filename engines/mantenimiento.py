@@ -85,6 +85,141 @@ _GESTION = {
         borrar=[VENDOR / "fx-upscale" / ".build"],
         instalador=["bash", "install/extras_metalfx.sh"],
     ),
+    "restormer": dict(
+        repo=VENDOR / "Restormer",
+        carpeta=VENDOR / "Restormer",
+        borrar=[RAIZ / ".venv-restormer" / ".ok"],
+        instalador=["bash", "install/extras_restormer.sh"],
+    ),
+    "retinexformer": dict(
+        repo=VENDOR / "Retinexformer",
+        carpeta=VENDOR / "Retinexformer" / "pretrained_weights",
+        borrar=[VENDOR / "Retinexformer" / "pretrained_weights",
+                RAIZ / ".venv-retinexformer" / ".ok"],
+        instalador=["bash", "install/extras_retinexformer.sh"],
+    ),
+    "dreamclear": dict(
+        repo=VENDOR / "DreamClear",
+        carpeta=MODELS / "DreamClear",
+        borrar=[MODELS / "DreamClear", RAIZ / ".venv-dreamclear" / ".ok"],
+        instalador=["bash", "install/extras_dreamclear.sh"],
+    ),
+    "hat": dict(
+        repo=VENDOR / "HAT",
+        carpeta=VENDOR / "HAT" / "experiments" / "pretrained_models",
+        borrar=[VENDOR / "HAT" / "experiments" / "pretrained_models",
+                RAIZ / ".venv-hat" / ".ok"],
+        instalador=["bash", "install/extras_hat.sh"],
+    ),
+    "practical_rife": dict(
+        repo=VENDOR / "Practical-RIFE",
+        carpeta=VENDOR / "Practical-RIFE" / "train_log",
+        borrar=[RAIZ / ".venv-prife" / ".ok"],
+        instalador=["bash", "install/extras_practical_rife.sh"],
+    ),
+    "film": dict(
+        repo=VENDOR / "frame-interpolation",
+        carpeta=MODELS / "FILM",
+        borrar=[MODELS / "FILM", RAIZ / ".venv-film" / ".ok"],
+        instalador=["bash", "install/extras_film.sh"],
+    ),
+    "ema_vfi": dict(
+        repo=VENDOR / "EMA-VFI",
+        carpeta=VENDOR / "EMA-VFI" / "ckpt",
+        borrar=[VENDOR / "EMA-VFI" / "ckpt", RAIZ / ".venv-emavfi" / ".ok"],
+        instalador=["bash", "install/extras_ema_vfi.sh"],
+    ),
+    "nafnet": dict(
+        repo=VENDOR / "NAFNet",
+        carpeta=VENDOR / "NAFNet" / "experiments" / "pretrained_models",
+        borrar=[VENDOR / "NAFNet" / "experiments" / "pretrained_models",
+                RAIZ / ".venv-nafnet" / ".ok"],
+        instalador=["bash", "install/extras_nafnet.sh"],
+    ),
+    "scunet": dict(
+        repo=VENDOR / "SCUNet",
+        carpeta=MODELS / "SCUNet",
+        borrar=[MODELS / "SCUNet", RAIZ / ".venv-scunet" / ".ok"],
+        instalador=["bash", "install/extras_scunet.sh"],
+    ),
+    "fbcnn": dict(
+        repo=VENDOR / "FBCNN",
+        carpeta=VENDOR / "FBCNN" / "model_zoo",
+        borrar=[VENDOR / "FBCNN" / "model_zoo", RAIZ / ".venv-fbcnn" / ".ok"],
+        instalador=["bash", "install/extras_fbcnn.sh"],
+    ),
+    "fftformer": dict(
+        repo=VENDOR / "FFTformer",
+        carpeta=VENDOR / "FFTformer" / "pretrain_model",
+        borrar=[RAIZ / ".venv-fftformer" / ".ok"],
+        instalador=["bash", "install/extras_fftformer.sh"],
+    ),
+    "dehazeformer": dict(
+        repo=VENDOR / "DehazeFormer",
+        carpeta=VENDOR / "DehazeFormer",
+        borrar=[RAIZ / ".venv-dehazeformer" / ".ok"],
+        instalador=["bash", "install/extras_dehazeformer.sh"],
+    ),
+    "hvi_cidnet": dict(
+        repo=VENDOR / "HVI-CIDNet",
+        carpeta=VENDOR / "HVI-CIDNet",
+        borrar=[RAIZ / ".venv-hvi_cidnet" / ".ok"],
+        instalador=["bash", "install/extras_hvi_cidnet.sh"],
+    ),
+    "darkir": dict(
+        repo=VENDOR / "DarkIR",
+        carpeta=VENDOR / "DarkIR",
+        borrar=[RAIZ / ".venv-darkir" / ".ok"],
+        instalador=["bash", "install/extras_darkir.sh"],
+    ),
+    "inspyrenet": dict(
+        repo=None,  # paquete pip transparent-background
+        carpeta=RAIZ / ".venv-inspyrenet",
+        borrar=[RAIZ / ".venv-inspyrenet" / ".ok"],
+        instalador=["bash", "install/extras_inspyrenet.sh"],
+    ),
+    "birefnet": dict(
+        repo=None,  # pesos de HuggingFace
+        carpeta=RAIZ / ".venv-birefnet",
+        borrar=[RAIZ / ".venv-birefnet" / ".ok"],
+        instalador=["bash", "install/extras_birefnet.sh"],
+    ),
+    "restoreformerpp": dict(
+        repo=VENDOR / "RestoreFormerPlusPlus",
+        carpeta=VENDOR / "RestoreFormerPlusPlus",
+        borrar=[RAIZ / ".venv-restoreformerpp" / ".ok"],
+        instalador=["bash", "install/extras_restoreformerpp.sh"],
+    ),
+    "dsrnet": dict(
+        repo=VENDOR / "DSRNet",
+        carpeta=MODELS / "DSRNet",
+        borrar=[MODELS / "DSRNet", RAIZ / ".venv-dsrnet" / ".ok"],
+        instalador=["bash", "install/extras_dsrnet.sh"],
+    ),
+    "shadowformer": dict(
+        repo=VENDOR / "ShadowFormer",
+        carpeta=MODELS / "ShadowFormer",
+        borrar=[MODELS / "ShadowFormer", RAIZ / ".venv-shadowformer" / ".ok"],
+        instalador=["bash", "install/extras_shadowformer.sh"],
+    ),
+    "dut_stab": dict(
+        repo=VENDOR / "DUTCode",
+        carpeta=VENDOR / "DUTCode" / "ckpt",
+        borrar=[VENDOR / "DUTCode" / "ckpt", RAIZ / ".venv-dut" / ".ok"],
+        instalador=["bash", "install/extras_dut_stab.sh"],
+    ),
+    "iclight": dict(
+        repo=VENDOR / "IC-Light",
+        carpeta=VENDOR / "IC-Light" / "models",
+        borrar=[RAIZ / ".venv-iclight" / ".ok"],
+        instalador=["bash", "install/extras_iclight.sh"],
+    ),
+    "iopaint_lama": dict(
+        repo=None,  # paquete pip iopaint; pesos LaMa al cache
+        carpeta=RAIZ / ".venv-iopaint_lama",
+        borrar=[RAIZ / ".venv-iopaint_lama" / ".ok"],
+        instalador=["bash", "install/extras_iopaint_lama.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)

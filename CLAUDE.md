@@ -88,6 +88,46 @@ en este orden:
 14. **DiffBIR/PMRF/OSDFace/FlashVSR son de difusión SD → solo NVIDIA en la
     práctica.** Escritos sin GPU disponible; verificar flags en la RTX 4080 al
     estrenarlos (igual que SeedVR2 en su momento).
+15. **Motores de imagen pesados (Restormer/Retinexformer/DreamClear/HAT)**:
+    deblur/lluvia/ruido (MIT), poca luz (MIT), restauración real (Apache), SR nítida
+    (Apache). Solo NVIDIA salvo donde se indique; instaladores aislados, pesos por
+    release/HF/gdride. NO probados en GPU: verificar comandos en la 4080.
+16. **Motores de slow-mo / interpolación de frames** (sección "Motor" del tab Video,
+    usan el factor `mult`; reensamblan a los fps ORIGINALES = cámara lenta real):
+    - **Practical-RIFE** (`engines/practical_rife.py`, MIT, Mac+NVIDIA): CLI
+      `inference_video.py --multi=N --video=… --fps=<orig>`; modelo en `train_log/`
+      (Google Drive → PRIFE_GDRIVE o manual). Verificar nombre/ubicación del mp4 de
+      salida y soporte MPS.
+    - **FILM** (`engines/film.py`, Apache-2.0, NVIDIA/TensorFlow): `eval.interpolator_cli
+      --pattern <dir> --model_path …/film_net/Style/saved_model --times_to_interpolate
+      K --output_video`, K=log2(mult). Pesos SavedModel por Google Drive (FILM_GDRIVE).
+      Verificar carpeta de salida (interpolated_frames/) y fps.
+    - **EMA-VFI** (`engines/ema_vfi.py`, Apache-2.0, NVIDIA): SIN CLI de video → el
+      engine escribe `_vb_batch.py` en el repo que recorre pares con
+      `Model.multi_inference(... time_list=[...])`. Verificar API del modelo, ckpt
+      (Google Drive → EMAVFI_GDRIVE) y que `.cuda()` no rompa.
+17. **RIESGO LEGAL — SANEADO (2026-06-16)**: **CodeFormer** (S-Lab NO comercial) y
+    **OSDFace** (sin LICENSE) ahora se EXCLUYEN del build que se vende por defecto
+    (`app.INCLUIR_NO_COMERCIAL`, flag `VB_NO_COMERCIAL=1` los reactiva para uso
+    personal). Reemplazo de caras en el build comercial: **RestoreFormer++** (Apache)
+    + **PMRF** (MIT) + DiffBIR-face. **FaithDiff: confirmado MIT vía gh api** (el repo
+    jychen9811/FaithDiff TIENE LICENSE MIT) → es comercial-OK, se mantiene como motor
+    recomendado (la duda del barrido era infundada).
+18. **Motores del ROADMAP integrados (2026-06-15, construidos con workflow multi-
+    agente; NO probados en GPU salvo matting → verificar en la 4080).** Todos
+    licencia comercial. Imagen (tab Imágenes): NAFNet, SCUNet, FBCNN, FFTformer
+    (NVIDIA), DehazeFormer, HVI-CIDNet, DarkIR, InSPyReNet+BiRefNet (matting, ✅ Mac/
+    MPS), RestoreFormer++ (caras), DSRNet (reflejos), ShadowFormer (sombras), IC-Light
+    (relighting por prompt, NVIDIA). Video: DUT (estabilización IA, NVIDIA; ⚠️ confirmar
+    licencia comercial con el autor — el README dice research-only aunque el LICENSE es
+    MIT). Cada motor: `engines/<id>.py` + `install/extras_<id>.sh` (venv propio, pesos
+    por release/HF/gdrive con patrón `<ID>_GDRIVE`). Incertidumbres de cada uno en el
+    spec del workflow; varios repos no traen CLI con argparse y el engine escribe un
+    script `_vb_*.py` parcheado (FBCNN, EMA-VFI, IC-Light, etc.). **IOPaint+LaMa**
+    (borrar objetos) está instalable pero NO en el selector: **falta UI de máscara**.
+    Filtros FFmpeg nuevos (LGPL, probados en Mac): `filtros.desentrelazar` ahora usa
+    **bwdif**, y `filtros.limpiar` (deblock+deband) = "Quitar artefactos de compresión".
+    Ver `ROADMAP-MEJORAS.md` para lo que falta.
 
 ## Licencias de venta (licencias.py)
 

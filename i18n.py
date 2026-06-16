@@ -24,6 +24,32 @@ T = {
         "es": "PixelBooster", "en": "PixelBooster", "fr": "PixelBooster"},
     "tab_video": {"es": "Video", "en": "Video", "fr": "Vidéo"},
     "tab_imagenes": {"es": "Imágenes", "en": "Images", "fr": "Images"},
+    "tab_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
+    "tab_comparar_luts": {
+        "es": "Comparar LUTs", "en": "Compare LUTs", "fr": "Comparer LUTs"},
+    "luts_intro": {
+        "es": "Sube un frame (o una foto) y míralo con **todos los LUTs a la vez**, "
+              "para elegir de un vistazo el que más te guste. Luego úsalo en el "
+              "«Revelado de color» de la pestaña Video.",
+        "en": "Upload a frame (or photo) and see it with **all LUTs at once** to pick "
+              "your favourite at a glance. Then use it in “Color grading” on the Video tab.",
+        "fr": "Téléversez une image (ou photo) et voyez-la avec **tous les LUTs à la "
+              "fois** pour choisir d'un coup d'œil. Utilisez-le ensuite dans "
+              "« Étalonnage » de l'onglet Vidéo."},
+    "luts_entrada": {
+        "es": "Frame o foto", "en": "Frame or photo", "fr": "Image ou photo"},
+    "luts_comparar": {
+        "es": "🎨 Comparar todos los LUTs", "en": "🎨 Compare all LUTs",
+        "fr": "🎨 Comparer tous les LUTs"},
+    "luts_galeria": {
+        "es": "Tu frame con cada LUT", "en": "Your frame with each LUT",
+        "fr": "Votre image avec chaque LUT"},
+    "luts_sube": {
+        "es": "⚠️ Sube un frame o foto primero.", "en": "⚠️ Upload a frame or photo first.",
+        "fr": "⚠️ Téléversez d'abord une image ou photo."},
+    "luts_progreso": {
+        "es": "Aplicando LUT {n}/{total}…", "en": "Applying LUT {n}/{total}…",
+        "fr": "Application du LUT {n}/{total}…"},
     "nivel": {"es": "Nivel", "en": "Tier", "fr": "Niveau"},
     "nivel_3": {"es": "Máximo", "en": "Maximum", "fr": "Maximum"},
     "nivel_2": {"es": "Pro", "en": "Pro", "fr": "Pro"},
@@ -58,6 +84,10 @@ T = {
     "boton_video": {"es": "Mejorar video", "en": "Enhance video", "fr": "Améliorer la vidéo"},
     "progreso": {"es": "Progreso", "en": "Progress", "fr": "Progression"},
     "resultado": {"es": "Resultado", "en": "Result", "fr": "Résultat"},
+    "resultado_preview": {
+        "es": "Resultado / preview (mueve la barra y elige el frame)",
+        "en": "Result / preview (scrub and pick the frame)",
+        "fr": "Résultat / aperçu (déplace la barre et choisis l'image)"},
     "antes": {"es": "Antes", "en": "Before", "fr": "Avant"},
     "despues": {"es": "Después", "en": "After", "fr": "Après"},
     "descargar": {"es": "Descargar resultado", "en": "Download result",
@@ -191,6 +221,22 @@ T = {
         "es": "FlashVSR — modo rápido (experimental, NVIDIA)",
         "en": "FlashVSR — fast mode (experimental, NVIDIA)",
         "fr": "FlashVSR — mode rapide (expérimental, NVIDIA)"},
+    "m_practical_rife": {
+        "es": "Practical-RIFE — slow-mo IA (Mac/NVIDIA)",
+        "en": "Practical-RIFE — AI slow-mo (Mac/NVIDIA)",
+        "fr": "Practical-RIFE — slow-mo IA (Mac/NVIDIA)"},
+    "m_film": {
+        "es": "FILM — slow-mo movimiento grande (NVIDIA)",
+        "en": "FILM — large-motion slow-mo (NVIDIA)",
+        "fr": "FILM — slow-mo grand mouvement (NVIDIA)"},
+    "m_ema_vfi": {
+        "es": "EMA-VFI — interpolación SOTA (NVIDIA)",
+        "en": "EMA-VFI — SOTA interpolation (NVIDIA)",
+        "fr": "EMA-VFI — interpolation SOTA (NVIDIA)"},
+    "m_dut_stab": {
+        "es": "DUT — estabilizar con IA (NVIDIA)",
+        "en": "DUT — AI stabilization (NVIDIA)",
+        "fr": "DUT — stabilisation IA (NVIDIA)"},
 
     # ---- nombres de motores (imagen) ----
     "i_faithdiff": {
@@ -264,7 +310,217 @@ T = {
               "dans le dépôt → usage test / personnel seulement, PAS pour une version vendue** "
               "(permission des auteurs requise). NVIDIA uniquement."},
 
-    # ---- apariencia / temas ----
+    # ---- motores pesados nuevos (deblur / poca luz / restauración real / SR nítida) ----
+    "i_restormer": {
+        "es": "Restormer — deblur / lluvia / ruido (NVIDIA)",
+        "en": "Restormer — deblur / rain / noise (NVIDIA)",
+        "fr": "Restormer — flou / pluie / bruit (NVIDIA)"},
+    "i_retinexformer": {
+        "es": "Retinexformer — poca luz / noche (NVIDIA)",
+        "en": "Retinexformer — low light / night (NVIDIA)",
+        "fr": "Retinexformer — basse lumière / nuit (NVIDIA)"},
+    "i_dreamclear": {
+        "es": "DreamClear — restauración real máxima (NVIDIA)",
+        "en": "DreamClear — max real-world restoration (NVIDIA)",
+        "fr": "DreamClear — restauration réelle maximale (NVIDIA)"},
+    "i_hat": {
+        "es": "HAT — super-resolución nítida x4 (NVIDIA)",
+        "en": "HAT — sharp x4 super-resolution (NVIDIA)",
+        "fr": "HAT — super-résolution nette x4 (NVIDIA)"},
+    "i_nafnet": {
+        "es": "NAFNet — denoise / deblur (Mac/NVIDIA)",
+        "en": "NAFNet — denoise / deblur (Mac/NVIDIA)",
+        "fr": "NAFNet — débruitage / déflou (Mac/NVIDIA)"},
+    "i_scunet": {
+        "es": "SCUNet — quitar ruido ciego (Mac/NVIDIA)",
+        "en": "SCUNet — blind denoise (Mac/NVIDIA)",
+        "fr": "SCUNet — débruitage aveugle (Mac/NVIDIA)"},
+    "i_fbcnn": {
+        "es": "FBCNN — quitar artefactos JPEG (Mac/NVIDIA)",
+        "en": "FBCNN — remove JPEG artifacts (Mac/NVIDIA)",
+        "fr": "FBCNN — enlever artefacts JPEG (Mac/NVIDIA)"},
+    "i_fftformer": {
+        "es": "FFTformer — deblur de movimiento (NVIDIA)",
+        "en": "FFTformer — motion deblur (NVIDIA)",
+        "fr": "FFTformer — déflou de mouvement (NVIDIA)"},
+    "i_dehazeformer": {
+        "es": "DehazeFormer — quitar neblina (Mac/NVIDIA)",
+        "en": "DehazeFormer — remove haze (Mac/NVIDIA)",
+        "fr": "DehazeFormer — enlever la brume (Mac/NVIDIA)"},
+    "i_hvi_cidnet": {
+        "es": "HVI-CIDNet — poca luz premium (Mac/NVIDIA)",
+        "en": "HVI-CIDNet — premium low-light (Mac/NVIDIA)",
+        "fr": "HVI-CIDNet — basse lumière premium (Mac/NVIDIA)"},
+    "i_darkir": {
+        "es": "DarkIR — noche extrema (Mac/NVIDIA)",
+        "en": "DarkIR — extreme night (Mac/NVIDIA)",
+        "fr": "DarkIR — nuit extrême (Mac/NVIDIA)"},
+    "i_inspyrenet": {
+        "es": "InSPyReNet — quitar fondo (Mac/NVIDIA)",
+        "en": "InSPyReNet — remove background (Mac/NVIDIA)",
+        "fr": "InSPyReNet — enlever le fond (Mac/NVIDIA)"},
+    "i_birefnet": {
+        "es": "BiRefNet — quitar fondo alta-res (Mac/NVIDIA)",
+        "en": "BiRefNet — remove background HR (Mac/NVIDIA)",
+        "fr": "BiRefNet — enlever le fond HR (Mac/NVIDIA)"},
+    "i_restoreformerpp": {
+        "es": "RestoreFormer++ — caras (Mac/NVIDIA)",
+        "en": "RestoreFormer++ — faces (Mac/NVIDIA)",
+        "fr": "RestoreFormer++ — visages (Mac/NVIDIA)"},
+    "i_dsrnet": {
+        "es": "DSRNet — quitar reflejos (Mac/NVIDIA)",
+        "en": "DSRNet — remove reflections (Mac/NVIDIA)",
+        "fr": "DSRNet — enlever les reflets (Mac/NVIDIA)"},
+    "i_shadowformer": {
+        "es": "ShadowFormer — quitar sombras (Mac/NVIDIA)",
+        "en": "ShadowFormer — remove shadows (Mac/NVIDIA)",
+        "fr": "ShadowFormer — enlever les ombres (Mac/NVIDIA)"},
+    "i_iclight": {
+        "es": "IC-Light — reiluminación (NVIDIA)",
+        "en": "IC-Light — relighting (NVIDIA)",
+        "fr": "IC-Light — ré-éclairage (NVIDIA)"},
+    "n_restormer": {
+        "es": "Transformer de restauración (MIT). Quita **desenfoque de movimiento y de "
+              "enfoque, lluvia y ruido real** en una pasada determinista (no inventa textura). "
+              "Elige la tarea abajo. SOTA en GoPro/SIDD. Solo NVIDIA en la práctica.",
+        "en": "Restoration transformer (MIT). Removes **motion & defocus blur, rain and real "
+              "noise** in one deterministic pass (no hallucinated texture). Pick the task below. "
+              "SOTA on GoPro/SIDD. NVIDIA in practice.",
+        "fr": "Transformer de restauration (MIT). Enlève **flou de mouvement et de mise au point, "
+              "pluie et bruit réel** en une passe déterministe (sans inventer de texture). "
+              "Choisis la tâche ci-dessous. SOTA sur GoPro/SIDD. NVIDIA en pratique."},
+    "n_retinexformer": {
+        "es": "Aclara fotos **oscuras o nocturnas** y recupera sombras sin amplificar el ruido "
+              "(MIT, SOTA ICCV'23). Ideal para material subexpuesto. Solo NVIDIA en la práctica.",
+        "en": "Brightens **dark or night** photos and recovers shadows without amplifying noise "
+              "(MIT, SOTA ICCV'23). Great for underexposed material. NVIDIA in practice.",
+        "fr": "Éclaircit les photos **sombres ou nocturnes** et récupère les ombres sans amplifier "
+              "le bruit (MIT, SOTA ICCV'23). Idéal pour le sous-exposé. NVIDIA en pratique."},
+    "n_dreamclear": {
+        "es": "Restauración fotorrealista de mundo real de **alta capacidad** por difusión "
+              "(Apache-2.0, NeurIPS'24). Máxima calidad pero **lento y pide mucha VRAM**. "
+              "Complementa a FaithDiff/DiffBIR. Solo NVIDIA.",
+        "en": "High-capacity real-world photorealistic restoration via diffusion (Apache-2.0, "
+              "NeurIPS'24). Top quality but **slow and very VRAM-hungry**. Complements "
+              "FaithDiff/DiffBIR. NVIDIA only.",
+        "fr": "Restauration photoréaliste du monde réel à **haute capacité** par diffusion "
+              "(Apache-2.0, NeurIPS'24). Qualité maximale mais **lente et gourmande en VRAM**. "
+              "Complète FaithDiff/DiffBIR. NVIDIA uniquement."},
+    "n_hat": {
+        "es": "Super-resolución x4 muy **nítida y con mucho detalle**, sin alucinaciones de "
+              "difusión (Apache-2.0, SOTA CVPR'23). Más rápida que SeedVR2, más detalle que "
+              "Real-ESRGAN. Solo NVIDIA en la práctica.",
+        "en": "Very **sharp, high-detail** x4 super-resolution, no diffusion hallucinations "
+              "(Apache-2.0, SOTA CVPR'23). Faster than SeedVR2, more detail than Real-ESRGAN. "
+              "NVIDIA in practice.",
+        "fr": "Super-résolution x4 très **nette et détaillée**, sans hallucinations de diffusion "
+              "(Apache-2.0, SOTA CVPR'23). Plus rapide que SeedVR2, plus de détail que "
+              "Real-ESRGAN. NVIDIA en pratique."},
+    "n_nafnet": {
+        "es": "Red simple sin difusión (MIT) que **quita ruido o desenfoque de movimiento** "
+              "(40.30 dB SIDD, supera a Restormer y más rápida). Corre en Mac (MPS) y NVIDIA.",
+        "en": "Simple no-diffusion net (MIT) that **removes noise or motion blur** (40.30 dB "
+              "SIDD, beats Restormer and faster). Runs on Mac (MPS) and NVIDIA.",
+        "fr": "Réseau simple sans diffusion (MIT) qui **enlève bruit ou flou de mouvement** "
+              "(40.30 dB SIDD, dépasse Restormer, plus rapide). Mac (MPS) et NVIDIA."},
+    "n_scunet": {
+        "es": "Quita **ruido real ciego** (no hay que estimar el nivel) de cámara/compresión "
+              "en una pasada, sin inventar textura (Apache-2.0). Ideal para ruido desconocido.",
+        "en": "Removes **blind real noise** (no level to estimate) from camera/compression in "
+              "one pass, no hallucinated texture (Apache-2.0). Great for unknown noise.",
+        "fr": "Enlève le **bruit réel aveugle** (sans estimer le niveau) de caméra/compression "
+              "en une passe, sans inventer de texture (Apache-2.0). Idéal pour bruit inconnu."},
+    "n_fbcnn": {
+        "es": "Quita **artefactos de compresión JPEG** (bloques, banding, mosquito) por IA, con "
+              "factor de calidad ciego o ajustable (Apache-2.0). Corre en Mac y NVIDIA.",
+        "en": "Removes **JPEG compression artifacts** (blocking, banding, mosquito) via AI, with "
+              "blind or adjustable quality factor (Apache-2.0). Runs on Mac and NVIDIA.",
+        "fr": "Enlève les **artefacts JPEG** (blocs, banding, moustique) par IA, facteur de "
+              "qualité aveugle ou réglable (Apache-2.0). Mac et NVIDIA."},
+    "n_fftformer": {
+        "es": "Transformer en frecuencia (MIT) para **desenfoque de movimiento** fuerte (34.21 dB "
+              "GoPro, SOTA). Determinista, no inventa textura. Solo NVIDIA en la práctica.",
+        "en": "Frequency-domain transformer (MIT) for strong **motion deblur** (34.21 dB GoPro, "
+              "SOTA). Deterministic, no hallucinated texture. NVIDIA in practice.",
+        "fr": "Transformer fréquentiel (MIT) pour le **flou de mouvement** fort (34.21 dB GoPro, "
+              "SOTA). Déterministe, sans inventer de texture. NVIDIA en pratique."},
+    "n_dehazeformer": {
+        "es": "Quita **neblina/calima atmosférica** y recupera detalle y color bajo niebla "
+              "(MIT, >40 dB SOTS). Corre en Mac (MPS) y NVIDIA.",
+        "en": "Removes **atmospheric haze/fog** and recovers detail and color (MIT, >40 dB "
+              "SOTS). Runs on Mac (MPS) and NVIDIA.",
+        "fr": "Enlève la **brume/brouillard atmosphérique** et récupère détail et couleur "
+              "(MIT, >40 dB SOTS). Mac (MPS) et NVIDIA."},
+    "n_hvi_cidnet": {
+        "es": "**Poca luz premium** (MIT): ganador NTIRE'25, mejor que Retinexformer en LOLv2. "
+              "Aclara fotos nocturnas/oscuras con color fiel. Mac (MPS) y NVIDIA.",
+        "en": "**Premium low-light** (MIT): NTIRE'25 winner, beats Retinexformer on LOLv2. "
+              "Brightens night/dark photos with faithful color. Mac (MPS) and NVIDIA.",
+        "fr": "**Basse lumière premium** (MIT) : gagnant NTIRE'25, dépasse Retinexformer sur "
+              "LOLv2. Éclaircit les photos nocturnes avec couleur fidèle. Mac (MPS) et NVIDIA."},
+    "n_darkir": {
+        "es": "**Noche extrema** (MIT): corrige luz + ruido + **desenfoque** de poca luz en una "
+              "sola pasada (todo-en-uno). Modelos ligeros → rápido en Mac (MPS) y NVIDIA.",
+        "en": "**Extreme night** (MIT): fixes light + noise + **blur** of low light in one pass "
+              "(all-in-one). Lightweight → fast on Mac (MPS) and NVIDIA.",
+        "fr": "**Nuit extrême** (MIT) : corrige lumière + bruit + **flou** de basse lumière en "
+              "une passe (tout-en-un). Léger → rapide sur Mac (MPS) et NVIDIA."},
+    "n_inspyrenet": {
+        "es": "**Quita el fondo** de la imagen (matting) y deja un PNG con transparencia (MIT). "
+              "Rápido y de buena calidad; **funciona en tu Mac (MPS)** y en NVIDIA.",
+        "en": "**Removes the background** (matting) leaving a transparent PNG (MIT). Fast and "
+              "good quality; **works on your Mac (MPS)** and NVIDIA.",
+        "fr": "**Enlève le fond** (matting) en laissant un PNG transparent (MIT). Rapide et de "
+              "bonne qualité ; **fonctionne sur ton Mac (MPS)** et NVIDIA."},
+    "n_birefnet": {
+        "es": "**Quita el fondo en alta resolución** con bordes/pelo muy finos (matting HR, MIT). "
+              "Más calidad que InSPyReNet en detalle. Mac (MPS) y NVIDIA.",
+        "en": "**Removes the background at high resolution** with very fine edges/hair (HR "
+              "matting, MIT). More detail than InSPyReNet. Mac (MPS) and NVIDIA.",
+        "fr": "**Enlève le fond en haute résolution** avec bords/cheveux très fins (matting HR, "
+              "MIT). Plus de détail qu'InSPyReNet. Mac (MPS) et NVIDIA."},
+    "n_restoreformerpp": {
+        "es": "Restaura **caras** (detecta, alinea y reconstruye) con licencia **Apache-2.0 apta "
+              "para vender** — reemplazo limpio de CodeFormer. Mac (MPS/CPU) y NVIDIA.",
+        "en": "Restores **faces** (detect, align, rebuild) with a **commercial-safe Apache-2.0** "
+              "license — clean CodeFormer replacement. Mac (MPS/CPU) and NVIDIA.",
+        "fr": "Restaure les **visages** (détecte, aligne, reconstruit) sous licence **Apache-2.0 "
+              "vendable** — remplaçant propre de CodeFormer. Mac (MPS/CPU) et NVIDIA."},
+    "n_dsrnet": {
+        "es": "Quita **reflejos** de cristal/ventana de una foto, separando la escena del reflejo "
+              "(Apache-2.0). Mac (CPU) y NVIDIA.",
+        "en": "Removes **reflections** from glass/windows in a photo, separating scene from "
+              "reflection (Apache-2.0). Mac (CPU) and NVIDIA.",
+        "fr": "Enlève les **reflets** de vitre/fenêtre d'une photo, séparant la scène du reflet "
+              "(Apache-2.0). Mac (CPU) et NVIDIA."},
+    "n_shadowformer": {
+        "es": "Quita **sombras proyectadas** nivelando la iluminación sin perder textura (MIT). "
+              "Sin máscara usa toda la imagen; para sombras duras conviene una máscara. Mac y NVIDIA.",
+        "en": "Removes **cast shadows**, evening out lighting without losing texture (MIT). With "
+              "no mask it uses the whole image; for hard shadows a mask helps. Mac and NVIDIA.",
+        "fr": "Enlève les **ombres portées** en uniformisant l'éclairage sans perdre la texture "
+              "(MIT). Sans masque, toute l'image ; pour ombres dures, un masque aide. Mac et NVIDIA."},
+    "n_iclight": {
+        "es": "**Reilumina** (relighting) la imagen por difusión (SD1.5) según el prompt y una "
+              "dirección de luz, conservando al sujeto (Apache-2.0). Pesado → solo NVIDIA. "
+              "Escribe en el prompt la luz deseada (p.ej. «luz cálida de atardecer por la izquierda»).",
+        "en": "**Relights** the image via diffusion (SD1.5) from the prompt and a light direction, "
+              "keeping the subject (Apache-2.0). Heavy → NVIDIA only. Describe the light in the "
+              "prompt (e.g. 'warm sunset light from the left').",
+        "fr": "**Ré-éclaire** l'image par diffusion (SD1.5) selon le prompt et une direction de "
+              "lumière, en conservant le sujet (Apache-2.0). Lourd → NVIDIA. Décris la lumière dans "
+              "le prompt (ex. « lumière chaude de coucher de soleil à gauche »)."},
+    "rest_tarea": {"es": "Tarea (Restormer)", "en": "Task (Restormer)", "fr": "Tâche (Restormer)"},
+    "rest_motion_deblurring": {
+        "es": "Quitar desenfoque de movimiento", "en": "Motion deblur", "fr": "Flou de mouvement"},
+    "rest_single_image_defocus_deblurring": {
+        "es": "Quitar desenfoque de enfoque", "en": "Defocus deblur", "fr": "Flou de mise au point"},
+    "rest_deraining": {
+        "es": "Quitar lluvia", "en": "Remove rain", "fr": "Enlever la pluie"},
+    "rest_real_denoising": {
+        "es": "Quitar ruido real", "en": "Remove real noise", "fr": "Enlever le bruit réel"},
+
+    # ---- apariencia / tema ----
     "ap_titulo": {"es": "🎨 Apariencia", "en": "🎨 Appearance", "fr": "🎨 Apparence"},
     "aj_tipografia": {"es": "Tipografía", "en": "Typography", "fr": "Typographie"},
     "fuente_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
@@ -651,6 +907,43 @@ T = {
               "— run it after upscaling for the “full Topaz” effect.",
         "fr": "Multiplie les fps (30→60/120) en interpolant des images. **Ne change pas la "
               "résolution** — à lancer après l'upscale pour l'effet « Topaz complet »."},
+    "n_practical_rife": {
+        "es": "RIFE moderno (4.x) por IA: inventa fotogramas intermedios para **cámara lenta** "
+              "(o más fps). Gran salto sobre el RIFE clásico. Corre en Mac (MPS) y NVIDIA. "
+              "Usa el factor de abajo (x2/x4). MIT.",
+        "en": "Modern AI RIFE (4.x): invents in-between frames for **slow motion** (or more fps). "
+              "Big jump over classic RIFE. Runs on Mac (MPS) and NVIDIA. Use the factor below "
+              "(x2/x4). MIT.",
+        "fr": "RIFE moderne (4.x) par IA : invente des images intermédiaires pour le **ralenti** "
+              "(ou plus de fps). Grand saut sur le RIFE classique. Mac (MPS) et NVIDIA. Facteur "
+              "ci-dessous (x2/x4). MIT."},
+    "n_film": {
+        "es": "FILM (Google): el **rey del movimiento grande**. Inventa fotogramas intermedios "
+              "fotorrealistas incluso con desplazamientos amplios → **slow-mo dramático**. "
+              "TensorFlow: solo NVIDIA en la práctica. Apache-2.0.",
+        "en": "FILM (Google): **king of large motion**. Invents photorealistic in-between frames "
+              "even with big displacements → **dramatic slow-mo**. TensorFlow: NVIDIA in practice. "
+              "Apache-2.0.",
+        "fr": "FILM (Google) : **roi du grand mouvement**. Invente des images intermédiaires "
+              "photoréalistes même avec de grands déplacements → **ralenti spectaculaire**. "
+              "TensorFlow : NVIDIA en pratique. Apache-2.0."},
+    "n_ema_vfi": {
+        "es": "Interpolación de frames de **calidad SOTA** con tiempo arbitrario (CVPR 2023). "
+              "Fotogramas intermedios muy limpios para slow-mo. PyTorch: solo NVIDIA. Apache-2.0.",
+        "en": "**SOTA-quality** frame interpolation with arbitrary time (CVPR 2023). Very clean "
+              "in-between frames for slow-mo. PyTorch: NVIDIA only. Apache-2.0.",
+        "fr": "Interpolation d'images de **qualité SOTA** à temps arbitraire (CVPR 2023). Images "
+              "intermédiaires très propres pour le ralenti. PyTorch : NVIDIA. Apache-2.0."},
+    "n_dut_stab": {
+        "es": "**Estabilización por IA** (MIT): suaviza la trayectoria de cámara con una malla de "
+              "movimiento aprendida, mejor que vidstab en temblor fuerte. Solo NVIDIA en la "
+              "práctica. ⚠️ Verificar licencia comercial con el autor antes de vender.",
+        "en": "**AI stabilization** (MIT): smooths the camera path with a learned motion mesh, "
+              "better than vidstab on heavy shake. NVIDIA only in practice. ⚠️ Confirm commercial "
+              "license with the author before selling.",
+        "fr": "**Stabilisation IA** (MIT) : lisse la trajectoire caméra avec un maillage de "
+              "mouvement appris, mieux que vidstab sur les fortes secousses. NVIDIA en pratique. "
+              "⚠️ Confirmer la licence commerciale avec l'auteur avant de vendre."},
     "n_flashvsr": {
         "es": "Super-resolución casi en tiempo real (CVPR 2026). Para horas de material. "
               "Experimental: si falla, usa SeedVR2.",
@@ -709,9 +1002,41 @@ T = {
 
     # ---- nuevos motores de filtro ----
     "m_desentrelazar": {
-        "es": "Desentrelazar — yadif (FFmpeg)",
-        "en": "Deinterlace — yadif (FFmpeg)",
-        "fr": "Désentrelacer — yadif (FFmpeg)"},
+        "es": "Desentrelazar — bwdif (FFmpeg)",
+        "en": "Deinterlace — bwdif (FFmpeg)",
+        "fr": "Désentrelacer — bwdif (FFmpeg)"},
+    "m_limpiar": {
+        "es": "Quitar artefactos de compresión (FFmpeg)",
+        "en": "Remove compression artifacts (FFmpeg)",
+        "fr": "Enlever les artefacts de compression (FFmpeg)"},
+    "m_cine": {
+        "es": "Look de cine — halation + bloom (FFmpeg)",
+        "en": "Film look — halation + bloom (FFmpeg)",
+        "fr": "Rendu cinéma — halation + bloom (FFmpeg)"},
+    "m_lente": {
+        "es": "Corregir lente — distorsión (FFmpeg)",
+        "en": "Lens correction — distortion (FFmpeg)",
+        "fr": "Correction d'objectif — distorsion (FFmpeg)"},
+    "m_ia": {
+        "es": "✨ Mejora IA por fotograma (NVIDIA)",
+        "en": "✨ AI enhance per frame (NVIDIA)",
+        "fr": "✨ Amélioration IA par image (NVIDIA)"},
+    "ia_modelo": {"es": "Modelo de IA", "en": "AI model", "fr": "Modèle IA"},
+    "ia_ruido": {"es": "Quitar ruido (Restormer)", "en": "Denoise (Restormer)",
+                 "fr": "Débruiter (Restormer)"},
+    "ia_desenfoque": {"es": "Quitar desenfoque (Restormer)",
+                      "en": "Deblur (Restormer)", "fr": "Déflouter (Restormer)"},
+    "ia_poca_luz": {"es": "Mejorar poca luz (Retinexformer)",
+                    "en": "Low-light (Retinexformer)",
+                    "fr": "Basse lumière (Retinexformer)"},
+    "lente_k1": {
+        "es": "Distorsión k1 (− barril / + cojín)",
+        "en": "Distortion k1 (− barrel / + pincushion)",
+        "fr": "Distorsion k1 (− barillet / + coussinet)"},
+    "lente_k2": {
+        "es": "Distorsión k2 (ajuste fino)",
+        "en": "Distortion k2 (fine tune)",
+        "fr": "Distorsion k2 (réglage fin)"},
     "m_denoise": {
         "es": "Reducir ruido — hqdn3d (FFmpeg)",
         "en": "Denoise — hqdn3d (FFmpeg)",
@@ -721,13 +1046,57 @@ T = {
         "en": "Stabilize — vidstab (FFmpeg)",
         "fr": "Stabiliser — vidstab (FFmpeg)"},
     "n_desentrelazar": {
-        "es": "Elimina el entrelazado clásico de material de TV/cámara de vídeo usando "
-              "yadif (Yet Another DeInterlacing Filter). Sin GPU, funciona en cualquier "
-              "máquina. Rápido.",
-        "en": "Removes classic interlacing from TV/video-camera footage using yadif "
-              "(Yet Another DeInterlacing Filter). No GPU needed, runs anywhere. Fast.",
-        "fr": "Supprime l'entrelacement classique des vidéos TV/caméscope avec yadif "
-              "(Yet Another DeInterlacing Filter). Sans GPU, fonctionne partout. Rapide."},
+        "es": "Elimina el entrelazado de material de TV/cámara usando **bwdif** "
+              "(BobWeaver, LGPL): mejor que yadif en líneas finas y movimiento. Si tu "
+              "FFmpeg no lo trae, cae a yadif. Sin GPU, rápido.",
+        "en": "Removes interlacing from TV/camera footage with **bwdif** (BobWeaver, "
+              "LGPL): better than yadif on fine lines and motion. Falls back to yadif if "
+              "absent. No GPU, fast.",
+        "fr": "Supprime l'entrelacement des vidéos TV/caméra avec **bwdif** (BobWeaver, "
+              "LGPL) : mieux que yadif sur les lignes fines et le mouvement. Repli sur "
+              "yadif si absent. Sans GPU, rapide."},
+    "n_cine": {
+        "es": "Da un **look de película**: *halation* (resplandor rojizo en las altas luces), "
+              "*bloom* (difusión de los brillos) y viñeteado óptico. CPU/FFmpeg, sin GPU. "
+              "Combínalo con los LUTs y el grano para el acabado cine.",
+        "en": "Adds a **film look**: *halation* (reddish glow on highlights), *bloom* (light "
+              "diffusion) and optical vignette. CPU/FFmpeg, no GPU. Combine with LUTs and grain "
+              "for a cinematic finish.",
+        "fr": "Donne un **rendu cinéma** : *halation* (lueur rougeâtre sur les hautes lumières), "
+              "*bloom* (diffusion des éclats) et vignettage optique. CPU/FFmpeg, sans GPU. À "
+              "combiner avec les LUT et le grain."},
+    "n_ia": {
+        "es": "Aplica un **modelo de IA fotograma a fotograma** al video: quitar ruido o "
+              "desenfoque (Restormer) o mejorar poca luz (Retinexformer). Calidad muy "
+              "superior a los filtros de FFmpeg. **Lento y requiere NVIDIA** (instala el "
+              "modelo en Sistema); procesa todos los frames con una sola carga del modelo.",
+        "en": "Applies an **AI model frame-by-frame** to the video: denoise or deblur "
+              "(Restormer) or low-light (Retinexformer). Far higher quality than the FFmpeg "
+              "filters. **Slow and needs NVIDIA** (install the model in System); processes all "
+              "frames with a single model load.",
+        "fr": "Applique un **modèle IA image par image** à la vidéo : débruiter ou déflouter "
+              "(Restormer) ou basse lumière (Retinexformer). Bien meilleure qualité que les "
+              "filtres FFmpeg. **Lent et nécessite NVIDIA** (installe le modèle dans Système)."},
+    "n_lente": {
+        "es": "Corrige la **distorsión de lente** (barril/cojín) con el filtro nativo "
+              "`lenscorrection` de FFmpeg. Ajusta k1 (negativo para ojo de pez) y k2 (fino). "
+              "Sin GPU. Para gran angular / GoPro / drones.",
+        "en": "Fixes **lens distortion** (barrel/pincushion) with FFmpeg's native "
+              "`lenscorrection`. Adjust k1 (negative for fisheye) and k2 (fine). No GPU. For "
+              "wide-angle / GoPro / drones.",
+        "fr": "Corrige la **distorsion d'objectif** (barillet/coussinet) avec le filtre natif "
+              "`lenscorrection` de FFmpeg. Règle k1 (négatif pour fisheye) et k2 (fin). Sans GPU. "
+              "Pour grand-angle / GoPro / drones."},
+    "n_limpiar": {
+        "es": "Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y "
+              "banding/posterización en degradados como cielos (deband). Filtros nativos "
+              "LGPL de FFmpeg, sin GPU. Ideal para material descargado o muy comprimido.",
+        "en": "Removes **compression artifacts**: H.264/JPEG blocking (deblock) and "
+              "banding/posterization in gradients like skies (deband). Native LGPL FFmpeg "
+              "filters, no GPU. Great for downloaded or heavily compressed footage.",
+        "fr": "Enlève les **artefacts de compression** : blocs H.264/JPEG (deblock) et le "
+              "banding/postérisation dans les dégradés comme le ciel (deband). Filtres LGPL "
+              "natifs de FFmpeg, sans GPU. Idéal pour les vidéos téléchargées ou compressées."},
     "n_denoise": {
         "es": "Reduce el ruido de video con el filtro hqdn3d de FFmpeg. Controla "
               "la fuerza en luminancia y crominancia por separado. Sin GPU.",
@@ -773,6 +1142,48 @@ T = {
         "fr": "Comparateur avant/après (image)"},
     "comparador_fs": {
         "es": "Pantalla completa", "en": "Fullscreen", "fr": "Plein écran"},
+    # ---- comparador por el frame del propio video ----
+    "cmp_scrub_ayuda": {
+        "es": "Mueve la barra del video de arriba y **pausa en el frame que quieras**; "
+              "luego pulsa «📸 Comparar este frame» (entrada vs resultado) o «👁 Vista "
+              "previa» (cómo quedaría el filtro en ese frame).",
+        "en": "Scrub the video bar above and **pause on the frame you want**; then press "
+              "“📸 Compare this frame” (input vs result) or “👁 Preview” (how the filter "
+              "would look on that frame).",
+        "fr": "Déplacez la barre de la vidéo ci-dessus et **mettez en pause sur l'image "
+              "voulue** ; puis « 📸 Comparer cette image » (entrée vs résultat) ou « 👁 "
+              "Aperçu » (rendu du filtre sur cette image)."},
+    "cmp_este_frame": {
+        "es": "📸 Comparar este frame", "en": "📸 Compare this frame",
+        "fr": "📸 Comparer cette image"},
+    # ---- comparador de LUTs sobre el medio ya cargado (dentro de los looks) ----
+    "cmp_luts_intro": {
+        "es": "Compara los **LUT 1/2/3** de arriba sobre el frame del video ya cargado "
+              "(el que dejaste en la barra). No subas nada.",
+        "en": "Compare the **LUT 1/2/3** above on the loaded video's current frame "
+              "(where you left the bar). No upload needed.",
+        "fr": "Compare les **LUT 1/2/3** ci-dessus sur l'image actuelle de la vidéo "
+              "chargée (là où tu as laissé la barre). Aucun envoi."},
+    "cmp_luts_boton": {
+        "es": "🎞️ Comparar LUTs en este frame", "en": "🎞️ Compare LUTs on this frame",
+        "fr": "🎞️ Comparer les LUT sur cette image"},
+    "cmp_luts_galeria": {
+        "es": "Este frame con cada LUT", "en": "This frame with each LUT",
+        "fr": "Cette image avec chaque LUT"},
+    "cmp_luts_sin_medio": {
+        "es": "⚠️ Carga primero un video (o imagen) en el preview.",
+        "en": "⚠️ Load a video (or image) in the preview first.",
+        "fr": "⚠️ Charge d'abord une vidéo (ou image) dans l'aperçu."},
+    "cmp_luts_elige": {
+        "es": "⚠️ Elige al menos un LUT en LUT 1/2/3 arriba.",
+        "en": "⚠️ Pick at least one LUT in LUT 1/2/3 above.",
+        "fr": "⚠️ Choisis au moins un LUT dans LUT 1/2/3 ci-dessus."},
+    "cmp_luts_trab": {
+        "es": "Revelando looks…", "en": "Rendering looks…", "fr": "Rendu des looks…"},
+    "cmp_sin_resultado": {
+        "es": "⚠️ Primero mejora el video; luego mueve la barra y compara cualquier frame.",
+        "en": "⚠️ Enhance the video first; then scrub and compare any frame.",
+        "fr": "⚠️ Améliorez d'abord la vidéo ; ensuite déplacez la barre et comparez n'importe quelle image."},
     # ---- comparador avanzado: elegir frame por línea de tiempo + hasta 4 ----
     "cmp_avanzado": {
         "es": "🔬 Comparar otros frames (línea de tiempo)",
@@ -821,6 +1232,42 @@ T = {
         "es": "⚠️ Escribe un nombre para el preset", "en": "⚠️ Enter a preset name",
         "fr": "⚠️ Entrez un nom pour le préréglage"},
     # ---- galería ----
+    "otros_motores": {
+        "es": "Otros motores (no disponibles en este equipo)",
+        "en": "Other engines (not available on this machine)",
+        "fr": "Autres moteurs (indisponibles sur cette machine)"},
+    "req_nvidia": {"es": "requiere NVIDIA (CUDA)", "en": "needs NVIDIA (CUDA)",
+                   "fr": "nécessite NVIDIA (CUDA)"},
+    "req_apple": {"es": "requiere Apple Silicon", "en": "needs Apple Silicon",
+                  "fr": "nécessite Apple Silicon"},
+    "req_instalar": {"es": "instalar en Sistema", "en": "install in System",
+                     "fr": "installer dans Système"},
+    "tab_borrar": {"es": "🧹 Borrar objetos", "en": "🧹 Remove objects",
+                   "fr": "🧹 Effacer objets"},
+    "borrar_intro": {
+        "es": "Sube una imagen, **pinta de blanco lo que quieras borrar** (una persona, un "
+              "objeto, una marca…) y pulsa «Borrar». LaMa rellena el hueco de forma coherente.",
+        "en": "Upload an image, **paint white over whatever you want to remove** (a person, an "
+              "object, a watermark…) and press “Remove”. LaMa fills the gap seamlessly.",
+        "fr": "Charge une image, **peins en blanc ce que tu veux effacer** (une personne, un "
+              "objet, un filigrane…) puis « Effacer ». LaMa comble le trou de façon cohérente."},
+    "borrar_lienzo": {
+        "es": "Imagen — pinta lo que sobra", "en": "Image — paint what to remove",
+        "fr": "Image — peins ce qui gêne"},
+    "borrar_boton": {"es": "🧹 Borrar lo pintado", "en": "🧹 Remove painted area",
+                     "fr": "🧹 Effacer la zone peinte"},
+    "borrar_sube": {
+        "es": "⚠️ Sube primero una imagen al lienzo.",
+        "en": "⚠️ Upload an image to the canvas first.",
+        "fr": "⚠️ Charge d'abord une image dans le canevas."},
+    "borrar_sin_mascara": {
+        "es": "⚠️ Pinta de blanco la zona a borrar antes de pulsar «Borrar».",
+        "en": "⚠️ Paint the area to remove white before pressing “Remove”.",
+        "fr": "⚠️ Peins en blanc la zone à effacer avant « Effacer »."},
+    "borrar_instalar": {
+        "es": "Para borrar objetos instala IOPaint+LaMa (Apache-2.0):",
+        "en": "To remove objects, install IOPaint+LaMa (Apache-2.0):",
+        "fr": "Pour effacer des objets, installe IOPaint+LaMa (Apache-2.0) :"},
     "tab_galeria": {"es": "Galería", "en": "Gallery", "fr": "Galerie"},
     "galeria_imagenes": {
         "es": "Imágenes guardadas", "en": "Saved images", "fr": "Images enregistrées"},
@@ -962,8 +1409,7 @@ T = {
         "es": "Descargar video", "en": "Download video", "fr": "Télécharger la vidéo"},
     # ---- filtros de post-proceso (columna derecha) ----
     "filtros_titulo": {
-        "es": "🎨 Filtros y ajustes", "en": "🎨 Filters & adjustments",
-        "fr": "🎨 Filtres et réglages"},
+        "es": "🎨 Imagen", "en": "🎨 Image", "fr": "🎨 Image"},
     "filtros_intro": {
         "es": "Se aplican AL RESULTADO ya mejorado (o al video original), antes de "
               "descargar. Puedes encadenar varios. Mira la vista previa antes de aplicar.",
@@ -972,15 +1418,23 @@ T = {
         "fr": "Appliqués au RÉSULTAT amélioré (ou à la vidéo d'origine), avant le "
               "téléchargement. Vous pouvez en enchaîner plusieurs. Voyez l'aperçu avant."},
     "filtros_picker": {
-        "es": "Filtro", "en": "Filter", "fr": "Filtre"},
+        "es": "Ajuste de imagen", "en": "Image adjustment", "fr": "Réglage d'image"},
     "filtros_preview": {
         "es": "Vista previa (un frame)", "en": "Preview (one frame)",
         "fr": "Aperçu (une image)"},
     "filtros_ver_preview": {
         "es": "👁 Vista previa", "en": "👁 Preview", "fr": "👁 Aperçu"},
     "filtros_aplicar": {
-        "es": "Aplicar al resultado", "en": "Apply to result",
-        "fr": "Appliquer au résultat"},
+        "es": "Aplicar al video mejorado",
+        "en": "Apply to the enhanced video",
+        "fr": "Appliquer à la vidéo améliorée"},
+    "filtros_aplicar_nota": {
+        "es": "Se aplica al video de **«Resultado»** (el ya mejorado). Si aún no has "
+              "mejorado nada, se aplica al video de entrada.",
+        "en": "Applies to the **“Result”** video (the enhanced one). If you haven't "
+              "enhanced yet, it applies to the input video.",
+        "fr": "S'applique à la vidéo **« Résultat »** (l'améliorée). Si vous n'avez rien "
+              "amélioré, elle s'applique à la vidéo d'entrée."},
     "filtros_sin_base": {
         "es": "⚠️ Primero mejora un video (o sube uno); el filtro se aplica sobre ese resultado.",
         "en": "⚠️ Enhance a video first (or upload one); the filter applies to that result.",
