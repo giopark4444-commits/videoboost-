@@ -1460,10 +1460,6 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                          elem_id="vb-result")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
-                    gr.Markdown(t("cmp_scrub_ayuda", lang), elem_classes="size-preview")
-                    with gr.Row():
-                        boton_cmp_frame = gr.Button(t("cmp_este_frame", lang), size="sm")
-                        boton_preview = gr.Button(t("filtros_ver_preview", lang), size="sm")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
                     # Posición (fracción 0-1) que el JS rellena con el tiempo actual
                     # del reproductor de resultado/entrada.
@@ -1560,12 +1556,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             filtro_v.change(controles_filtro, filtro_v,
                             [nota_filtro, grupo_simples, grupo_l_v, col_revelado])
 
-            # "📸 Comparar este frame": entrada vs resultado en el frame pausado.
-            boton_cmp_frame.click(hacer_comparar_frame(lang),
-                                  [pos_frac, video_in, video_out], comparador_v,
-                                  js=_JS_POS)
-
-            # "👁 Vista previa" del filtro en el frame actual → comparador central.
+            # Vista previa EN VIVO del filtro (sin botones): el comparador central se
+            # actualiza solo al cambiar de filtro o tocar un LUT/control.
             _prev_in = [pos_frac, video_out, video_in, filtro_v, gpre_v, gint_v,
                         gtam_v, gcol_v, den_luma, den_croma, *rev_v]
             _prev_fn = hacer_preview_filtro(lang)
@@ -1574,7 +1566,6 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 """Engancha el auto-preview (en vivo) a un control del filtro."""
                 getattr(componente, evento)(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
 
-            boton_preview.click(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
             _auto_prev(filtro_v)  # al cambiar de filtro
             # LUTs en vivo: dropdowns (change) y mezclas (release, al soltar).
             for _i, _c in enumerate(rev_v):
