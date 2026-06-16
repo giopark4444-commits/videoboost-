@@ -1271,7 +1271,72 @@ def _nota_video(motor, lang):
 # en 4.x/5.x van en el constructor. Detectamos la versión para que la UI cálida,
 # el modo oscuro y el comparador se apliquen en cualquier instalación.
 _GR6 = int(gr.__version__.split(".")[0]) >= 6
-_APARIENCIA = dict(theme=ui_theme.TEMA, css=ui_theme.CSS, js=_JS_CARGA)
+
+# Splash de carga: aparece mientras Gradio conecta al backend.
+_HEAD_SPLASH = """
+<style>
+#vb-splash{position:fixed;inset:0;z-index:99999;
+  background:#1a1917;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  transition:opacity .55s ease,visibility .55s ease;}
+#vb-splash.vb-gone{opacity:0;visibility:hidden;pointer-events:none;}
+.vb-sp-brand{font-family:system-ui,-apple-system,sans-serif;font-size:1.75rem;
+  font-weight:800;letter-spacing:-.035em;color:#fff;opacity:.92;}
+.vb-sp-sub{font-size:.73rem;color:rgba(255,255,255,.35);letter-spacing:.12em;
+  text-transform:uppercase;margin-top:-8px;}
+.vb-sp-track{width:220px;height:3px;background:rgba(255,255,255,.08);
+  border-radius:99px;overflow:hidden;}
+.vb-sp-fill{height:100%;width:0%;
+  background:linear-gradient(90deg,#e08a63,#ce744c);
+  border-radius:99px;transition:width .28s ease;}
+.vb-sp-hint{font-size:.7rem;color:rgba(255,255,255,.28);letter-spacing:.04em;}
+</style>
+<script>
+(function(){
+  function boot(){
+    var el=document.createElement('div');
+    el.id='vb-splash';
+    el.innerHTML=
+      '<div class="vb-sp-brand">PixelBooster</div>'+
+      '<div class="vb-sp-sub">AI Video &amp; Image Studio</div>'+
+      '<div class="vb-sp-track"><div class="vb-sp-fill" id="vb-fill"></div></div>'+
+      '<div class="vb-sp-hint" id="vb-hint">Cargando…</div>';
+    document.body.appendChild(el);
+    var fill=document.getElementById('vb-fill'),
+        hint=document.getElementById('vb-hint'),
+        pct=0,done=false;
+    var iv=setInterval(function(){
+      if(done)return;
+      var step=pct<45?4+Math.random()*5:0.5+Math.random();
+      pct=Math.min(pct+step,85);
+      fill.style.width=pct+'%';
+    },160);
+    var ck=setInterval(function(){
+      if(done)return;
+      if(document.querySelector('.gradio-container .tab-nav button,'+
+                                '.gradio-container .block,.gradio-container select')){
+        finish();
+      }
+    },200);
+    setTimeout(function(){if(!done)finish();},30000);
+    function finish(){
+      done=true;clearInterval(iv);clearInterval(ck);
+      pct=100;fill.style.width='100%';
+      hint.textContent='¡Listo!';
+      setTimeout(function(){
+        el.classList.add('vb-gone');
+        setTimeout(function(){el.remove();},700);
+      },420);
+    }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot);
+  }else{boot();}
+})();
+</script>
+"""
+_APARIENCIA = dict(theme=ui_theme.TEMA, css=ui_theme.CSS, js=_JS_CARGA,
+                   head=_HEAD_SPLASH)
 
 with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
     idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
@@ -1877,6 +1942,43 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 "iclight": "IC-Light — reiluminación (Apache-2.0)",
                 "iopaint_lama": "IOPaint+LaMa — borrar objetos (Apache-2.0)",
             }
+            # Función disponible() real de cada motor (más precisa que ubicacion().existe
+            # porque verifica pesos, no solo la carpeta).
+            _MANT_DISP = {
+                "seedvr2": lambda: HW["seedvr2"],
+                "vulkan": lambda: HW["vulkan"],
+                "codeformer": faces.disponible,
+                "ddcolor": color.disponible,
+                "seedvr2_mlx": seedvr2_mlx.disponible,
+                "realesrgan_mlx": realesrgan_mlx.disponible,
+                "metalfx": metalfx.disponible,
+                "diffbir": diffbir.disponible,
+                "pmrf": pmrf.disponible,
+                "osdface": osdface.disponible,
+                "flashvsr": flashvsr.disponible,
+                "restormer": restormer.disponible,
+                "retinexformer": retinexformer.disponible,
+                "dreamclear": dreamclear.disponible,
+                "hat": hat.disponible,
+                "practical_rife": practical_rife.disponible,
+                "film": film.disponible,
+                "ema_vfi": ema_vfi.disponible,
+                "nafnet": nafnet.disponible,
+                "scunet": scunet.disponible,
+                "fbcnn": fbcnn.disponible,
+                "fftformer": fftformer.disponible,
+                "dehazeformer": dehazeformer.disponible,
+                "hvi_cidnet": hvi_cidnet.disponible,
+                "darkir": darkir.disponible,
+                "inspyrenet": inspyrenet.disponible,
+                "birefnet": birefnet.disponible,
+                "restoreformerpp": restoreformerpp.disponible,
+                "dsrnet": dsrnet.disponible,
+                "shadowformer": shadowformer.disponible,
+                "dut_stab": dut_stab.disponible,
+                "iclight": iclight.disponible,
+                "iopaint_lama": iopaint_lama.disponible,
+            }
             # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
             # muestran en mantenimiento solo si ya están instalados.
             _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr",
@@ -1983,7 +2085,9 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
 
                             for _m in _gestionables:
                                 _u = mantenimiento.ubicacion(_m)
-                                _inst = _u["existe"]
+                                # Usamos disponible() real del motor (chequea pesos, no solo la carpeta).
+                                _disp_fn = _MANT_DISP.get(_m)
+                                _inst = bool(_disp_fn()) if _disp_fn else _u["existe"]
                                 _badge_cls = "mant-ok" if _inst else "mant-no"
                                 _badge_txt = ("✅ " + t("mant_instalado", lang)
                                               if _inst else "❌ " + t("mant_no_inst", lang))
