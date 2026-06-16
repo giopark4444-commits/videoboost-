@@ -657,9 +657,13 @@ T = {
 
     # ---- nuevos motores de filtro ----
     "m_desentrelazar": {
-        "es": "Desentrelazar — yadif (FFmpeg)",
-        "en": "Deinterlace — yadif (FFmpeg)",
-        "fr": "Désentrelacer — yadif (FFmpeg)"},
+        "es": "Desentrelazar — bwdif (FFmpeg)",
+        "en": "Deinterlace — bwdif (FFmpeg)",
+        "fr": "Désentrelacer — bwdif (FFmpeg)"},
+    "m_limpiar": {
+        "es": "Quitar artefactos de compresión (FFmpeg)",
+        "en": "Remove compression artifacts (FFmpeg)",
+        "fr": "Enlever les artefacts de compression (FFmpeg)"},
     "m_denoise": {
         "es": "Reducir ruido — hqdn3d (FFmpeg)",
         "en": "Denoise — hqdn3d (FFmpeg)",
@@ -669,13 +673,25 @@ T = {
         "en": "Stabilize — vidstab (FFmpeg)",
         "fr": "Stabiliser — vidstab (FFmpeg)"},
     "n_desentrelazar": {
-        "es": "Elimina el entrelazado clásico de material de TV/cámara de vídeo usando "
-              "yadif (Yet Another DeInterlacing Filter). Sin GPU, funciona en cualquier "
-              "máquina. Rápido.",
-        "en": "Removes classic interlacing from TV/video-camera footage using yadif "
-              "(Yet Another DeInterlacing Filter). No GPU needed, runs anywhere. Fast.",
-        "fr": "Supprime l'entrelacement classique des vidéos TV/caméscope avec yadif "
-              "(Yet Another DeInterlacing Filter). Sans GPU, fonctionne partout. Rapide."},
+        "es": "Elimina el entrelazado de material de TV/cámara usando **bwdif** "
+              "(BobWeaver, LGPL): mejor que yadif en líneas finas y movimiento. Si tu "
+              "FFmpeg no lo trae, cae a yadif. Sin GPU, rápido.",
+        "en": "Removes interlacing from TV/camera footage with **bwdif** (BobWeaver, "
+              "LGPL): better than yadif on fine lines and motion. Falls back to yadif if "
+              "absent. No GPU, fast.",
+        "fr": "Supprime l'entrelacement des vidéos TV/caméra avec **bwdif** (BobWeaver, "
+              "LGPL) : mieux que yadif sur les lignes fines et le mouvement. Repli sur "
+              "yadif si absent. Sans GPU, rapide."},
+    "n_limpiar": {
+        "es": "Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y "
+              "banding/posterización en degradados como cielos (deband). Filtros nativos "
+              "LGPL de FFmpeg, sin GPU. Ideal para material descargado o muy comprimido.",
+        "en": "Removes **compression artifacts**: H.264/JPEG blocking (deblock) and "
+              "banding/posterization in gradients like skies (deband). Native LGPL FFmpeg "
+              "filters, no GPU. Great for downloaded or heavily compressed footage.",
+        "fr": "Enlève les **artefacts de compression** : blocs H.264/JPEG (deblock) et le "
+              "banding/postérisation dans les dégradés comme le ciel (deband). Filtres LGPL "
+              "natifs de FFmpeg, sans GPU. Idéal pour les vidéos téléchargées ou compressées."},
     "n_denoise": {
         "es": "Reduce el ruido de video con el filtro hqdn3d de FFmpeg. Controla "
               "la fuerza en luminancia y crominancia por separado. Sin GPU.",

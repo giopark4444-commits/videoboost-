@@ -27,24 +27,59 @@ def _tiene_filtro(nombre: str) -> bool:
 VIDSTAB_OK: bool = _tiene_filtro("vidstabdetect")          # 2 pasadas, mejor (libvidstab)
 DESHAKE_OK: bool = _tiene_filtro("deshake")                # 1 pasada, integrado (cualquier ffmpeg)
 ESTABILIZA_OK: bool = VIDSTAB_OK or DESHAKE_OK             # ¿se puede estabilizar?
+BWDIF_OK: bool = _tiene_filtro("bwdif")                     # desentrelazado de más calidad (LGPL)
+DEBLOCK_OK: bool = _tiene_filtro("deblock")                # quitar bloques de compresión (LGPL)
 
 
 def desentrelazar(entrada):
-    """Desentrelaza el video usando yadif=mode=0.
+    """Desentrelaza el video.
 
+    Usa **bwdif** (BobWeaver, LGPL) si está disponible — reconstruye mejor las líneas
+    finas y maneja mejor el movimiento que yadif; si no, recurre a yadif=mode=0.
     Generador: cede líneas de log; retorna la ruta del archivo de salida.
     """
     entrada = Path(entrada)
     salida = SALIDAS / (entrada.stem + "_desentrelazado.mp4")
+    vf = "bwdif=mode=send_frame" if BWDIF_OK else "yadif=mode=0"
     cmd = [
         ffmpeg(), "-y", "-i", str(entrada),
-        "-vf", "yadif=mode=0",
+        "-vf", vf,
         "-c:v", "libx264", "-crf", "17", "-preset", "medium",
         "-pix_fmt", "yuv420p",
         "-c:a", "copy",
         str(salida),
     ]
-    yield f"▶ desentrelazar: {entrada.name} → {salida.name}"
+    yield f"▶ desentrelazar ({'bwdif' if BWDIF_OK else 'yadif'}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
+def limpiar(entrada, fuerza: str = "default"):
+    """Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y banding
+    / posterización en degradados (deband). Filtros nativos LGPL de FFmpeg, sin GPU.
+
+    fuerza — "weak" | "default" | "strong" (intensidad del deblock).
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_limpio.mp4")
+    cadena = []
+    if DEBLOCK_OK:
+        # el filtro deblock solo admite weak | strong
+        filtro_db = "weak" if fuerza == "weak" else "strong"
+        cadena.append(f"deblock=filter={filtro_db}:block=8")
+    # deband: 1thr..4thr = umbral por canal; range/blur por defecto van bien.
+    cadena.append("deband=1thr=0.015:2thr=0.015:3thr=0.015:4thr=0.015")
+    vf = ",".join(cadena)
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "16", "-preset", "medium",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "copy",
+        str(salida),
+    ]
+    yield f"▶ limpiar compresión ({vf}): {entrada.name} → {salida.name}"
     yield from correr(cmd)
     return str(salida)
 

@@ -40,7 +40,7 @@ MOTORES_VIDEO_NOTAS = {
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
     "practical_rife": "n_practical_rife", "film": "n_film", "ema_vfi": "n_ema_vfi",
     "grano": "n_grano", "lut": "n_lut",
-    "desentrelazar": "n_desentrelazar", "denoise": "n_denoise",
+    "desentrelazar": "n_desentrelazar", "denoise": "n_denoise", "limpiar": "n_limpiar",
     "estabilizar": "n_estabilizar",
 }
 MOTORES_IMG_NOTAS = {
@@ -422,6 +422,8 @@ def hacer_aplicar_filtros(lang):
                 gen = filtros.denoise(base, luma=float(den_luma), chroma=float(den_croma))
             elif filtro == "estabilizar":
                 gen = filtros.estabilizar(base, suavidad=int(est_suav), zoom=float(est_zoom))
+            elif filtro == "limpiar":
+                gen = filtros.limpiar(base)
             else:
                 yield t("filtros_sin_base", lang), salida_actual, "", oculto, _barra(None)
                 return
@@ -879,7 +881,7 @@ def filtros_video():
     antes de descargar: revelado/LUT, grano, desentrelazar, ruido, estabilizar."""
     if not HW["ffmpeg"]:
         return []
-    f = ["lut", "grano", "desentrelazar", "denoise"]
+    f = ["lut", "grano", "desentrelazar", "denoise", "limpiar"]
     if filtros.ESTABILIZA_OK:   # vidstab (2 pasadas) o deshake (integrado)
         f.append("estabilizar")
     return f
@@ -1205,7 +1207,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 ids_f = filtros_video()
                 # Filtros "simples" (grano/desentrelazar/ruido/estabilizar): sus
                 # opciones van JUNTAS en un solo grupo. El revelado (lut) va aparte.
-                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar"}
+                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar", "limpiar"}
                 _CON_CTRL = _SIMPLES | {"lut"}
                 with gr.Column(elem_classes="col-aside", min_width=220):
                     gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",
