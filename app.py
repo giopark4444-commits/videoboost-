@@ -23,11 +23,12 @@ import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import (birefnet, color, darkir, dehazeformer, diffbir, dreamclear,
-                     ema_vfi, faces, faithdiff, fbcnn, fftformer, film, filtros,
-                     flashvsr, grano, hat, hvi_cidnet, inspyrenet, instantir,
-                     luts, mantenimiento, metalfx, nafnet, osdface, pmrf,
-                     practical_rife, realesrgan_mlx, restormer, retinexformer,
-                     scunet, seedvr2, seedvr2_mlx, vulkan)
+                     dsrnet, dut_stab, ema_vfi, faces, faithdiff, fbcnn, fftformer,
+                     film, filtros, flashvsr, grano, hat, hvi_cidnet, iclight,
+                     inspyrenet, instantir, iopaint_lama, luts, mantenimiento,
+                     metalfx, nafnet, osdface, pmrf, practical_rife, realesrgan_mlx,
+                     restoreformerpp, restormer, retinexformer, scunet, seedvr2,
+                     seedvr2_mlx, shadowformer, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -40,6 +41,7 @@ MOTORES_VIDEO_NOTAS = {
     "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
     "practical_rife": "n_practical_rife", "film": "n_film", "ema_vfi": "n_ema_vfi",
+    "dut_stab": "n_dut_stab",
     "grano": "n_grano", "lut": "n_lut",
     "desentrelazar": "n_desentrelazar", "denoise": "n_denoise", "limpiar": "n_limpiar",
     "estabilizar": "n_estabilizar",
@@ -57,11 +59,13 @@ MOTORES_IMG_NOTAS = {
     "fftformer": "n_fftformer", "dehazeformer": "n_dehazeformer",
     "hvi_cidnet": "n_hvi_cidnet", "darkir": "n_darkir",
     "inspyrenet": "n_inspyrenet", "birefnet": "n_birefnet",
+    "restoreformerpp": "n_restoreformerpp", "dsrnet": "n_dsrnet",
+    "shadowformer": "n_shadowformer", "iclight": "n_iclight",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
 # Motores de imagen que aceptan un prompt opcional.
-IMG_CON_PROMPT = ("faithdiff", "instantir")
+IMG_CON_PROMPT = ("faithdiff", "instantir", "iclight")
 
 # Formatos de salida
 _FORMATOS_VIDEO = [
@@ -346,6 +350,8 @@ def hacer_procesar_video(lang):
                 gen = film.interpolar(video, mult=int(mult))
             elif motor == "ema_vfi":
                 gen = ema_vfi.interpolar(video, mult=int(mult))
+            elif motor == "dut_stab":
+                gen = dut_stab.estabilizar(video)
             elif motor == "flashvsr":
                 gen = flashvsr.mejorar(video)
             else:
@@ -606,6 +612,14 @@ def hacer_procesar_imagen(lang):
                 gen = inspyrenet.mejorar(imagen)
             elif motor == "birefnet":
                 gen = birefnet.mejorar(imagen)
+            elif motor == "restoreformerpp":
+                gen = restoreformerpp.mejorar(imagen, escala=2)
+            elif motor == "dsrnet":
+                gen = dsrnet.mejorar(imagen)
+            elif motor == "shadowformer":
+                gen = shadowformer.mejorar(imagen)
+            elif motor == "iclight":
+                gen = iclight.relight(imagen, prompt=prompt or "", direccion="izquierda")
             elif motor == "seedvr2_img":
                 gen = seedvr2.mejorar(imagen, resolucion=int(resolucion), es_video=False)
             elif motor == "seedvr2_mlx_img":
@@ -869,6 +883,18 @@ def texto_sistema(lang):
          "bash install/extras_inspyrenet.sh", False),
         ("BiRefNet — quitar fondo alta resolución (MIT)", birefnet.disponible(),
          "bash install/extras_birefnet.sh", False),
+        ("RestoreFormer++ — caras (Apache-2.0)", restoreformerpp.disponible(),
+         "bash install/extras_restoreformerpp.sh", False),
+        ("DSRNet — quitar reflejos (Apache-2.0)", dsrnet.disponible(),
+         "bash install/extras_dsrnet.sh", False),
+        ("ShadowFormer — quitar sombras (MIT)", shadowformer.disponible(),
+         "bash install/extras_shadowformer.sh", False),
+        ("DUT — estabilización por IA (MIT)", dut_stab.disponible(),
+         "bash install/extras_dut_stab.sh", True),
+        ("IC-Light — reiluminación / relighting (Apache-2.0)", iclight.disponible(),
+         "bash install/extras_iclight.sh", True),
+        ("IOPaint+LaMa — borrar objetos con máscara (Apache-2.0)", iopaint_lama.disponible(),
+         "bash install/extras_iopaint_lama.sh", False),
     ]
     listos, instalables, no_aplican = [], [], []
     for nombre, ok, inst, solo_nvidia in motores:
@@ -911,7 +937,7 @@ def motores_video():
         m.append("flashvsr")
     # Motores de interpolación de frames (slow-mo); aparecen si están instalados.
     for vfi, mod in (("practical_rife", practical_rife), ("film", film),
-                     ("ema_vfi", ema_vfi)):
+                     ("ema_vfi", ema_vfi), ("dut_stab", dut_stab)):
         if mod.disponible():
             m.append(vfi)
     return m or ["realesrgan"]  # que la UI nunca quede vacía
@@ -960,7 +986,9 @@ def motores_imagen():
     for mid, mod in (("nafnet", nafnet), ("scunet", scunet), ("fbcnn", fbcnn),
                      ("fftformer", fftformer), ("dehazeformer", dehazeformer),
                      ("hvi_cidnet", hvi_cidnet), ("darkir", darkir),
-                     ("inspyrenet", inspyrenet), ("birefnet", birefnet)):
+                     ("inspyrenet", inspyrenet), ("birefnet", birefnet),
+                     ("restoreformerpp", restoreformerpp), ("dsrnet", dsrnet),
+                     ("shadowformer", shadowformer), ("iclight", iclight)):
         if mod.disponible():
             m.append(mid)
     if color.disponible():
@@ -981,7 +1009,8 @@ _MEJORADORES_IMG = {"faithdiff", "seedvr2_img", "instantir", "codeformer",
                     "realesrgan_img", "diffbir", "pmrf", "osdface", "seedvr2_mlx_img",
                     "realesrgan_mlx_img", "restormer", "retinexformer", "dreamclear",
                     "hat", "nafnet", "scunet", "fbcnn", "fftformer", "dehazeformer",
-                    "hvi_cidnet", "darkir", "inspyrenet", "birefnet"}
+                    "hvi_cidnet", "darkir", "inspyrenet", "birefnet",
+                    "restoreformerpp", "dsrnet", "shadowformer", "iclight"}
 # Motores que escalan a una resolución/escala (para la vista previa de tamaño).
 _ESCALADORES = {"seedvr2", "seedvr2_mlx", "flashvsr", "realesrgan", "realcugan",
                 "waifu2x", "metalfx"}
@@ -1373,7 +1402,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                            "fbcnn": "i_fbcnn", "fftformer": "i_fftformer",
                            "dehazeformer": "i_dehazeformer", "hvi_cidnet": "i_hvi_cidnet",
                            "darkir": "i_darkir", "inspyrenet": "i_inspyrenet",
-                           "birefnet": "i_birefnet"}
+                           "birefnet": "i_birefnet", "restoreformerpp": "i_restoreformerpp",
+                           "dsrnet": "i_dsrnet", "shadowformer": "i_shadowformer",
+                           "iclight": "i_iclight"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -1398,7 +1429,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                                   "fbcnn", "fftformer",
                                                                   "dehazeformer", "hvi_cidnet",
                                                                   "darkir", "inspyrenet",
-                                                                  "birefnet"))
+                                                                  "birefnet", "restoreformerpp",
+                                                                  "dsrnet", "shadowformer",
+                                                                  "iclight"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] in ("seedvr2_img", "seedvr2_mlx_img"))
@@ -1445,7 +1478,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                     "retinexformer", "hat", "nafnet",
                                                     "scunet", "fbcnn", "fftformer",
                                                     "dehazeformer", "hvi_cidnet", "darkir",
-                                                    "inspyrenet", "birefnet")),
+                                                    "inspyrenet", "birefnet",
+                                                    "restoreformerpp", "dsrnet",
+                                                    "shadowformer", "iclight")),
                     gr.update(visible=motor in ("seedvr2_img", "seedvr2_mlx_img")),
                     gr.update(visible=motor == "codeformer"),
                     gr.update(visible=motor == "restormer"),
@@ -1605,12 +1640,18 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 "darkir": "DarkIR — noche extrema (MIT)",
                 "inspyrenet": "InSPyReNet — quitar fondo (MIT)",
                 "birefnet": "BiRefNet — quitar fondo HR (MIT)",
+                "restoreformerpp": "RestoreFormer++ — caras (Apache-2.0)",
+                "dsrnet": "DSRNet — quitar reflejos (Apache-2.0)",
+                "shadowformer": "ShadowFormer — quitar sombras (MIT)",
+                "dut_stab": "DUT — estabilización por IA (MIT)",
+                "iclight": "IC-Light — reiluminación (Apache-2.0)",
+                "iopaint_lama": "IOPaint+LaMa — borrar objetos (Apache-2.0)",
             }
             # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
             # muestran en mantenimiento solo si ya están instalados.
             _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr",
                             "restormer", "retinexformer", "dreamclear", "hat",
-                            "film", "ema_vfi", "fftformer"}
+                            "film", "ema_vfi", "fftformer", "dut_stab", "iclight"}
 
             def _mant_aplica(m):
                 if m == "seedvr2":

@@ -184,6 +184,42 @@ _GESTION = {
         borrar=[RAIZ / ".venv-birefnet" / ".ok"],
         instalador=["bash", "install/extras_birefnet.sh"],
     ),
+    "restoreformerpp": dict(
+        repo=VENDOR / "RestoreFormerPlusPlus",
+        carpeta=VENDOR / "RestoreFormerPlusPlus",
+        borrar=[RAIZ / ".venv-restoreformerpp" / ".ok"],
+        instalador=["bash", "install/extras_restoreformerpp.sh"],
+    ),
+    "dsrnet": dict(
+        repo=VENDOR / "DSRNet",
+        carpeta=MODELS / "DSRNet",
+        borrar=[MODELS / "DSRNet", RAIZ / ".venv-dsrnet" / ".ok"],
+        instalador=["bash", "install/extras_dsrnet.sh"],
+    ),
+    "shadowformer": dict(
+        repo=VENDOR / "ShadowFormer",
+        carpeta=MODELS / "ShadowFormer",
+        borrar=[MODELS / "ShadowFormer", RAIZ / ".venv-shadowformer" / ".ok"],
+        instalador=["bash", "install/extras_shadowformer.sh"],
+    ),
+    "dut_stab": dict(
+        repo=VENDOR / "DUTCode",
+        carpeta=VENDOR / "DUTCode" / "ckpt",
+        borrar=[VENDOR / "DUTCode" / "ckpt", RAIZ / ".venv-dut" / ".ok"],
+        instalador=["bash", "install/extras_dut_stab.sh"],
+    ),
+    "iclight": dict(
+        repo=VENDOR / "IC-Light",
+        carpeta=VENDOR / "IC-Light" / "models",
+        borrar=[RAIZ / ".venv-iclight" / ".ok"],
+        instalador=["bash", "install/extras_iclight.sh"],
+    ),
+    "iopaint_lama": dict(
+        repo=None,  # paquete pip iopaint; pesos LaMa al cache
+        carpeta=RAIZ / ".venv-iopaint_lama",
+        borrar=[RAIZ / ".venv-iopaint_lama" / ".ok"],
+        instalador=["bash", "install/extras_iopaint_lama.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)

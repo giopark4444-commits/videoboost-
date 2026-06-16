@@ -237,6 +237,10 @@ T = {
         "es": "EMA-VFI — interpolación SOTA (NVIDIA)",
         "en": "EMA-VFI — SOTA interpolation (NVIDIA)",
         "fr": "EMA-VFI — interpolation SOTA (NVIDIA)"},
+    "m_dut_stab": {
+        "es": "DUT — estabilizar con IA (NVIDIA)",
+        "en": "DUT — AI stabilization (NVIDIA)",
+        "fr": "DUT — stabilisation IA (NVIDIA)"},
 
     # ---- nombres de motores (imagen) ----
     "i_faithdiff": {
@@ -363,6 +367,22 @@ T = {
         "es": "BiRefNet — quitar fondo alta-res (Mac/NVIDIA)",
         "en": "BiRefNet — remove background HR (Mac/NVIDIA)",
         "fr": "BiRefNet — enlever le fond HR (Mac/NVIDIA)"},
+    "i_restoreformerpp": {
+        "es": "RestoreFormer++ — caras (Mac/NVIDIA)",
+        "en": "RestoreFormer++ — faces (Mac/NVIDIA)",
+        "fr": "RestoreFormer++ — visages (Mac/NVIDIA)"},
+    "i_dsrnet": {
+        "es": "DSRNet — quitar reflejos (Mac/NVIDIA)",
+        "en": "DSRNet — remove reflections (Mac/NVIDIA)",
+        "fr": "DSRNet — enlever les reflets (Mac/NVIDIA)"},
+    "i_shadowformer": {
+        "es": "ShadowFormer — quitar sombras (Mac/NVIDIA)",
+        "en": "ShadowFormer — remove shadows (Mac/NVIDIA)",
+        "fr": "ShadowFormer — enlever les ombres (Mac/NVIDIA)"},
+    "i_iclight": {
+        "es": "IC-Light — reiluminación (NVIDIA)",
+        "en": "IC-Light — relighting (NVIDIA)",
+        "fr": "IC-Light — ré-éclairage (NVIDIA)"},
     "n_restormer": {
         "es": "Transformer de restauración (MIT). Quita **desenfoque de movimiento y de "
               "enfoque, lluvia y ruido real** en una pasada determinista (no inventa textura). "
@@ -463,6 +483,37 @@ T = {
               "matting, MIT). More detail than InSPyReNet. Mac (MPS) and NVIDIA.",
         "fr": "**Enlève le fond en haute résolution** avec bords/cheveux très fins (matting HR, "
               "MIT). Plus de détail qu'InSPyReNet. Mac (MPS) et NVIDIA."},
+    "n_restoreformerpp": {
+        "es": "Restaura **caras** (detecta, alinea y reconstruye) con licencia **Apache-2.0 apta "
+              "para vender** — reemplazo limpio de CodeFormer. Mac (MPS/CPU) y NVIDIA.",
+        "en": "Restores **faces** (detect, align, rebuild) with a **commercial-safe Apache-2.0** "
+              "license — clean CodeFormer replacement. Mac (MPS/CPU) and NVIDIA.",
+        "fr": "Restaure les **visages** (détecte, aligne, reconstruit) sous licence **Apache-2.0 "
+              "vendable** — remplaçant propre de CodeFormer. Mac (MPS/CPU) et NVIDIA."},
+    "n_dsrnet": {
+        "es": "Quita **reflejos** de cristal/ventana de una foto, separando la escena del reflejo "
+              "(Apache-2.0). Mac (CPU) y NVIDIA.",
+        "en": "Removes **reflections** from glass/windows in a photo, separating scene from "
+              "reflection (Apache-2.0). Mac (CPU) and NVIDIA.",
+        "fr": "Enlève les **reflets** de vitre/fenêtre d'une photo, séparant la scène du reflet "
+              "(Apache-2.0). Mac (CPU) et NVIDIA."},
+    "n_shadowformer": {
+        "es": "Quita **sombras proyectadas** nivelando la iluminación sin perder textura (MIT). "
+              "Sin máscara usa toda la imagen; para sombras duras conviene una máscara. Mac y NVIDIA.",
+        "en": "Removes **cast shadows**, evening out lighting without losing texture (MIT). With "
+              "no mask it uses the whole image; for hard shadows a mask helps. Mac and NVIDIA.",
+        "fr": "Enlève les **ombres portées** en uniformisant l'éclairage sans perdre la texture "
+              "(MIT). Sans masque, toute l'image ; pour ombres dures, un masque aide. Mac et NVIDIA."},
+    "n_iclight": {
+        "es": "**Reilumina** (relighting) la imagen por difusión (SD1.5) según el prompt y una "
+              "dirección de luz, conservando al sujeto (Apache-2.0). Pesado → solo NVIDIA. "
+              "Escribe en el prompt la luz deseada (p.ej. «luz cálida de atardecer por la izquierda»).",
+        "en": "**Relights** the image via diffusion (SD1.5) from the prompt and a light direction, "
+              "keeping the subject (Apache-2.0). Heavy → NVIDIA only. Describe the light in the "
+              "prompt (e.g. 'warm sunset light from the left').",
+        "fr": "**Ré-éclaire** l'image par diffusion (SD1.5) selon le prompt et une direction de "
+              "lumière, en conservant le sujet (Apache-2.0). Lourd → NVIDIA. Décris la lumière dans "
+              "le prompt (ex. « lumière chaude de coucher de soleil à gauche »)."},
     "rest_tarea": {"es": "Tarea (Restormer)", "en": "Task (Restormer)", "fr": "Tâche (Restormer)"},
     "rest_motion_deblurring": {
         "es": "Quitar desenfoque de movimiento", "en": "Motion deblur", "fr": "Flou de mouvement"},
@@ -698,6 +749,16 @@ T = {
               "in-between frames for slow-mo. PyTorch: NVIDIA only. Apache-2.0.",
         "fr": "Interpolation d'images de **qualité SOTA** à temps arbitraire (CVPR 2023). Images "
               "intermédiaires très propres pour le ralenti. PyTorch : NVIDIA. Apache-2.0."},
+    "n_dut_stab": {
+        "es": "**Estabilización por IA** (MIT): suaviza la trayectoria de cámara con una malla de "
+              "movimiento aprendida, mejor que vidstab en temblor fuerte. Solo NVIDIA en la "
+              "práctica. ⚠️ Verificar licencia comercial con el autor antes de vender.",
+        "en": "**AI stabilization** (MIT): smooths the camera path with a learned motion mesh, "
+              "better than vidstab on heavy shake. NVIDIA only in practice. ⚠️ Confirm commercial "
+              "license with the author before selling.",
+        "fr": "**Stabilisation IA** (MIT) : lisse la trajectoire caméra avec un maillage de "
+              "mouvement appris, mieux que vidstab sur les fortes secousses. NVIDIA en pratique. "
+              "⚠️ Confirmer la licence commerciale avec l'auteur avant de vendre."},
     "n_flashvsr": {
         "es": "Super-resolución casi en tiempo real (CVPR 2026). Para horas de material. "
               "Experimental: si falla, usa SeedVR2.",
