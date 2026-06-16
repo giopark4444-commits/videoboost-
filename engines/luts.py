@@ -14,6 +14,11 @@ motor de grano analógico (aplicar primero el LUT, luego el grano).
 100% FFmpeg/CPU, sin venv propio. Video e imagen; en video el audio se copia.
 """
 
+import re
+import shutil
+import subprocess
+import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from engines import MODELS, SALIDAS, correr
@@ -216,6 +221,111 @@ def _cadena_detalle(a):
     if a["vineta"] > 1e-3:
         f.append(f"vignette=angle={min(1.0, a['vineta']) * 0.628:.3f}")  # hasta ~PI/5
     return f
+
+
+_LUT_PREV_DIR = SALIDAS / "lut_previews"
+
+
+def luts_todos() -> list:
+    """IDs de todos los LUTs disponibles: integrados + .cube importados."""
+    integrados = list(LOOKS.keys())
+    extras = [f.stem for f in LUTS_DIR.glob("*.cube") if f.stem not in integrados]
+    return integrados + extras
+
+
+def vista_previa_todos_luts(entrada, es_video: bool = False,
+                             pos_frac: float = 0.3) -> list:
+    """Genera miniaturas de TODOS los LUTs sobre un frame/imagen.
+
+    Devuelve lista de (path_str, caption) para gr.Gallery.
+    Ejecuta los FFmpeg en paralelo (4 workers).
+    """
+    if not entrada:
+        return []
+
+    entrada = Path(str(entrada))
+    frame_tmp = None
+
+    if es_video:
+        info = ff.info_video(entrada)
+        dur = info.get("duracion") or info.get("duration") or 1.0
+        t_seg = max(0.0, float(pos_frac or 0.3)) * float(dur)
+        frame_tmp = Path(tempfile.mktemp(suffix=".jpg", prefix="vb_lf_"))
+        subprocess.run(
+            [ff.ffmpeg(), "-y", "-ss", f"{t_seg:.3f}", "-i", str(entrada),
+             "-frames:v", "1", "-q:v", "2", str(frame_tmp)],
+            capture_output=True, timeout=30)
+        if not frame_tmp.exists():
+            return []
+        fuente_img = frame_tmp
+    else:
+        fuente_img = entrada
+
+    _LUT_PREV_DIR.mkdir(parents=True, exist_ok=True)
+
+    todos = luts_todos()
+    resultados_ord = [None] * (len(todos) + 1)  # +1 para el original
+
+    # Original sin LUT
+    orig_out = _LUT_PREV_DIR / "_original.jpg"
+    subprocess.run(
+        [ff.ffmpeg(), "-y", "-i", str(fuente_img),
+         "-vf", "scale=300:-2:flags=lanczos",
+         "-frames:v", "1", "-q:v", "3", str(orig_out)],
+        capture_output=True, timeout=30)
+    if orig_out.exists():
+        resultados_ord[0] = (str(orig_out), "Original")
+
+    def aplicar_uno(idx, lk):
+        try:
+            if lk in LOOKS:
+                lut_path = generar_lut(lk)
+                nombre_vis = NOMBRES.get(lk, lk)
+            else:
+                lut_path = LUTS_DIR / f"{lk}.cube"
+                nombre_vis = lk
+            if not lut_path.exists():
+                return idx, None
+            lut_esc = str(lut_path).replace("\\", "/").replace(":", "\\:")
+            out = _LUT_PREV_DIR / f"{lk}.jpg"
+            r = subprocess.run(
+                [ff.ffmpeg(), "-y", "-i", str(fuente_img),
+                 "-vf", f"scale=300:-2:flags=lanczos,lut3d='{lut_esc}'",
+                 "-frames:v", "1", "-q:v", "3", str(out)],
+                capture_output=True, timeout=30)
+            if r.returncode == 0 and out.exists():
+                return idx, (str(out), nombre_vis)
+            return idx, None
+        except Exception:
+            return idx, None
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futs = {pool.submit(aplicar_uno, i + 1, lk): lk
+                for i, lk in enumerate(todos)}
+        for fut in as_completed(futs):
+            idx, item = fut.result()
+            if item:
+                resultados_ord[idx] = item
+
+    if frame_tmp and frame_tmp.exists():
+        frame_tmp.unlink(missing_ok=True)
+
+    return [r for r in resultados_ord if r]
+
+
+def importar_lut(path_tmp: str, nombre: str = "") -> str:
+    """Copia un .cube/.3dl al directorio de LUTs. Devuelve mensaje de estado."""
+    src = Path(str(path_tmp))
+    if not src.exists():
+        return f"❌ Archivo no encontrado."
+    if src.suffix.lower() not in (".cube", ".3dl"):
+        return "❌ Solo se aceptan archivos .cube o .3dl"
+    base = (nombre.strip() or src.stem)
+    base = re.sub(r'[^\w\- ]', '_', base).strip("_")[:60] or "lut_custom"
+    LUTS_DIR.mkdir(parents=True, exist_ok=True)
+    dest = LUTS_DIR / f"{base}.cube"
+    shutil.copy2(src, dest)
+    return f"✅ Importado: {dest.name}"
 
 
 def etalonar(entrada, es_video, looks=(), **ajustes):

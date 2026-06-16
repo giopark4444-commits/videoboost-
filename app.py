@@ -1275,10 +1275,12 @@ _GR6 = int(gr.__version__.split(".")[0]) >= 6
 # Splash de carga: aparece mientras Gradio conecta al backend.
 _HEAD_SPLASH = """
 <style>
+/* Cubre la pantalla en blanco ANTES de que Gradio renderice nada */
+html,body{background:#1a1917 !important;}
 #vb-splash{position:fixed;inset:0;z-index:99999;
   background:#1a1917;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:16px;
-  transition:opacity .55s ease,visibility .55s ease;}
+  transition:opacity .6s ease,visibility .6s ease;}
 #vb-splash.vb-gone{opacity:0;visibility:hidden;pointer-events:none;}
 .vb-sp-brand{font-family:system-ui,-apple-system,sans-serif;font-size:1.75rem;
   font-weight:800;letter-spacing:-.035em;color:#fff;opacity:.92;}
@@ -1288,7 +1290,7 @@ _HEAD_SPLASH = """
   border-radius:99px;overflow:hidden;}
 .vb-sp-fill{height:100%;width:0%;
   background:linear-gradient(90deg,#e08a63,#ce744c);
-  border-radius:99px;transition:width .28s ease;}
+  border-radius:99px;transition:width .3s ease;}
 .vb-sp-hint{font-size:.7rem;color:rgba(255,255,255,.28);letter-spacing:.04em;}
 </style>
 <script>
@@ -1305,30 +1307,36 @@ _HEAD_SPLASH = """
     var fill=document.getElementById('vb-fill'),
         hint=document.getElementById('vb-hint'),
         pct=0,done=false;
+    // Tiempo mínimo visible: 3.5 s (suficiente para que se vea mientras carga Python)
+    var minEnd=Date.now()+3500;
     var iv=setInterval(function(){
       if(done)return;
-      var step=pct<45?4+Math.random()*5:0.5+Math.random();
+      // Avanza rápido al principio, luego muy lento cerca de 85% para simular espera real
+      var step=pct<30?3+Math.random()*4:pct<60?1+Math.random()*2:0.3+Math.random()*0.6;
       pct=Math.min(pct+step,85);
       fill.style.width=pct+'%';
-    },160);
+    },180);
     var ck=setInterval(function(){
       if(done)return;
-      if(document.querySelector('.gradio-container .tab-nav button,'+
-                                '.gradio-container .block,.gradio-container select')){
+      // Espera a que haya al menos 3 pestañas renderizadas CON texto Y haya pasado minEnd
+      var btns=document.querySelectorAll('.gradio-container .tab-nav button');
+      if(btns.length>=3 && btns[0] && btns[0].textContent.trim() && Date.now()>=minEnd){
         finish();
       }
-    },200);
-    setTimeout(function(){if(!done)finish();},30000);
+    },250);
+    // Failsafe: 45 s máximo
+    setTimeout(function(){if(!done)finish();},45000);
     function finish(){
       done=true;clearInterval(iv);clearInterval(ck);
       pct=100;fill.style.width='100%';
       hint.textContent='¡Listo!';
       setTimeout(function(){
         el.classList.add('vb-gone');
-        setTimeout(function(){el.remove();},700);
-      },420);
+        setTimeout(function(){el.remove();},800);
+      },450);
     }
   }
+  // Crear el overlay lo antes posible para cubrir la pantalla en blanco
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',boot);
   }else{boot();}
@@ -1449,6 +1457,20 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
                     sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
 
+                # ---- visor: frame con todos los LUTs a la vez ----
+                if fuente is not None:
+                    _btn_ver_luts = gr.Button(
+                        t("luts_ver_todos", lang), size="sm",
+                        elem_classes="luts-ver-btn")
+                    _lut_gallery = gr.Gallery(
+                        label=t("luts_galeria", lang),
+                        visible=False, columns=4, height=380,
+                        elem_classes="lut-gallery-wrap",
+                        object_fit="cover", allow_preview=True)
+                else:
+                    _btn_ver_luts = None
+                    _lut_gallery = None
+
             # ---- lógica presets ----
             def _guardar(nombre, *vals):
                 if not nombre or not nombre.strip():
@@ -1474,6 +1496,24 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 [preset_selector, preset_msg])
             preset_selector.change(
                 _cargar, preset_selector, comps)
+
+            # ---- visor LUT: click genera galería con todos los LUTs ----
+            if _btn_ver_luts is not None and _lut_gallery is not None:
+                _lut_inps = [fuente] + ([pos] if pos is not None else [])
+
+                def _handler_ver_luts(*args):
+                    _fuente = args[0]
+                    _pos = float(args[1]) if len(args) > 1 else 0.3
+                    if not _fuente:
+                        return gr.update(visible=False, value=[])
+                    items = luts.vista_previa_todos_luts(
+                        _fuente, es_video=es_video, pos_frac=_pos)
+                    if not items:
+                        return gr.update(visible=False, value=[])
+                    return gr.update(visible=True, value=items)
+
+                _btn_ver_luts.click(
+                    _handler_ver_luts, inputs=_lut_inps, outputs=_lut_gallery)
 
             return g, comps
 
@@ -1908,39 +1948,75 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             # Datos para el rubro de Mantenimiento (se calculan antes de pintar
             # las columnas para saber si hay motores gestionables).
             _MANT_NOMBRES = {
-                "seedvr2": "SeedVR2 — restauración IA",
+                "seedvr2": "SeedVR2",
                 "vulkan": "Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)",
-                "codeformer": "CodeFormer — caras",
-                "ddcolor": "DDColor — color",
-                "seedvr2_mlx": "SeedVR2 (MLX) — Apple Silicon",
-                "realesrgan_mlx": "Real-ESRGAN x4 (MLX) — Apple Silicon",
-                "metalfx": "MetalFX — escalado rápido (Apple)",
-                "diffbir": "DiffBIR — caras + escena (Apache-2.0)",
-                "pmrf": "PMRF — caras (MIT)",
-                "osdface": "OSDFace — caras ⚠️ sin licencia (pruebas)",
-                "flashvsr": "FlashVSR — video rápido (Apache-2.0)",
-                "restormer": "Restormer — deblur / lluvia / ruido (MIT)",
-                "retinexformer": "Retinexformer — poca luz (MIT)",
-                "dreamclear": "DreamClear — restauración real (Apache-2.0)",
-                "hat": "HAT — super-resolución nítida (Apache-2.0)",
-                "practical_rife": "Practical-RIFE — slow-mo / interpolación (MIT)",
-                "film": "FILM — slow-mo movimiento grande (Apache-2.0)",
-                "ema_vfi": "EMA-VFI — interpolación SOTA (Apache-2.0)",
-                "nafnet": "NAFNet — denoise / deblur (MIT)",
-                "scunet": "SCUNet — denoise ciego (Apache-2.0)",
-                "fbcnn": "FBCNN — quitar artefactos JPEG (Apache-2.0)",
-                "fftformer": "FFTformer — deblur de movimiento (MIT)",
-                "dehazeformer": "DehazeFormer — quitar neblina (MIT)",
-                "hvi_cidnet": "HVI-CIDNet — poca luz premium (MIT)",
-                "darkir": "DarkIR — noche extrema (MIT)",
-                "inspyrenet": "InSPyReNet — quitar fondo (MIT)",
-                "birefnet": "BiRefNet — quitar fondo HR (MIT)",
-                "restoreformerpp": "RestoreFormer++ — caras (Apache-2.0)",
-                "dsrnet": "DSRNet — quitar reflejos (Apache-2.0)",
-                "shadowformer": "ShadowFormer — quitar sombras (MIT)",
-                "dut_stab": "DUT — estabilización por IA (MIT)",
-                "iclight": "IC-Light — reiluminación (Apache-2.0)",
-                "iopaint_lama": "IOPaint+LaMa — borrar objetos (Apache-2.0)",
+                "codeformer": "CodeFormer",
+                "ddcolor": "DDColor",
+                "seedvr2_mlx": "SeedVR2 (MLX)",
+                "realesrgan_mlx": "Real-ESRGAN x4 (MLX)",
+                "metalfx": "MetalFX",
+                "diffbir": "DiffBIR",
+                "pmrf": "PMRF",
+                "osdface": "OSDFace ⚠️",
+                "flashvsr": "FlashVSR",
+                "restormer": "Restormer",
+                "retinexformer": "Retinexformer",
+                "dreamclear": "DreamClear",
+                "hat": "HAT",
+                "practical_rife": "Practical-RIFE",
+                "film": "FILM",
+                "ema_vfi": "EMA-VFI",
+                "nafnet": "NAFNet",
+                "scunet": "SCUNet",
+                "fbcnn": "FBCNN",
+                "fftformer": "FFTformer",
+                "dehazeformer": "DehazeFormer",
+                "hvi_cidnet": "HVI-CIDNet",
+                "darkir": "DarkIR",
+                "inspyrenet": "InSPyReNet",
+                "birefnet": "BiRefNet",
+                "restoreformerpp": "RestoreFormer++",
+                "dsrnet": "DSRNet",
+                "shadowformer": "ShadowFormer",
+                "dut_stab": "DUT",
+                "iclight": "IC-Light",
+                "iopaint_lama": "IOPaint + LaMa",
+            }
+            # Fabricante + descripción corta + licencia por motor
+            _MANT_INFO = {
+                "seedvr2": ("Numz / Bytedance", "Restauración y súper-resolución de video con difusión; SOTA en calidad.", "Apache 2.0"),
+                "vulkan": ("xinntao / nihui / nihui", "Suite Vulkan: upscaling con Real-ESRGAN/CUGAN/waifu2x + interpolación RIFE en cualquier GPU.", "BSD/MIT"),
+                "codeformer": ("S-Lab, NTU", "Restauración de caras degradadas con transformer + diccionario de codebook.", "NTU S-Lab (no comercial)"),
+                "ddcolor": ("Piddnad / Alibaba DAMO", "Colorización automática de fotos en blanco y negro con red dual-decoder.", "Apache 2.0"),
+                "seedvr2_mlx": ("Numz / Bytedance", "SeedVR2 optimizado con MLX para Apple Silicon (M1/M2/M3/M4); GPU Metal.", "Apache 2.0"),
+                "realesrgan_mlx": ("xinntao / xinntao", "Real-ESRGAN x4+ reimplementado en MLX para M1-M4; escalado rápido en Metal.", "BSD 3-Clause"),
+                "metalfx": ("Apple", "Escalado espacial con MetalFX (AMD FSR-like); solo Mac, sin pesos, latencia mínima.", "Apple"),
+                "diffbir": ("CUHK / Kai Zhang", "Restauración ciega de imágenes con difusión estable (caras + escena general).", "Apache 2.0"),
+                "pmrf": ("Ohayonguy", "Restauración de caras alineadas con rectified flow probabilístico; alta fidelidad.", "MIT"),
+                "osdface": ("Desconocido", "Restauración de caras con SDXL + LoRA asociativo. Sin licencia oficial — solo pruebas.", "Sin licencia"),
+                "flashvsr": ("Flash-VDM / Wan2.1", "Súper-resolución de video ultra-rápida con modelo Wan2.1; destaca en detalles finos.", "Apache 2.0"),
+                "restormer": ("swz30 / ICCV 2022", "Transformer eficiente para deblur por movimiento, lluvia y reducción de ruido.", "MIT"),
+                "retinexformer": ("ICCV 2023", "Mejora de imágenes en condiciones de baja iluminación con Retinex + Transformer.", "MIT"),
+                "dreamclear": ("NIPS 2024", "Restauración de imágenes reales degradadas con difusión y estimación del degradado.", "Apache 2.0"),
+                "hat": ("XPixelGroup / CVPR 2023", "HAT: Hybrid Attention Transformer para súper-resolución; PSNR SOTA en SISR.", "Apache 2.0"),
+                "practical_rife": ("megvii-research / hzwer", "RIFE práctico: interpolación de frames a tiempo arbitrario, muy veloz y portátil.", "MIT"),
+                "film": ("Google Research / ECCV 2022", "Frame interpolation para movimiento grande (escenas de acción) con red film-style.", "Apache 2.0"),
+                "ema_vfi": ("MCG-NJU", "EMA-VFI: interpolación de fotogramas SOTA con atención de movimiento extendida.", "Apache 2.0"),
+                "nafnet": ("MEGA Research / ECCV 2022", "NAFNet: red minimalista sin activaciones no-lineales para denoise y deblur en GPU.", "MIT"),
+                "scunet": ("Kai Zhang / CVPR 2023", "SCUNet: denoise ciego robusto a contaminación desconocida con U-Net + Swin.", "Apache 2.0"),
+                "fbcnn": ("Jiaxi Jiang / ICCV 2021", "Eliminación de artefactos JPEG con red flexible controlada por factor de calidad.", "Apache 2.0"),
+                "fftformer": ("Ruigang Fu / ICCV 2023", "Deblur de movimiento de alta calidad con Transformer en dominio de frecuencia.", "MIT"),
+                "dehazeformer": ("IDKiro / CVPR 2023", "Eliminación de neblina/smog en exteriores con Swin Transformer adaptado.", "MIT"),
+                "hvi_cidnet": ("Zhaoyang Zhang / CVPR 2024", "Mejora de imágenes en poca luz en espacio HVI; balance detalle-color premium.", "MIT"),
+                "darkir": ("Cidautai / ECCV 2024", "Restauración todo-en-uno: baja iluminación + ruido + desenfoque con red ligera.", "MIT"),
+                "inspyrenet": ("ECCV 2022", "Segmentación/matting de objetos con pirámide inversa para bordes precisos.", "MIT"),
+                "birefnet": ("CAIDAS / CVPR 2024", "Matting de alta resolución con red de refinamiento bidireccional; SOTA.", "MIT"),
+                "restoreformerpp": ("wzhouxiff / CVPR 2023", "Restauración de caras con codebook aprendido de 1024 rostros de alta calidad.", "Apache 2.0"),
+                "dsrnet": ("mingcv / CVPR 2022", "Eliminación de reflejos de vidrio con descomposición por transmisión y reflexión.", "Apache 2.0"),
+                "shadowformer": ("GuoLanqing / CVPR 2023", "Eliminación de sombras con Transformer global-local y pérdida de relaciones.", "MIT"),
+                "dut_stab": ("CVPR 2023", "Estabilización de video con IA: propaga trayectorias suaves preservando contenido.", "MIT"),
+                "iclight": ("lllyasviel", "Reiluminación consistente de personas por prompt de luz o imagen de referencia.", "Apache 2.0"),
+                "iopaint_lama": ("Sanster / Samsung", "Borrado de objetos con inpainting LaMa (Large Mask); rellena con textura natural.", "Apache 2.0"),
             }
             # Función disponible() real de cada motor (más precisa que ubicacion().existe
             # porque verifica pesos, no solo la carpeta).
@@ -2037,6 +2113,21 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                         aj_fmt_v.change(_guardar_fmt_v, aj_fmt_v, aj_msg)
                         aj_fmt_i.change(_guardar_fmt_i, aj_fmt_i, aj_msg)
 
+                    with _seccion(t("luts_import_titulo", lang)):
+                        lut_file = gr.File(
+                            label=t("luts_import_archivo", lang),
+                            file_types=[".cube", ".3dl"],
+                            type="filepath")
+                        lut_import_msg = gr.Markdown(elem_classes="formato-nota")
+
+                        def _importar_lut(path):
+                            if not path:
+                                return ""
+                            msg = luts.importar_lut(path)
+                            return msg
+
+                        lut_file.change(_importar_lut, lut_file, lut_import_msg)
+
                     with _seccion("🖥️ " + t("aj_equipo", lang)):
                         gr.Markdown(f"#### {gpu_resumen(lang)}")
                         gr.Markdown(texto_sistema(lang))
@@ -2085,13 +2176,21 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
 
                             for _m in _gestionables:
                                 _u = mantenimiento.ubicacion(_m)
-                                # Usamos disponible() real del motor (chequea pesos, no solo la carpeta).
                                 _disp_fn = _MANT_DISP.get(_m)
                                 _inst = bool(_disp_fn()) if _disp_fn else _u["existe"]
                                 _badge_cls = "mant-ok" if _inst else "mant-no"
                                 _badge_txt = ("✅ " + t("mant_instalado", lang)
                                               if _inst else "❌ " + t("mant_no_inst", lang))
                                 _tam = f" &nbsp;·&nbsp; {_html.escape(_u['tamano'])}" if _u["tamano"] else ""
+                                _info = _MANT_INFO.get(_m, ("", "", ""))
+                                _fab, _desc, _lic = _info
+                                _info_html = ""
+                                if _desc:
+                                    _info_html += (
+                                        f'<div class="mant-desc">'
+                                        f'{_html.escape(_desc)}'
+                                        f'<span class="mant-fab"> · {_html.escape(_fab)} · {_html.escape(_lic)}</span>'
+                                        f'</div>')
 
                                 with gr.Group(elem_classes="mant-motor"):
                                     gr.HTML(
@@ -2099,7 +2198,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                         f'<span class="mant-badge {_badge_cls}">{_badge_txt}</span>'
                                         f'<span class="mant-nombre">{_html.escape(_MANT_NOMBRES[_m])}</span>'
                                         f'{_tam}'
-                                        f'</div>')
+                                        f'</div>'
+                                        f'{_info_html}')
                                     with gr.Row(elem_classes="mant-btns"):
                                         _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
                                         _btn_re = gr.Button(t("mant_redescargar", lang), size="sm",

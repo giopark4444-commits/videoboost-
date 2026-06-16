@@ -50,6 +50,21 @@ T = {
     "luts_progreso": {
         "es": "Aplicando LUT {n}/{total}…", "en": "Applying LUT {n}/{total}…",
         "fr": "Application du LUT {n}/{total}…"},
+    "luts_ver_todos": {
+        "es": "🎞️ Ver frame con todos los LUTs", "en": "🎞️ Preview frame with all LUTs",
+        "fr": "🎞️ Voir l'image avec tous les LUTs"},
+    "luts_import_titulo": {
+        "es": "🎨 LUTs personalizados", "en": "🎨 Custom LUTs",
+        "fr": "🎨 LUTs personnalisés"},
+    "luts_import_archivo": {
+        "es": "Importar archivo .cube", "en": "Import .cube file",
+        "fr": "Importer un fichier .cube"},
+    "luts_import_btn": {
+        "es": "Importar LUT", "en": "Import LUT", "fr": "Importer LUT"},
+    "luts_import_ok": {
+        "es": "LUT importado. Recarga la app para verlo en el selector.",
+        "en": "LUT imported. Reload the app to see it in the selector.",
+        "fr": "LUT importé. Rechargez l'application pour le voir."},
     "nivel": {"es": "Nivel", "en": "Tier", "fr": "Niveau"},
     "nivel_3": {"es": "Máximo", "en": "Maximum", "fr": "Maximum"},
     "nivel_2": {"es": "Pro", "en": "Pro", "fr": "Pro"},

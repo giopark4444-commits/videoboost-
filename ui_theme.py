@@ -451,6 +451,20 @@ footer{display:none !important;}
 .vb-fuente:hover{border-color:var(--vb-border-strong); transform:translateY(-1px);}
 .vb-fuente:focus-visible{outline:2px solid var(--vb-accent); outline-offset:2px;}
 
+/* ---- descripción por motor en Mantenimiento ---- */
+.mant-desc{font-size:11px; color:var(--vb-muted); line-height:1.45;
+  margin:2px 0 4px 0; padding-left:2px;}
+.mant-fab{font-size:10.5px; color:var(--vb-muted); opacity:.7;
+  font-style:italic; margin-left:6px;}
+
+/* ---- galería LUT viewer ---- */
+.lut-gallery-wrap{margin-top:12px !important;}
+.lut-gallery-wrap .gallery-item{border-radius:8px !important; overflow:hidden;}
+.lut-gallery-wrap .label{font-size:11px !important; font-weight:600 !important;
+  text-align:center !important; padding:4px 2px !important; background:var(--vb-surface) !important;
+  color:var(--vb-ink) !important;}
+.lut-import-row{display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;}
+
 /* Responsive */
 @media (max-width:760px){
   .gradio-container{padding:0 14px 40px !important;}
