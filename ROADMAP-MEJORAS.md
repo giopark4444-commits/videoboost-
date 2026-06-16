@@ -28,12 +28,27 @@ en GPU salvo donde se indica — verificar en la 4080):
 - **IOPaint+LaMa** (borrar objetos): instalable en Sistema; **falta la UI de máscara**
   (no está en el selector todavía).
 
-**PENDIENTE (siguiente tanda):** UI de máscara para IOPaint; dropdown de dirección
-de luz para IC-Light; **sanear caras legal** (retirar CodeFormer/OSDFace del build);
-acelerar DDColor (MPS); RIFE→v4.26; filtros FFmpeg de **corrección de lente**,
-**HDR/tonemapping**, **igualar color**, **balance de blancos auto**, **emulación de
-película** (halation/bloom); OSEDiff/DRCT (modos SR). Verificar en la 4080 todos los
-motores GPU y confirmar licencia comercial de **DUT** con el autor.
+**HECHO en la 2ª tanda (2026-06-16):**
+- ✅ **Sanear caras legal**: CodeFormer (S-Lab) y OSDFace (sin licencia) EXCLUIDOS del
+  build comercial por defecto (`VB_NO_COMERCIAL=1` los reactiva). FaithDiff confirmado
+  MIT → se mantiene.
+- ✅ **UI de máscara para IOPaint**: nuevo tab **«Borrar objetos»** (lienzo + LaMa).
+- ✅ Filtro **emulación de película** (cine: halation+bloom+viñeta) — probado en Mac.
+- ✅ Filtro **corrección de lente** (lenscorrection k1/k2) — probado en Mac.
+
+**PENDIENTE / bloqueado:**
+- **HDR / tone mapping**: ⛔ bloqueado — el FFmpeg de Homebrew no trae `zscale`/
+  `libplacebo`; requiere recompilar FFmpeg con libzimg+libplacebo.
+- **Igualar color** (entre tomas) y **balance de blancos auto**: necesitan input de
+  referencia / cv2 → más UI (siguiente tanda).
+- **DDColor MPS**: el script oficial cae a CPU en Mac; forzar MPS es arriesgado (ops no
+  soportadas) → pendiente de probar con cuidado.
+- **RIFE→v4.26**: cubierto en la práctica por **Practical-RIFE** (4.x) ya integrado.
+- **IC-Light**: funciona con dirección de luz por defecto; falta dropdown de dirección
+  (polish, NVIDIA-only).
+- **OSEDiff/DRCT** (modos SR rápido/fidelidad): opcional.
+- Verificar en la 4080 todos los motores GPU; confirmar licencia comercial de **DUT**
+  con el autor.
 
 ---
 
