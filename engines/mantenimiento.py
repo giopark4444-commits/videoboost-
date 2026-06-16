@@ -129,6 +129,61 @@ _GESTION = {
         borrar=[VENDOR / "EMA-VFI" / "ckpt", RAIZ / ".venv-emavfi" / ".ok"],
         instalador=["bash", "install/extras_ema_vfi.sh"],
     ),
+    "nafnet": dict(
+        repo=VENDOR / "NAFNet",
+        carpeta=VENDOR / "NAFNet" / "experiments" / "pretrained_models",
+        borrar=[VENDOR / "NAFNet" / "experiments" / "pretrained_models",
+                RAIZ / ".venv-nafnet" / ".ok"],
+        instalador=["bash", "install/extras_nafnet.sh"],
+    ),
+    "scunet": dict(
+        repo=VENDOR / "SCUNet",
+        carpeta=MODELS / "SCUNet",
+        borrar=[MODELS / "SCUNet", RAIZ / ".venv-scunet" / ".ok"],
+        instalador=["bash", "install/extras_scunet.sh"],
+    ),
+    "fbcnn": dict(
+        repo=VENDOR / "FBCNN",
+        carpeta=VENDOR / "FBCNN" / "model_zoo",
+        borrar=[VENDOR / "FBCNN" / "model_zoo", RAIZ / ".venv-fbcnn" / ".ok"],
+        instalador=["bash", "install/extras_fbcnn.sh"],
+    ),
+    "fftformer": dict(
+        repo=VENDOR / "FFTformer",
+        carpeta=VENDOR / "FFTformer" / "pretrain_model",
+        borrar=[RAIZ / ".venv-fftformer" / ".ok"],
+        instalador=["bash", "install/extras_fftformer.sh"],
+    ),
+    "dehazeformer": dict(
+        repo=VENDOR / "DehazeFormer",
+        carpeta=VENDOR / "DehazeFormer",
+        borrar=[RAIZ / ".venv-dehazeformer" / ".ok"],
+        instalador=["bash", "install/extras_dehazeformer.sh"],
+    ),
+    "hvi_cidnet": dict(
+        repo=VENDOR / "HVI-CIDNet",
+        carpeta=VENDOR / "HVI-CIDNet",
+        borrar=[RAIZ / ".venv-hvi_cidnet" / ".ok"],
+        instalador=["bash", "install/extras_hvi_cidnet.sh"],
+    ),
+    "darkir": dict(
+        repo=VENDOR / "DarkIR",
+        carpeta=VENDOR / "DarkIR",
+        borrar=[RAIZ / ".venv-darkir" / ".ok"],
+        instalador=["bash", "install/extras_darkir.sh"],
+    ),
+    "inspyrenet": dict(
+        repo=None,  # paquete pip transparent-background
+        carpeta=RAIZ / ".venv-inspyrenet",
+        borrar=[RAIZ / ".venv-inspyrenet" / ".ok"],
+        instalador=["bash", "install/extras_inspyrenet.sh"],
+    ),
+    "birefnet": dict(
+        repo=None,  # pesos de HuggingFace
+        carpeta=RAIZ / ".venv-birefnet",
+        borrar=[RAIZ / ".venv-birefnet" / ".ok"],
+        instalador=["bash", "install/extras_birefnet.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)

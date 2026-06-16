@@ -327,6 +327,42 @@ T = {
         "es": "HAT — super-resolución nítida x4 (NVIDIA)",
         "en": "HAT — sharp x4 super-resolution (NVIDIA)",
         "fr": "HAT — super-résolution nette x4 (NVIDIA)"},
+    "i_nafnet": {
+        "es": "NAFNet — denoise / deblur (Mac/NVIDIA)",
+        "en": "NAFNet — denoise / deblur (Mac/NVIDIA)",
+        "fr": "NAFNet — débruitage / déflou (Mac/NVIDIA)"},
+    "i_scunet": {
+        "es": "SCUNet — quitar ruido ciego (Mac/NVIDIA)",
+        "en": "SCUNet — blind denoise (Mac/NVIDIA)",
+        "fr": "SCUNet — débruitage aveugle (Mac/NVIDIA)"},
+    "i_fbcnn": {
+        "es": "FBCNN — quitar artefactos JPEG (Mac/NVIDIA)",
+        "en": "FBCNN — remove JPEG artifacts (Mac/NVIDIA)",
+        "fr": "FBCNN — enlever artefacts JPEG (Mac/NVIDIA)"},
+    "i_fftformer": {
+        "es": "FFTformer — deblur de movimiento (NVIDIA)",
+        "en": "FFTformer — motion deblur (NVIDIA)",
+        "fr": "FFTformer — déflou de mouvement (NVIDIA)"},
+    "i_dehazeformer": {
+        "es": "DehazeFormer — quitar neblina (Mac/NVIDIA)",
+        "en": "DehazeFormer — remove haze (Mac/NVIDIA)",
+        "fr": "DehazeFormer — enlever la brume (Mac/NVIDIA)"},
+    "i_hvi_cidnet": {
+        "es": "HVI-CIDNet — poca luz premium (Mac/NVIDIA)",
+        "en": "HVI-CIDNet — premium low-light (Mac/NVIDIA)",
+        "fr": "HVI-CIDNet — basse lumière premium (Mac/NVIDIA)"},
+    "i_darkir": {
+        "es": "DarkIR — noche extrema (Mac/NVIDIA)",
+        "en": "DarkIR — extreme night (Mac/NVIDIA)",
+        "fr": "DarkIR — nuit extrême (Mac/NVIDIA)"},
+    "i_inspyrenet": {
+        "es": "InSPyReNet — quitar fondo (Mac/NVIDIA)",
+        "en": "InSPyReNet — remove background (Mac/NVIDIA)",
+        "fr": "InSPyReNet — enlever le fond (Mac/NVIDIA)"},
+    "i_birefnet": {
+        "es": "BiRefNet — quitar fondo alta-res (Mac/NVIDIA)",
+        "en": "BiRefNet — remove background HR (Mac/NVIDIA)",
+        "fr": "BiRefNet — enlever le fond HR (Mac/NVIDIA)"},
     "n_restormer": {
         "es": "Transformer de restauración (MIT). Quita **desenfoque de movimiento y de "
               "enfoque, lluvia y ruido real** en una pasada determinista (no inventa textura). "
@@ -364,6 +400,69 @@ T = {
         "fr": "Super-résolution x4 très **nette et détaillée**, sans hallucinations de diffusion "
               "(Apache-2.0, SOTA CVPR'23). Plus rapide que SeedVR2, plus de détail que "
               "Real-ESRGAN. NVIDIA en pratique."},
+    "n_nafnet": {
+        "es": "Red simple sin difusión (MIT) que **quita ruido o desenfoque de movimiento** "
+              "(40.30 dB SIDD, supera a Restormer y más rápida). Corre en Mac (MPS) y NVIDIA.",
+        "en": "Simple no-diffusion net (MIT) that **removes noise or motion blur** (40.30 dB "
+              "SIDD, beats Restormer and faster). Runs on Mac (MPS) and NVIDIA.",
+        "fr": "Réseau simple sans diffusion (MIT) qui **enlève bruit ou flou de mouvement** "
+              "(40.30 dB SIDD, dépasse Restormer, plus rapide). Mac (MPS) et NVIDIA."},
+    "n_scunet": {
+        "es": "Quita **ruido real ciego** (no hay que estimar el nivel) de cámara/compresión "
+              "en una pasada, sin inventar textura (Apache-2.0). Ideal para ruido desconocido.",
+        "en": "Removes **blind real noise** (no level to estimate) from camera/compression in "
+              "one pass, no hallucinated texture (Apache-2.0). Great for unknown noise.",
+        "fr": "Enlève le **bruit réel aveugle** (sans estimer le niveau) de caméra/compression "
+              "en une passe, sans inventer de texture (Apache-2.0). Idéal pour bruit inconnu."},
+    "n_fbcnn": {
+        "es": "Quita **artefactos de compresión JPEG** (bloques, banding, mosquito) por IA, con "
+              "factor de calidad ciego o ajustable (Apache-2.0). Corre en Mac y NVIDIA.",
+        "en": "Removes **JPEG compression artifacts** (blocking, banding, mosquito) via AI, with "
+              "blind or adjustable quality factor (Apache-2.0). Runs on Mac and NVIDIA.",
+        "fr": "Enlève les **artefacts JPEG** (blocs, banding, moustique) par IA, facteur de "
+              "qualité aveugle ou réglable (Apache-2.0). Mac et NVIDIA."},
+    "n_fftformer": {
+        "es": "Transformer en frecuencia (MIT) para **desenfoque de movimiento** fuerte (34.21 dB "
+              "GoPro, SOTA). Determinista, no inventa textura. Solo NVIDIA en la práctica.",
+        "en": "Frequency-domain transformer (MIT) for strong **motion deblur** (34.21 dB GoPro, "
+              "SOTA). Deterministic, no hallucinated texture. NVIDIA in practice.",
+        "fr": "Transformer fréquentiel (MIT) pour le **flou de mouvement** fort (34.21 dB GoPro, "
+              "SOTA). Déterministe, sans inventer de texture. NVIDIA en pratique."},
+    "n_dehazeformer": {
+        "es": "Quita **neblina/calima atmosférica** y recupera detalle y color bajo niebla "
+              "(MIT, >40 dB SOTS). Corre en Mac (MPS) y NVIDIA.",
+        "en": "Removes **atmospheric haze/fog** and recovers detail and color (MIT, >40 dB "
+              "SOTS). Runs on Mac (MPS) and NVIDIA.",
+        "fr": "Enlève la **brume/brouillard atmosphérique** et récupère détail et couleur "
+              "(MIT, >40 dB SOTS). Mac (MPS) et NVIDIA."},
+    "n_hvi_cidnet": {
+        "es": "**Poca luz premium** (MIT): ganador NTIRE'25, mejor que Retinexformer en LOLv2. "
+              "Aclara fotos nocturnas/oscuras con color fiel. Mac (MPS) y NVIDIA.",
+        "en": "**Premium low-light** (MIT): NTIRE'25 winner, beats Retinexformer on LOLv2. "
+              "Brightens night/dark photos with faithful color. Mac (MPS) and NVIDIA.",
+        "fr": "**Basse lumière premium** (MIT) : gagnant NTIRE'25, dépasse Retinexformer sur "
+              "LOLv2. Éclaircit les photos nocturnes avec couleur fidèle. Mac (MPS) et NVIDIA."},
+    "n_darkir": {
+        "es": "**Noche extrema** (MIT): corrige luz + ruido + **desenfoque** de poca luz en una "
+              "sola pasada (todo-en-uno). Modelos ligeros → rápido en Mac (MPS) y NVIDIA.",
+        "en": "**Extreme night** (MIT): fixes light + noise + **blur** of low light in one pass "
+              "(all-in-one). Lightweight → fast on Mac (MPS) and NVIDIA.",
+        "fr": "**Nuit extrême** (MIT) : corrige lumière + bruit + **flou** de basse lumière en "
+              "une passe (tout-en-un). Léger → rapide sur Mac (MPS) et NVIDIA."},
+    "n_inspyrenet": {
+        "es": "**Quita el fondo** de la imagen (matting) y deja un PNG con transparencia (MIT). "
+              "Rápido y de buena calidad; **funciona en tu Mac (MPS)** y en NVIDIA.",
+        "en": "**Removes the background** (matting) leaving a transparent PNG (MIT). Fast and "
+              "good quality; **works on your Mac (MPS)** and NVIDIA.",
+        "fr": "**Enlève le fond** (matting) en laissant un PNG transparent (MIT). Rapide et de "
+              "bonne qualité ; **fonctionne sur ton Mac (MPS)** et NVIDIA."},
+    "n_birefnet": {
+        "es": "**Quita el fondo en alta resolución** con bordes/pelo muy finos (matting HR, MIT). "
+              "Más calidad que InSPyReNet en detalle. Mac (MPS) y NVIDIA.",
+        "en": "**Removes the background at high resolution** with very fine edges/hair (HR "
+              "matting, MIT). More detail than InSPyReNet. Mac (MPS) and NVIDIA.",
+        "fr": "**Enlève le fond en haute résolution** avec bords/cheveux très fins (matting HR, "
+              "MIT). Plus de détail qu'InSPyReNet. Mac (MPS) et NVIDIA."},
     "rest_tarea": {"es": "Tarea (Restormer)", "en": "Task (Restormer)", "fr": "Tâche (Restormer)"},
     "rest_motion_deblurring": {
         "es": "Quitar desenfoque de movimiento", "en": "Motion deblur", "fr": "Flou de mouvement"},
