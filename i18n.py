@@ -225,6 +225,18 @@ T = {
         "es": "FlashVSR — modo rápido (experimental, NVIDIA)",
         "en": "FlashVSR — fast mode (experimental, NVIDIA)",
         "fr": "FlashVSR — mode rapide (expérimental, NVIDIA)"},
+    "m_practical_rife": {
+        "es": "Practical-RIFE — slow-mo IA (Mac/NVIDIA)",
+        "en": "Practical-RIFE — AI slow-mo (Mac/NVIDIA)",
+        "fr": "Practical-RIFE — slow-mo IA (Mac/NVIDIA)"},
+    "m_film": {
+        "es": "FILM — slow-mo movimiento grande (NVIDIA)",
+        "en": "FILM — large-motion slow-mo (NVIDIA)",
+        "fr": "FILM — slow-mo grand mouvement (NVIDIA)"},
+    "m_ema_vfi": {
+        "es": "EMA-VFI — interpolación SOTA (NVIDIA)",
+        "en": "EMA-VFI — SOTA interpolation (NVIDIA)",
+        "fr": "EMA-VFI — interpolation SOTA (NVIDIA)"},
 
     # ---- nombres de motores (imagen) ----
     "i_faithdiff": {
@@ -560,6 +572,33 @@ T = {
               "— run it after upscaling for the “full Topaz” effect.",
         "fr": "Multiplie les fps (30→60/120) en interpolant des images. **Ne change pas la "
               "résolution** — à lancer après l'upscale pour l'effet « Topaz complet »."},
+    "n_practical_rife": {
+        "es": "RIFE moderno (4.x) por IA: inventa fotogramas intermedios para **cámara lenta** "
+              "(o más fps). Gran salto sobre el RIFE clásico. Corre en Mac (MPS) y NVIDIA. "
+              "Usa el factor de abajo (x2/x4). MIT.",
+        "en": "Modern AI RIFE (4.x): invents in-between frames for **slow motion** (or more fps). "
+              "Big jump over classic RIFE. Runs on Mac (MPS) and NVIDIA. Use the factor below "
+              "(x2/x4). MIT.",
+        "fr": "RIFE moderne (4.x) par IA : invente des images intermédiaires pour le **ralenti** "
+              "(ou plus de fps). Grand saut sur le RIFE classique. Mac (MPS) et NVIDIA. Facteur "
+              "ci-dessous (x2/x4). MIT."},
+    "n_film": {
+        "es": "FILM (Google): el **rey del movimiento grande**. Inventa fotogramas intermedios "
+              "fotorrealistas incluso con desplazamientos amplios → **slow-mo dramático**. "
+              "TensorFlow: solo NVIDIA en la práctica. Apache-2.0.",
+        "en": "FILM (Google): **king of large motion**. Invents photorealistic in-between frames "
+              "even with big displacements → **dramatic slow-mo**. TensorFlow: NVIDIA in practice. "
+              "Apache-2.0.",
+        "fr": "FILM (Google) : **roi du grand mouvement**. Invente des images intermédiaires "
+              "photoréalistes même avec de grands déplacements → **ralenti spectaculaire**. "
+              "TensorFlow : NVIDIA en pratique. Apache-2.0."},
+    "n_ema_vfi": {
+        "es": "Interpolación de frames de **calidad SOTA** con tiempo arbitrario (CVPR 2023). "
+              "Fotogramas intermedios muy limpios para slow-mo. PyTorch: solo NVIDIA. Apache-2.0.",
+        "en": "**SOTA-quality** frame interpolation with arbitrary time (CVPR 2023). Very clean "
+              "in-between frames for slow-mo. PyTorch: NVIDIA only. Apache-2.0.",
+        "fr": "Interpolation d'images de **qualité SOTA** à temps arbitraire (CVPR 2023). Images "
+              "intermédiaires très propres pour le ralenti. PyTorch : NVIDIA. Apache-2.0."},
     "n_flashvsr": {
         "es": "Super-resolución casi en tiempo real (CVPR 2026). Para horas de material. "
               "Experimental: si falla, usa SeedVR2.",

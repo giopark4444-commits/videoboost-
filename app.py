@@ -22,10 +22,11 @@ import hardware
 import licencias
 import ui_theme
 from engines import ffmpeg_utils as ff
-from engines import (color, diffbir, dreamclear, faces, faithdiff, filtros,
-                     flashvsr, grano, hat, instantir, luts, mantenimiento,
-                     metalfx, osdface, pmrf, realesrgan_mlx, restormer,
-                     retinexformer, seedvr2, seedvr2_mlx, vulkan)
+from engines import (color, diffbir, dreamclear, ema_vfi, faces, faithdiff,
+                     film, filtros, flashvsr, grano, hat, instantir, luts,
+                     mantenimiento, metalfx, osdface, pmrf, practical_rife,
+                     realesrgan_mlx, restormer, retinexformer, seedvr2,
+                     seedvr2_mlx, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
@@ -37,6 +38,7 @@ MOTORES_VIDEO_NOTAS = {
     "seedvr2": "n_seedvr2", "seedvr2_mlx": "n_seedvr2_mlx", "metalfx": "n_metalfx",
     "realesrgan": "n_realesrgan", "realcugan": "n_realcugan",
     "waifu2x": "n_waifu2x", "rife": "n_rife", "flashvsr": "n_flashvsr",
+    "practical_rife": "n_practical_rife", "film": "n_film", "ema_vfi": "n_ema_vfi",
     "grano": "n_grano", "lut": "n_lut",
     "desentrelazar": "n_desentrelazar", "denoise": "n_denoise",
     "estabilizar": "n_estabilizar",
@@ -333,6 +335,12 @@ def hacer_procesar_video(lang):
                 gen = metalfx.mejorar(video, escala=int(escala))
             elif motor == "rife":
                 gen = vulkan.interpolar_video(video, mult=int(mult))
+            elif motor == "practical_rife":
+                gen = practical_rife.interpolar(video, mult=int(mult))
+            elif motor == "film":
+                gen = film.interpolar(video, mult=int(mult))
+            elif motor == "ema_vfi":
+                gen = ema_vfi.interpolar(video, mult=int(mult))
             elif motor == "flashvsr":
                 gen = flashvsr.mejorar(video)
             else:
@@ -812,6 +820,12 @@ def texto_sistema(lang):
          "bash install/extras_dreamclear.sh", True),
         ("HAT — super-resolución nítida (Apache-2.0)", hat.disponible(),
          "bash install/extras_hat.sh", True),
+        ("Practical-RIFE — slow-mo / interpolación (MIT)", practical_rife.disponible(),
+         "bash install/extras_practical_rife.sh", False),
+        ("FILM — slow-mo movimiento grande (Apache-2.0)", film.disponible(),
+         "bash install/extras_film.sh", True),
+        ("EMA-VFI — interpolación SOTA (Apache-2.0)", ema_vfi.disponible(),
+         "bash install/extras_ema_vfi.sh", True),
     ]
     listos, instalables, no_aplican = [], [], []
     for nombre, ok, inst, solo_nvidia in motores:
@@ -852,6 +866,11 @@ def motores_video():
     m = (sv2 + vk) if HW["cuda"] else (vk + mlx + mfx + sv2)
     if HW["flashvsr"] and flashvsr.disponible():
         m.append("flashvsr")
+    # Motores de interpolación de frames (slow-mo); aparecen si están instalados.
+    for vfi, mod in (("practical_rife", practical_rife), ("film", film),
+                     ("ema_vfi", ema_vfi)):
+        if mod.disponible():
+            m.append(vfi)
     return m or ["realesrgan"]  # que la UI nunca quede vacía
 
 
@@ -1226,7 +1245,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(value=_nota_video(motor, lang)),
                     gr.update(visible=motor in ("realesrgan", "realcugan", "waifu2x", "metalfx")),
                     gr.update(visible=motor in ("realcugan", "waifu2x")),
-                    gr.update(visible=motor == "rife"),
+                    gr.update(visible=motor in ("rife", "practical_rife", "film", "ema_vfi")),
                     gr.update(visible=motor in ("seedvr2", "seedvr2_mlx")),
                 )
 
@@ -1511,11 +1530,15 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 "retinexformer": "Retinexformer — poca luz (MIT)",
                 "dreamclear": "DreamClear — restauración real (Apache-2.0)",
                 "hat": "HAT — super-resolución nítida (Apache-2.0)",
+                "practical_rife": "Practical-RIFE — slow-mo / interpolación (MIT)",
+                "film": "FILM — slow-mo movimiento grande (Apache-2.0)",
+                "ema_vfi": "EMA-VFI — interpolación SOTA (Apache-2.0)",
             }
             # Motores de difusión SD → en la práctica solo NVIDIA; en Mac se
             # muestran en mantenimiento solo si ya están instalados.
             _MANT_NVIDIA = {"diffbir", "pmrf", "osdface", "flashvsr",
-                            "restormer", "retinexformer", "dreamclear", "hat"}
+                            "restormer", "retinexformer", "dreamclear", "hat",
+                            "film", "ema_vfi"}
 
             def _mant_aplica(m):
                 if m == "seedvr2":

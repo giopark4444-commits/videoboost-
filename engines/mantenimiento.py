@@ -111,6 +111,24 @@ _GESTION = {
                 RAIZ / ".venv-hat" / ".ok"],
         instalador=["bash", "install/extras_hat.sh"],
     ),
+    "practical_rife": dict(
+        repo=VENDOR / "Practical-RIFE",
+        carpeta=VENDOR / "Practical-RIFE" / "train_log",
+        borrar=[RAIZ / ".venv-prife" / ".ok"],
+        instalador=["bash", "install/extras_practical_rife.sh"],
+    ),
+    "film": dict(
+        repo=VENDOR / "frame-interpolation",
+        carpeta=MODELS / "FILM",
+        borrar=[MODELS / "FILM", RAIZ / ".venv-film" / ".ok"],
+        instalador=["bash", "install/extras_film.sh"],
+    ),
+    "ema_vfi": dict(
+        repo=VENDOR / "EMA-VFI",
+        carpeta=VENDOR / "EMA-VFI" / "ckpt",
+        borrar=[VENDOR / "EMA-VFI" / "ckpt", RAIZ / ".venv-emavfi" / ".ok"],
+        instalador=["bash", "install/extras_ema_vfi.sh"],
+    ),
 }
 
 MOTORES = list(_GESTION)
