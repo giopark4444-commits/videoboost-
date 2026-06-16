@@ -985,6 +985,25 @@ _JS_CARGA = """() => {
       if (first && e.clientX < first.getBoundingClientRect().left) irAPestana(first);
     });
   }
+  // El icono pequeño "Upload file" (junto al de webcam) solo selecciona el modo,
+  // que ya está activo, así que parece muerto. Hacemos que también ABRA el selector
+  // de archivo (disparando el área grande de carga). Delegado para sobrevivir a los
+  // re-render de @gr.render.
+  if (!window.__vbUploadFix) {
+    window.__vbUploadFix = true;
+    document.addEventListener('click', (e) => {
+      const ic = e.target && e.target.closest && e.target.closest('.source-selection button');
+      if (!ic) return;
+      const lbl = (ic.getAttribute('aria-label') || '').toLowerCase();
+      if (!lbl.includes('upload')) return;          // solo el icono de subir
+      const comp = ic.closest('.vb-upload');
+      if (!comp) return;
+      setTimeout(() => {
+        const big = comp.querySelector('button.boundedheight');
+        if (big) big.click();                        // abre el diálogo de archivo
+      }, 40);
+    });
+  }
 }""" % (ui_theme.temas_js(), ui_theme.fuentes_js(),
         ui_theme.TEMA_DEFECTO, ui_theme.FUENTE_DEFECTO)
 
