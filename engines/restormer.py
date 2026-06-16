@@ -98,3 +98,25 @@ def mejorar(entrada, tarea="Motion_Deblurring"):
         return str(salida)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def procesar_carpeta(in_dir, out_dir, tarea="Real_Denoising"):
+    """Procesa TODA una carpeta de imágenes con UNA sola carga del modelo (para
+    aplicar Restormer fotograma a fotograma a un video). Los resultados quedan en
+    `out_dir/<tarea>/`. Generador: cede líneas de log.
+    """
+    if not disponible():
+        raise RuntimeError("Restormer no está instalado. Corre install/extras_restormer.sh.")
+    if tarea not in TAREAS:
+        raise RuntimeError(f"Tarea Restormer desconocida: {tarea}.")
+    if not (RESTORMER_DIR / PESOS[tarea]).exists():
+        raise RuntimeError(f"Faltan los pesos de '{tarea}' ({PESOS[tarea]}).")
+    py = python_venv(".venv-restormer", "install/extras_restormer.sh")
+    cmd = [
+        py, "demo.py",
+        "--task", tarea,
+        "--input_dir", str(in_dir),
+        "--result_dir", str(out_dir),
+    ]
+    yield f"🚀 Restormer · {tarea} · carpeta (una carga del modelo)"
+    yield from correr(cmd, cwd=RESTORMER_DIR)

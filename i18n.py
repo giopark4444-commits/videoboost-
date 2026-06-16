@@ -832,6 +832,18 @@ T = {
         "es": "Corregir lente — distorsión (FFmpeg)",
         "en": "Lens correction — distortion (FFmpeg)",
         "fr": "Correction d'objectif — distorsion (FFmpeg)"},
+    "m_ia": {
+        "es": "✨ Mejora IA por fotograma (NVIDIA)",
+        "en": "✨ AI enhance per frame (NVIDIA)",
+        "fr": "✨ Amélioration IA par image (NVIDIA)"},
+    "ia_modelo": {"es": "Modelo de IA", "en": "AI model", "fr": "Modèle IA"},
+    "ia_ruido": {"es": "Quitar ruido (Restormer)", "en": "Denoise (Restormer)",
+                 "fr": "Débruiter (Restormer)"},
+    "ia_desenfoque": {"es": "Quitar desenfoque (Restormer)",
+                      "en": "Deblur (Restormer)", "fr": "Déflouter (Restormer)"},
+    "ia_poca_luz": {"es": "Mejorar poca luz (Retinexformer)",
+                    "en": "Low-light (Retinexformer)",
+                    "fr": "Basse lumière (Retinexformer)"},
     "lente_k1": {
         "es": "Distorsión k1 (− barril / + cojín)",
         "en": "Distortion k1 (− barrel / + pincushion)",
@@ -868,6 +880,18 @@ T = {
         "fr": "Donne un **rendu cinéma** : *halation* (lueur rougeâtre sur les hautes lumières), "
               "*bloom* (diffusion des éclats) et vignettage optique. CPU/FFmpeg, sans GPU. À "
               "combiner avec les LUT et le grain."},
+    "n_ia": {
+        "es": "Aplica un **modelo de IA fotograma a fotograma** al video: quitar ruido o "
+              "desenfoque (Restormer) o mejorar poca luz (Retinexformer). Calidad muy "
+              "superior a los filtros de FFmpeg. **Lento y requiere NVIDIA** (instala el "
+              "modelo en Sistema); procesa todos los frames con una sola carga del modelo.",
+        "en": "Applies an **AI model frame-by-frame** to the video: denoise or deblur "
+              "(Restormer) or low-light (Retinexformer). Far higher quality than the FFmpeg "
+              "filters. **Slow and needs NVIDIA** (install the model in System); processes all "
+              "frames with a single model load.",
+        "fr": "Applique un **modèle IA image par image** à la vidéo : débruiter ou déflouter "
+              "(Restormer) ou basse lumière (Retinexformer). Bien meilleure qualité que les "
+              "filtres FFmpeg. **Lent et nécessite NVIDIA** (installe le modèle dans Système)."},
     "n_lente": {
         "es": "Corrige la **distorsión de lente** (barril/cojín) con el filtro nativo "
               "`lenscorrection` de FFmpeg. Ajusta k1 (negativo para ojo de pez) y k2 (fino). "

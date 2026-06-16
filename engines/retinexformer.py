@@ -117,3 +117,37 @@ def mejorar(entrada):
         return str(salida)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def procesar_carpeta(in_dir, out_dir):
+    """Procesa TODA una carpeta de imágenes (frames de un video) con UNA carga del
+    modelo. Los resultados (mismos nombres) quedan en `out_dir`. Generador: log.
+    """
+    import hardware
+
+    if not disponible():
+        raise RuntimeError("Retinexformer no está instalado. Corre install/extras_retinexformer.sh.")
+    in_dir, out_dir = Path(in_dir), Path(out_dir)
+    py = python_venv(".venv-retinexformer", "install/extras_retinexformer.sh")
+    device = "cuda" if hardware.info_sistema()["cuda"] else "cpu"
+
+    # El script exige lq_dir y gt_dir; usamos la MISMA carpeta de frames para ambos
+    # (el GT solo evita que falle la carga de métricas).
+    tmp = Path(tempfile.mkdtemp(prefix="videoboost_retinex_vid_"))
+    yaml_tmp = tmp / "config.yml"
+    _parchear_yaml(RETINEXFORMER_DIR / CONFIG, in_dir, in_dir, yaml_tmp)
+    cmd = [
+        py, "Enhancement/test_from_dataset.py",
+        "--opt", yaml_tmp,
+        "--weights", PESO,
+        "--dataset", DATASET,
+        "--output_dir", str(out_dir),
+        "--gpus", "0" if device == "cuda" else "-1",
+    ]
+    try:
+        yield f"🌙 Retinexformer · poca luz · carpeta · {device}"
+        if device != "cuda":
+            yield "⚠️ Sin CUDA corre por CPU (muy lento). Pensado para NVIDIA."
+        yield from correr(cmd, cwd=RETINEXFORMER_DIR)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
