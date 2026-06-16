@@ -1,9 +1,9 @@
 @echo off
-REM VideoBoost - Instalador para Windows con GPU NVIDIA (ej. RTX 4080).
+REM PixelBooster - Instalador para Windows con GPU NVIDIA (ej. RTX 4080).
 REM Instala: entorno Python, PyTorch CUDA, SeedVR2, motores Vulkan y FFmpeg.
 cd /d "%~dp0\.."
 
-echo == VideoBoost - instalador para Windows + NVIDIA ==
+echo == PixelBooster - instalador para Windows + NVIDIA ==
 
 where python >nul 2>nul
 if errorlevel 1 (

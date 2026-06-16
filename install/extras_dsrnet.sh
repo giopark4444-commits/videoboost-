@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DSRNet (Apache-2.0) — eliminación de reflejos en una sola imagen
+# PixelBooster · DSRNet (Apache-2.0) — eliminación de reflejos en una sola imagen
 # (single image reflection removal). Red convolucional: corre en NVIDIA y también
 # en CPU (Mac Apple Silicon), suficiente para una imagen. Venv propio.
 # Los pesos están en Google Drive → patrón DSRNET_GDRIVE (gdown) o manual; NO se

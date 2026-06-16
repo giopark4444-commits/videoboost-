@@ -1,6 +1,6 @@
-# Guía de instalación y prueba de VideoBoost
+# Guía de instalación y prueba de PixelBooster
 
-Paso a paso para poner VideoBoost a funcionar en tus dos máquinas:
+Paso a paso para poner PixelBooster a funcionar en tus dos máquinas:
 **PC con RTX 4080 (Windows)** y **Mac M4**. Empieza por el PC: es donde
 corren TODOS los motores (los de solo-CUDA — FaithDiff, InstantIR, FlashVSR —
 únicamente funcionan ahí).
@@ -48,7 +48,7 @@ el resto y lo avisa al final.
 > *Más información* → *Ejecutar de todas formas*.
 
 ### 1.4 Arrancar la app
-Doble clic en `VideoBoost.bat` (o `python app.py` con el venv activado).
+Doble clic en `PixelBooster.bat` (o `python app.py` con el venv activado).
 Se abre solo en el navegador.
 
 ### 1.5 Configuración recomendada (ya viene por defecto)
@@ -72,7 +72,7 @@ Se abre solo en el navegador.
 git clone https://github.com/giopark4444-commits/videoboost-
 cd videoboost-
 ```
-Doble clic en **`INSTALAR_TODO.command`**, luego en `VideoBoost.command`.
+Doble clic en **`INSTALAR_TODO.command`**, luego en `PixelBooster.command`.
 
 ### 2.3 Diferencias clave del Mac (memoria unificada / MPS)
 - **NO** se usa fp8 → en MPS va fp16 o GGUF.

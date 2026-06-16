@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · MetalFX Spatial — escalado de video NATIVO de Apple Silicon vía el
+# PixelBooster · MetalFX Spatial — escalado de video NATIVO de Apple Silicon vía el
 # CLI de dominio público (CC0) finnvoor/fx-upscale. Lo clonamos en vendor/ y lo
 # compilamos con Swift. Solo Mac con chip Apple (MetalFX no existe en NVIDIA/Linux).
 set -euo pipefail

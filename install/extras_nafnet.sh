@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · NAFNet (MIT) — denoise (SIDD) + deblur (GoPro) por imagen, red
+# PixelBooster · NAFNet (MIT) — denoise (SIDD) + deblur (GoPro) por imagen, red
 # simple sin difusión. Funciona en Mac (MPS/CPU) y en NVIDIA/CUDA. Venv propio.
 #
 # Los pesos están en Google Drive. Patrón NAFNET_GDRIVE: si gdown está disponible

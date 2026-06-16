@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · FlashVSR (CVPR 2026) — modo rápido EXPERIMENTAL. Solo NVIDIA:
+# PixelBooster · FlashVSR (CVPR 2026) — modo rápido EXPERIMENTAL. Solo NVIDIA:
 # usa kernels CUDA de atención dispersa que no existen para Mac.
 set -euo pipefail
 cd "$(dirname "$0")/.."

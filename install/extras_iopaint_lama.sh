@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · IOPaint + LaMa (ambos Apache-2.0) — borrar objetos de imágenes por
+# PixelBooster · IOPaint + LaMa (ambos Apache-2.0) — borrar objetos de imágenes por
 # inpainting (imagen + máscara). Corre en CPU, CUDA (RTX 4080) y MPS (Mac M).
 # IOPaint es un paquete pip: NO se clona repo, se instala "iopaint" en su venv.
 set -euo pipefail

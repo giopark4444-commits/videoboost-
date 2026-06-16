@@ -1,5 +1,5 @@
 @echo off
-REM VideoBoost - InstantIR: restauracion de imagenes instantanea (Apache 2.0).
+REM PixelBooster - InstantIR: restauracion de imagenes instantanea (Apache 2.0).
 REM SOLO NVIDIA/CUDA. Construido sobre SDXL + DINOv2.
 cd /d "%~dp0\.."
 

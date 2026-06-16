@@ -1,4 +1,4 @@
-# VideoBoost · Contexto para Claude Code
+# PixelBooster · Contexto para Claude Code
 
 App Gradio (español/inglés/francés) para mejorar videos e imágenes con IA, 100% local.
 Dos plataformas objetivo del dueño: **Mac con chip M** (uso principal) y **PC con

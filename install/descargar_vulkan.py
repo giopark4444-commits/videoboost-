@@ -115,7 +115,7 @@ def instalar_ffmpeg_windows():
 
 
 if __name__ == "__main__":
-    print(f"== VideoBoost · binarios Vulkan para {OS_KEY} ==")
+    print(f"== PixelBooster · binarios Vulkan para {OS_KEY} ==")
     BIN.mkdir(exist_ok=True)
     for nombre, url in MOTORES.items():
         instalar_motor(nombre, url)

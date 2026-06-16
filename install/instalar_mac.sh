@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# VideoBoost · Instalador para Mac con chip M (Apple Silicon).
+# PixelBooster · Instalador para Mac con chip M (Apple Silicon).
 # Instala: ffmpeg, entorno Python, PyTorch (MPS/Metal), SeedVR2 y motores Vulkan.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "== VideoBoost · instalador para Mac (Apple Silicon) =="
+echo "== PixelBooster · instalador para Mac (Apple Silicon) =="
 
 # 1. FFmpeg: ya no es obligatorio instalarlo a mano — viene por pip
 #    (imageio-ffmpeg en requirements.txt). Si Homebrew ya lo tiene, mejor (trae

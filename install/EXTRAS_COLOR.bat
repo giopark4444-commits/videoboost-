@@ -1,5 +1,5 @@
 @echo off
-REM VideoBoost - DDColor: colorizacion de imagenes B/N (el "colorize model" tipo HitPaw).
+REM PixelBooster - DDColor: colorizacion de imagenes B/N (el "colorize model" tipo HitPaw).
 cd /d "%~dp0\.."
 
 echo == DDColor (colorizacion de imagenes) ==

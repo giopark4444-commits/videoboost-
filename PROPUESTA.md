@@ -1,4 +1,4 @@
-# VideoBoost · Propuesta v2 — Lo mejor de lo mejor (junio 2026)
+# PixelBooster · Propuesta v2 — Lo mejor de lo mejor (junio 2026)
 
 > Reemplaza el plan de la sesión anterior ("Mejorador de Video con IA Local").
 > Objetivo: calidad **nivel Topaz o superior**, 100% local y gratis, para video **e imágenes**.

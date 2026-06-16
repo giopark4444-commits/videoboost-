@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · IC-Light v1 (lllyasviel, Apache-2.0) — re-iluminación (relighting)
+# PixelBooster · IC-Light v1 (lllyasviel, Apache-2.0) — re-iluminación (relighting)
 # de imágenes por difusión sobre Stable Diffusion 1.5. Pensado para NVIDIA; en Mac
 # corre por CPU/MPS (impráctico de lento). Venv propio.
 #

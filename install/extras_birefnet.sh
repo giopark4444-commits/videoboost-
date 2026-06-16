@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · BiRefNet (ZhengPeng7, MIT) — matting de ALTA RESOLUCIÓN (recorta el
+# PixelBooster · BiRefNet (ZhengPeng7, MIT) — matting de ALTA RESOLUCIÓN (recorta el
 # sujeto y deja PNG con alpha suave). PyTorch + transformers; corre en NVIDIA
 # (CUDA) y en Apple Silicon (MPS). Venv propio .venv-birefnet.
 set -euo pipefail

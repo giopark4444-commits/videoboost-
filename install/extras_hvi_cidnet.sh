@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · HVI-CIDNet (MIT) — realce de poca luz (low-light), ganador NTIRE 2025
+# PixelBooster · HVI-CIDNet (MIT) — realce de poca luz (low-light), ganador NTIRE 2025
 # / CVPR 2025. CIDNet es una CNN ligera, así que corre en NVIDIA y en Mac (MPS/CPU).
 # Venv propio .venv-hvi_cidnet. Los pesos se bajan de HuggingFace en el primer uso.
 set -euo pipefail

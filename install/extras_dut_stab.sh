@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DUT (Annbless/DUTCode, MIT) — estabilización de VIDEO por IA.
+# PixelBooster · DUT (Annbless/DUTCode, MIT) — estabilización de VIDEO por IA.
 # Pensado para NVIDIA/CUDA (el script hace .cuda() y PWCNet usa cupy). Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

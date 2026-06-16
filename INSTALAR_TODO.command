@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · doble clic para instalar TODO de una vez (Mac Apple Silicon).
+# PixelBooster · doble clic para instalar TODO de una vez (Mac Apple Silicon).
 # Hazle doble clic en el Finder. (Si macOS lo bloquea: clic derecho › Abrir.)
 # Instala la base y todos los motores compatibles con tu Mac. Tarda un buen
 # rato y baja varios GB; déjalo trabajando.

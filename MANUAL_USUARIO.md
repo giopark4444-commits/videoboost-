@@ -1,4 +1,4 @@
-# VideoBoost · Manual de inicio
+# PixelBooster · Manual de inicio
 
 Mejora videos e imágenes con IA, **100% en tu computadora**: tus archivos nunca
 salen de tu máquina, sin suscripciones ni internet (salvo la instalación).
@@ -15,15 +15,15 @@ salen de tu máquina, sin suscripciones ni internet (salvo la instalación).
 Hay **dos formas**, elige una:
 
 **A) Rápida — solo lo esencial** (video + SeedVR2 + Vulkan):
-1. Descomprime VideoBoost donde quieras.
-2. Doble clic en **`VideoBoost.bat`** (Windows) o **`VideoBoost.command`** (Mac).
+1. Descomprime PixelBooster donde quieras.
+2. Doble clic en **`PixelBooster.bat`** (Windows) o **`PixelBooster.command`** (Mac).
    La primera vez instala el núcleo y al terminar abre la app sola.
 
 **B) Completa — TODOS los motores** (restauración de imagen, caras, color…):
 1. Doble clic en **`INSTALAR_TODO.bat`** (Windows) o **`INSTALAR_TODO.command`** (Mac).
 2. Instala la base y todos los motores compatibles con tu máquina, uno tras otro.
    Si alguno falla, avisa y sigue con los demás (terminas con todo lo que sí pudo).
-3. Después arranca normal con `VideoBoost.bat` / `VideoBoost.command`.
+3. Después arranca normal con `PixelBooster.bat` / `PixelBooster.command`.
 
 En ambos casos:
 - *Windows:* si aparece el aviso azul de SmartScreen → "Más información" → "Ejecutar de todas formas".
@@ -39,7 +39,7 @@ vez y no necesita internet.
 
 ## Uso diario
 
-Doble clic en `VideoBoost.bat` / `VideoBoost.command` → se abre en el navegador.
+Doble clic en `PixelBooster.bat` / `PixelBooster.command` → se abre en el navegador.
 
 - **Pestaña Video:** sube tu video, elige motor (SeedVR2 es el recomendado para
   restaurar), pulsa *Mejorar video*. El progreso se ve en vivo.
@@ -58,7 +58,7 @@ Flujo recomendado: **Restaurar → Revelado → Grano.**
 
 ## Si algo no va
 
-- **"Falta Python"** → instálalo desde python.org y vuelve a abrir VideoBoost.
+- **"Falta Python"** → instálalo desde python.org y vuelve a abrir PixelBooster.
 - **La primera mejora tarda mucho en empezar** → está descargando un modelo;
   solo pasa la primera vez con cada motor.
 - **Memoria insuficiente en video** → baja la resolución objetivo o los

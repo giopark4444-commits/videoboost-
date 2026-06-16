@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · CodeFormer — restauración de caras (el "face model" tipo HitPaw).
+# PixelBooster · CodeFormer — restauración de caras (el "face model" tipo HitPaw).
 # Entorno propio porque basicsr/facexlib chocan con diffusers de FaithDiff/SeedVR2.
 # Funciona en CUDA (NVIDIA) y MPS (Mac con chip M).
 set -euo pipefail

@@ -1,4 +1,4 @@
-"""Panel de administración de licencias VideoBoost — uso exclusivo del vendedor.
+"""Panel de administración de licencias PixelBooster — uso exclusivo del vendedor.
 
 Genera y verifica claves de licencia Ed25519 firmadas offline.
 Requiere que `clave_privada.pem` exista en la carpeta del proyecto
@@ -90,9 +90,9 @@ CSS = """
 # Gradio 6 movió css del constructor a launch(); 4.x/5.x lo aceptan en Blocks().
 _GR6 = int(gr.__version__.split(".")[0]) >= 6
 
-with gr.Blocks(title="VideoBoost — Admin Licencias",
+with gr.Blocks(title="PixelBooster — Admin Licencias",
                **({} if _GR6 else dict(css=CSS))) as admin:
-    gr.HTML('<div class="admin-title">🔑 VideoBoost — Panel de licencias</div>'
+    gr.HTML('<div class="admin-title">🔑 PixelBooster — Panel de licencias</div>'
             '<div class="admin-note">Solo para uso del vendedor. '
             'No compartas esta herramienta.</div>')
 

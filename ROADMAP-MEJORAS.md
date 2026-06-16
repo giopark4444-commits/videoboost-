@@ -1,4 +1,4 @@
-# VideoBoost — Hoja de ruta de mejoras (futuro)
+# PixelBooster — Hoja de ruta de mejoras (futuro)
 
 > Backlog de capacidades a añadir/mejorar, salido del barrido multi-agente del
 > 2026-06-15 (20 categorías de mejora de imagen/video investigadas con licencia

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DDColor — colorización de imágenes B/N (el "colorize model" tipo HitPaw).
+# PixelBooster · DDColor — colorización de imágenes B/N (el "colorize model" tipo HitPaw).
 # CUDA en NVIDIA; en Mac corre en CPU (más lento pero funciona). Entorno propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

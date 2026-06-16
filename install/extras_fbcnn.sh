@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · FBCNN (ICCV 2021, Apache-2.0) — quita artefactos de compresión JPEG
+# PixelBooster · FBCNN (ICCV 2021, Apache-2.0) — quita artefactos de compresión JPEG
 # con Factor de Calidad ajustable. CNN ligera: funciona en Mac (MPS) y NVIDIA
 # (CUDA). Venv propio. Los pesos vienen de los releases del repo (no Google Drive).
 set -euo pipefail

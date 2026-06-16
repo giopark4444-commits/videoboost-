@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · FaithDiff — restauración fiel de imágenes (MIT, uso comercial libre).
+# PixelBooster · FaithDiff — restauración fiel de imágenes (MIT, uso comercial libre).
 # SOLO NVIDIA/CUDA. Construido sobre SDXL. No descarga LLaVA (no hace falta).
 set -euo pipefail
 cd "$(dirname "$0")/.."

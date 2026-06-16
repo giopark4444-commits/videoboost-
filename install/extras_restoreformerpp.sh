@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · RestoreFormer++ (Apache-2.0) — restauración de CARAS, reemplazo
+# PixelBooster · RestoreFormer++ (Apache-2.0) — restauración de CARAS, reemplazo
 # comercial-limpio de CodeFormer. Funciona en NVIDIA (CUDA) y en Mac Apple
 # Silicon (cae a CPU). Venv propio. Los pesos se auto-descargan de los releases
 # de GitHub en el primer uso (no requiere Google Drive).

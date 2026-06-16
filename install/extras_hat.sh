@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · HAT (Apache-2.0) — Hybrid Attention Transformer, super-resolución
+# PixelBooster · HAT (Apache-2.0) — Hybrid Attention Transformer, super-resolución
 # clásica (NO difusión) muy nítida. Pensado para NVIDIA; en Mac corre por CPU
 # (lentísimo). Venv propio .venv-hat. Basado en BasicSR.
 set -euo pipefail

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · InstantIR — restauración de imágenes instantánea (Apache 2.0).
+# PixelBooster · InstantIR — restauración de imágenes instantánea (Apache 2.0).
 # SOLO NVIDIA/CUDA. Construido sobre SDXL + DINOv2. Entorno propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

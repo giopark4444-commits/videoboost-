@@ -1,4 +1,4 @@
-# 🚀 VideoBoost
+# 🚀 PixelBooster
 
 Mejora la calidad de **videos e imágenes** con IA, **100% local** — sin nube, sin
 suscripciones, sin subir nada a internet. Calidad nivel **Topaz Video AI** (o superior
@@ -25,9 +25,9 @@ La app detecta tu hardware al arrancar y solo muestra lo que puede funcionar.
 
 ### La forma fácil — doble clic
 
-- **Mac (chip M):** doble clic en **`VideoBoost.command`**.
+- **Mac (chip M):** doble clic en **`PixelBooster.command`**.
   (Si macOS lo bloquea la primera vez: clic derecho › *Abrir*.)
-- **Windows + NVIDIA:** doble clic en **`VideoBoost.bat`**.
+- **Windows + NVIDIA:** doble clic en **`PixelBooster.bat`**.
   (Si SmartScreen avisa: *Más información* › *Ejecutar de todas formas*.)
 
 La **primera vez** instala todo y descarga los modelos (tarda, son varios GB).
@@ -93,7 +93,7 @@ faltan y con qué comando instalarlos. Útil antes del primer uso.
 
 Son productos cerrados, pero la técnica detrás es conocida — y aquí la tienes gratis:
 
-| Producto de pago | Lo que hace por dentro | Tu equivalente en VideoBoost |
+| Producto de pago | Lo que hace por dentro | Tu equivalente en PixelBooster |
 |---|---|---|
 | **HitPaw** | GANs clásicos: upscale, caras, interpolación, colorizado | Vulkan + **CodeFormer** + **DDColor** + RIFE |
 | **Magnific AI** | Difusión Stable Diffusion por mosaicos (tile) | **FaithDiff / InstantIR** |

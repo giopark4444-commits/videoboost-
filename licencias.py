@@ -1,4 +1,4 @@
-"""Sistema de licencias de VideoBoost — claves firmadas, verificación offline.
+"""Sistema de licencias de PixelBooster — claves firmadas, verificación offline.
 
 Modelo "Topaz": la app se instala en la máquina del cliente y se activa una vez
 con una clave de licencia. No hay servidor: las claves van firmadas con Ed25519

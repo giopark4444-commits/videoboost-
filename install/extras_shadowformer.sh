@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · ShadowFormer (MIT) — eliminación de sombras en imágenes con un
+# PixelBooster · ShadowFormer (MIT) — eliminación de sombras en imágenes con un
 # transformer de contexto global (AAAI 2023). Es ligero (no es difusión): corre
 # en Mac (MPS/CPU) y en NVIDIA → plataforma ambas. Venv propio.
 #

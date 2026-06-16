@@ -1,5 +1,5 @@
 @echo off
-REM VideoBoost - FaithDiff: restauracion fiel de imagenes (MIT, uso comercial libre).
+REM PixelBooster - FaithDiff: restauracion fiel de imagenes (MIT, uso comercial libre).
 REM SOLO NVIDIA/CUDA. Construido sobre SDXL. No descarga LLaVA (no hace falta).
 cd /d "%~dp0\.."
 

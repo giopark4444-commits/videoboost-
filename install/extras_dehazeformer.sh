@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DehazeFormer (IDKiro, MIT) — quita neblina/niebla de imágenes con un
+# PixelBooster · DehazeFormer (IDKiro, MIT) — quita neblina/niebla de imágenes con un
 # Transformer eficiente. Incluye gUNet (mismo autor, MIT) como modo rápido. NO es
 # difusión: corre en NVIDIA (CUDA) y en Mac con chip M (MPS/CPU) → plataforma ambas.
 # Venv propio. Pesos en Google Drive (no autodescargan): se bajan con gdown si pasas

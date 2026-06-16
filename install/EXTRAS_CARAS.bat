@@ -1,5 +1,5 @@
 @echo off
-REM VideoBoost - CodeFormer: restauracion de caras (el "face model" tipo HitPaw).
+REM PixelBooster - CodeFormer: restauracion de caras (el "face model" tipo HitPaw).
 cd /d "%~dp0\.."
 
 echo == CodeFormer (restauracion de caras) ==

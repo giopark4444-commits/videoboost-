@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · Practical-RIFE (MIT) — interpolación de frames moderna (slow-mo).
+# PixelBooster · Practical-RIFE (MIT) — interpolación de frames moderna (slow-mo).
 # PyTorch: corre en NVIDIA (CUDA) y en Mac (MPS). Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

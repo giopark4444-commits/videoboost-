@@ -1,13 +1,13 @@
 @echo off
-REM VideoBoost - doble clic para instalar TODO de una vez (Windows + NVIDIA).
+REM PixelBooster - doble clic para instalar TODO de una vez (Windows + NVIDIA).
 REM Instala la base y TODOS los motores: SeedVR2, Vulkan, FaithDiff, InstantIR,
 REM FlashVSR, CodeFormer (caras) y DDColor (color). Si un motor falla, avisa y
 REM sigue con los demas. Tarda un buen rato y baja decenas de GB.
-title VideoBoost - Instalar todo
+title PixelBooster - Instalar todo
 cd /d "%~dp0"
 cls
 echo ====================================================
-echo    VideoBoost - instalacion completa (todo-en-uno)
+echo    PixelBooster - instalacion completa (todo-en-uno)
 echo ====================================================
 echo.
 
@@ -66,6 +66,6 @@ if "%FALLIDOS%"=="" (
   echo No se completaron:%FALLIDOS%
   echo Puedes reintentar cada uno con su EXTRAS_*.bat en install\.
 )
-echo Arranca la app con doble clic en VideoBoost.bat
+echo Arranca la app con doble clic en PixelBooster.bat
 echo ====================================================
 pause

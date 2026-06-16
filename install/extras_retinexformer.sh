@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · Retinexformer (MIT) — realce de imágenes con POCA LUZ.
+# PixelBooster · Retinexformer (MIT) — realce de imágenes con POCA LUZ.
 # Transformer Retinex sobre BasicSR. Pensado para NVIDIA; en Mac corre por CPU
 # (lentísimo). Venv propio .venv-retinexformer.
 set -euo pipefail

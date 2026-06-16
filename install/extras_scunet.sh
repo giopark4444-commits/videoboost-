@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · SCUNet (Apache-2.0) — denoise ciego de fotos reales (Swin-Conv-UNet).
+# PixelBooster · SCUNet (Apache-2.0) — denoise ciego de fotos reales (Swin-Conv-UNet).
 # CNN ligera, no difusión: corre en NVIDIA (CUDA) y también por CPU en Mac (más
 # lento pero usable). Venv propio. Los pesos se bajan del release v1.0 de KAIR.
 set -euo pipefail

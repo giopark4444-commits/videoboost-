@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · EMA-VFI (MCG-NJU, Apache-2.0) — interpolación de frames SOTA (slow-mo).
+# PixelBooster · EMA-VFI (MCG-NJU, Apache-2.0) — interpolación de frames SOTA (slow-mo).
 # PyTorch; el demo usa .cuda() → pensado para NVIDIA (4080). Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -1,5 +1,5 @@
 @echo off
-REM VideoBoost - FlashVSR (CVPR 2026), modo rapido EXPERIMENTAL. Solo NVIDIA.
+REM PixelBooster - FlashVSR (CVPR 2026), modo rapido EXPERIMENTAL. Solo NVIDIA.
 cd /d "%~dp0\.."
 
 where nvidia-smi >nul 2>nul

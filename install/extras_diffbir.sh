@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DiffBIR (Apache-2.0) — restauración ciega por difusión (caras +
+# PixelBooster · DiffBIR (Apache-2.0) — restauración ciega por difusión (caras +
 # escena). Pensado para NVIDIA; en Mac corre por CPU (lentísimo). Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

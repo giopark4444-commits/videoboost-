@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · FILM (Google, Apache-2.0) — interpolación de frames para movimiento
+# PixelBooster · FILM (Google, Apache-2.0) — interpolación de frames para movimiento
 # grande (slow-mo fotorrealista). TensorFlow 2 → pensado para NVIDIA (4080).
 set -euo pipefail
 cd "$(dirname "$0")/.."

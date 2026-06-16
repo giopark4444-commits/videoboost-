@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · OSDFace (CVPR 2025) — restauración de caras 1-paso, textura muy
+# PixelBooster · OSDFace (CVPR 2025) — restauración de caras 1-paso, textura muy
 # orgánica. ⚠️ SIN LICENCIA en el repo → SOLO uso personal / pruebas, NO para
 # la build de venta. Pensado para NVIDIA. Venv propio.
 set -euo pipefail

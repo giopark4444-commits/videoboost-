@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · FFTformer (MIT) — desenfoque de movimiento (motion deblur) SOTA
+# PixelBooster · FFTformer (MIT) — desenfoque de movimiento (motion deblur) SOTA
 # por Transformer en el dominio de frecuencia (34.21 dB en GoPro). Pensado para
 # NVIDIA (el test.py fija device cuda); en Mac no corre. Venv propio. NO probado
 # en GPU real desde el Mac.

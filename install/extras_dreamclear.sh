@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DreamClear (shallowdream204/DreamClear, Apache-2.0) — restauración
+# PixelBooster · DreamClear (shallowdream204/DreamClear, Apache-2.0) — restauración
 # real-world fotorealista de máxima calidad (NeurIPS 2024). Difusión de alta capacidad
 # sobre PixArt-α-1024 + SwinIR + VAE + T5-XXL. SOLO NVIDIA/CUDA y MUCHA VRAM.
 # Entorno propio .venv-dreamclear. Python 3.9 según su repo (admitimos 3.9–3.11).

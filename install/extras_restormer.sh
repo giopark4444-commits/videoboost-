@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · Restormer (MIT) — restaurador por Transformer eficiente (deblur de
+# PixelBooster · Restormer (MIT) — restaurador por Transformer eficiente (deblur de
 # movimiento/defocus, quitar lluvia, denoise real). Pensado para NVIDIA; en Mac
 # corre por CPU (lento). Venv propio. NO probado en GPU real desde el Mac.
 set -euo pipefail

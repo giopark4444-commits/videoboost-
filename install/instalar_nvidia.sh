@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# VideoBoost · Instalador para Linux con GPU NVIDIA.
+# PixelBooster · Instalador para Linux con GPU NVIDIA.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "== VideoBoost · instalador para Linux + NVIDIA =="
+echo "== PixelBooster · instalador para Linux + NVIDIA =="
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "❌ Falta ffmpeg. Instálalo con tu gestor de paquetes (ej.: sudo apt install ffmpeg)."

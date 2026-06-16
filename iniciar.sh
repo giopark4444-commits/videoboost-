@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lanza VideoBoost (Mac y Linux).
+# Lanza PixelBooster (Mac y Linux).
 cd "$(dirname "$0")"
 if [ ! -d .venv ]; then
   echo "❌ Falta el entorno. Corre primero el instalador de tu plataforma:"

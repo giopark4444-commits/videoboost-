@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · Instalador ÚNICO todo-en-uno (Mac Apple Silicon o Linux NVIDIA).
+# PixelBooster · Instalador ÚNICO todo-en-uno (Mac Apple Silicon o Linux NVIDIA).
 # Instala la base (app + SeedVR2 + Vulkan) y TODOS los motores que tu máquina
 # puede usar, uno tras otro. Si un motor falla, avisa y sigue con los demás:
 # terminas con todo lo que sí se pudo instalar, nunca a medias por un solo error.
@@ -11,7 +11,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 echo "════════════════════════════════════════════════════"
-echo "   VideoBoost · instalación completa (todo-en-uno)"
+echo "   PixelBooster · instalación completa (todo-en-uno)"
 echo "════════════════════════════════════════════════════"
 echo ""
 
@@ -76,5 +76,5 @@ else
   echo "   No se completaron: ${FALLIDOS[*]}"
   echo "   Puedes reintentar cada uno con su script en install/ cuando quieras."
 fi
-echo "   Arranca la app con doble clic en VideoBoost (o ./iniciar.sh)."
+echo "   Arranca la app con doble clic en PixelBooster (o ./iniciar.sh)."
 echo "════════════════════════════════════════════════════"

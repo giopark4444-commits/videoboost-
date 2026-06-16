@@ -1,4 +1,4 @@
-"""Preferencias persistentes de VideoBoost (formato de salida por defecto).
+"""Preferencias persistentes de PixelBooster (formato de salida por defecto).
 
 Se guardan en un JSON local junto a los presets de revelado; sin servidor, 100%
 local. Si el archivo no existe o está corrupto, se usan los valores por defecto.

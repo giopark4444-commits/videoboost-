@@ -1,5 +1,5 @@
 @echo off
-REM Lanza VideoBoost (Windows).
+REM Lanza PixelBooster (Windows).
 cd /d "%~dp0"
 if not exist .venv (
   echo ERROR: Falta el entorno. Corre primero install\INSTALAR_NVIDIA.bat

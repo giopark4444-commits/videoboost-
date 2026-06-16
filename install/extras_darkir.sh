@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · DarkIR (MIT) — restauración all-in-one de poca luz (corrige luz +
+# PixelBooster · DarkIR (MIT) — restauración all-in-one de poca luz (corrige luz +
 # ruido + desenfoque a la vez) con un modelo ligero (3-13M params). Corre tanto
 # en NVIDIA como en Mac (no es difusión). Venv propio.
 set -euo pipefail

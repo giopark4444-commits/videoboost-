@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · PMRF (MIT) — restauración de caras (caras alineadas). Pensado
+# PixelBooster · PMRF (MIT) — restauración de caras (caras alineadas). Pensado
 # para NVIDIA. Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

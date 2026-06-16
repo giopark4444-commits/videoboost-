@@ -134,7 +134,7 @@ def generar_lut(look: str) -> Path:
     rgb = np.stack([rr.ravel(), gg.ravel(), bb.ravel()], axis=1)
     out = _transformar(rgb, LOOKS[look])
 
-    lineas = [f'TITLE "VideoBoost {NOMBRES[look]}"', f"LUT_3D_SIZE {n}"]
+    lineas = [f'TITLE "PixelBooster {NOMBRES[look]}"', f"LUT_3D_SIZE {n}"]
     lineas += [f"{r:.6f} {g:.6f} {b:.6f}" for r, g, b in out]
     ruta.write_text("\n".join(lineas) + "\n")
     return ruta

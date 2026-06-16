@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · InSPyReNet / transparent-background (MIT) — quita el FONDO de una
+# PixelBooster · InSPyReNet / transparent-background (MIT) — quita el FONDO de una
 # imagen (matting) y deja PNG con alpha. Paquete pip puro; corre en NVIDIA (CUDA)
 # y en Apple Silicon (MPS). Venv propio .venv-inspyrenet.
 set -euo pipefail

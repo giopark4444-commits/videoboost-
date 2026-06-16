@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VideoBoost · SeedVR2 en MLX (vía mflux, MIT) — restauración por difusión NATIVA
+# PixelBooster · SeedVR2 en MLX (vía mflux, MIT) — restauración por difusión NATIVA
 # de Apple Silicon. Solo Mac con chip M (MLX no existe en NVIDIA/Linux). Venv propio.
 set -euo pipefail
 cd "$(dirname "$0")/.."

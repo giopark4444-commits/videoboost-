@@ -1,4 +1,4 @@
-"""Diagnóstico de VideoBoost — ¿qué está listo para procesar?
+"""Diagnóstico de PixelBooster — ¿qué está listo para procesar?
 
 Uso:  python check.py
 
@@ -57,7 +57,7 @@ def main():
 
     hw = hardware.info_sistema()
     print()
-    print(_c("  VideoBoost · diagnóstico", NEGR))
+    print(_c("  PixelBooster · diagnóstico", NEGR))
     print("  " + "─" * 46)
     print("  " + hardware.resumen().replace("**", ""))
     print()
