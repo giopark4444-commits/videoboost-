@@ -12,6 +12,31 @@
 
 ---
 
+## ✅ Estado de integración (actualizado 2026-06-15)
+
+**YA INTEGRADOS** (motor + instalador + UI + i18n + Sistema/mantenimiento; NO probados
+en GPU salvo donde se indica — verificar en la 4080):
+
+- **Imagen (tab Imágenes):** NAFNet (denoise/deblur), SCUNet (denoise ciego), FBCNN
+  (artefactos JPEG), FFTformer (deblur movim., NVIDIA), DehazeFormer (neblina),
+  HVI-CIDNet (poca luz premium), DarkIR (noche extrema), **InSPyReNet** y **BiRefNet**
+  (quitar fondo/matting — ✅ corren en Mac/MPS), RestoreFormer++ (caras, Apache),
+  DSRNet (reflejos), ShadowFormer (sombras), IC-Light (relighting por prompt, NVIDIA).
+- **Video (tab Video):** FILM, Practical-RIFE, EMA-VFI (slow-mo); DUT (estabilización IA, NVIDIA).
+- **Filtros FFmpeg (sección «Imagen»):** desentrelazado **bwdif** (sustituye a yadif);
+  **«Quitar artefactos de compresión»** (deblock+deband). ✅ probados en Mac.
+- **IOPaint+LaMa** (borrar objetos): instalable en Sistema; **falta la UI de máscara**
+  (no está en el selector todavía).
+
+**PENDIENTE (siguiente tanda):** UI de máscara para IOPaint; dropdown de dirección
+de luz para IC-Light; **sanear caras legal** (retirar CodeFormer/OSDFace del build);
+acelerar DDColor (MPS); RIFE→v4.26; filtros FFmpeg de **corrección de lente**,
+**HDR/tonemapping**, **igualar color**, **balance de blancos auto**, **emulación de
+película** (halation/bloom); OSEDiff/DRCT (modos SR). Verificar en la 4080 todos los
+motores GPU y confirmar licencia comercial de **DUT** con el autor.
+
+---
+
 ## 0) 🚨 RIESGO LEGAL — atender antes de vender (bloqueante)
 
 | Problema | Detalle | Acción |

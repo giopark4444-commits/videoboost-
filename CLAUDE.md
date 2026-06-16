@@ -110,7 +110,22 @@ en este orden:
     **CodeFormer** (licencia S-Lab = NO comercial) y **OSDFace** (sin LICENSE) están
     embebidos, y **FaithDiff** no tiene licencia clara. Para vender: retirarlos o
     dejarlos como plugin opt-in que descarga el usuario, y quedarse con **PMRF**
-    (MIT) + **RestoreFormer++** (Apache) para caras. PENDIENTE.
+    (MIT) + **RestoreFormer++** (Apache, ya integrado) para caras. PENDIENTE.
+18. **Motores del ROADMAP integrados (2026-06-15, construidos con workflow multi-
+    agente; NO probados en GPU salvo matting → verificar en la 4080).** Todos
+    licencia comercial. Imagen (tab Imágenes): NAFNet, SCUNet, FBCNN, FFTformer
+    (NVIDIA), DehazeFormer, HVI-CIDNet, DarkIR, InSPyReNet+BiRefNet (matting, ✅ Mac/
+    MPS), RestoreFormer++ (caras), DSRNet (reflejos), ShadowFormer (sombras), IC-Light
+    (relighting por prompt, NVIDIA). Video: DUT (estabilización IA, NVIDIA; ⚠️ confirmar
+    licencia comercial con el autor — el README dice research-only aunque el LICENSE es
+    MIT). Cada motor: `engines/<id>.py` + `install/extras_<id>.sh` (venv propio, pesos
+    por release/HF/gdrive con patrón `<ID>_GDRIVE`). Incertidumbres de cada uno en el
+    spec del workflow; varios repos no traen CLI con argparse y el engine escribe un
+    script `_vb_*.py` parcheado (FBCNN, EMA-VFI, IC-Light, etc.). **IOPaint+LaMa**
+    (borrar objetos) está instalable pero NO en el selector: **falta UI de máscara**.
+    Filtros FFmpeg nuevos (LGPL, probados en Mac): `filtros.desentrelazar` ahora usa
+    **bwdif**, y `filtros.limpiar` (deblock+deband) = "Quitar artefactos de compresión".
+    Ver `ROADMAP-MEJORAS.md` para lo que falta.
 
 ## Licencias de venta (licencias.py)
 
