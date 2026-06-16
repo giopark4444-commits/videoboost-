@@ -88,6 +88,29 @@ en este orden:
 14. **DiffBIR/PMRF/OSDFace/FlashVSR son de difusión SD → solo NVIDIA en la
     práctica.** Escritos sin GPU disponible; verificar flags en la RTX 4080 al
     estrenarlos (igual que SeedVR2 en su momento).
+15. **Motores de imagen pesados (Restormer/Retinexformer/DreamClear/HAT)**:
+    deblur/lluvia/ruido (MIT), poca luz (MIT), restauración real (Apache), SR nítida
+    (Apache). Solo NVIDIA salvo donde se indique; instaladores aislados, pesos por
+    release/HF/gdride. NO probados en GPU: verificar comandos en la 4080.
+16. **Motores de slow-mo / interpolación de frames** (sección "Motor" del tab Video,
+    usan el factor `mult`; reensamblan a los fps ORIGINALES = cámara lenta real):
+    - **Practical-RIFE** (`engines/practical_rife.py`, MIT, Mac+NVIDIA): CLI
+      `inference_video.py --multi=N --video=… --fps=<orig>`; modelo en `train_log/`
+      (Google Drive → PRIFE_GDRIVE o manual). Verificar nombre/ubicación del mp4 de
+      salida y soporte MPS.
+    - **FILM** (`engines/film.py`, Apache-2.0, NVIDIA/TensorFlow): `eval.interpolator_cli
+      --pattern <dir> --model_path …/film_net/Style/saved_model --times_to_interpolate
+      K --output_video`, K=log2(mult). Pesos SavedModel por Google Drive (FILM_GDRIVE).
+      Verificar carpeta de salida (interpolated_frames/) y fps.
+    - **EMA-VFI** (`engines/ema_vfi.py`, Apache-2.0, NVIDIA): SIN CLI de video → el
+      engine escribe `_vb_batch.py` en el repo que recorre pares con
+      `Model.multi_inference(... time_list=[...])`. Verificar API del modelo, ckpt
+      (Google Drive → EMAVFI_GDRIVE) y que `.cuda()` no rompa.
+17. **⚠️ RIESGO LEGAL (build comercial)**: el barrido multi-agente confirmó que
+    **CodeFormer** (licencia S-Lab = NO comercial) y **OSDFace** (sin LICENSE) están
+    embebidos, y **FaithDiff** no tiene licencia clara. Para vender: retirarlos o
+    dejarlos como plugin opt-in que descarga el usuario, y quedarse con **PMRF**
+    (MIT) + **RestoreFormer++** (Apache) para caras. PENDIENTE.
 
 ## Licencias de venta (licencias.py)
 
