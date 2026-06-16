@@ -9,6 +9,7 @@ Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 import base64
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -32,6 +33,13 @@ from engines import (birefnet, color, darkir, dehazeformer, diffbir, dreamclear,
 from i18n import IDIOMAS, idioma_por_defecto, t
 
 HW = hardware.info_sistema()
+
+# Saneamiento legal del build que se VENDE: por defecto se EXCLUYEN los motores con
+# licencia no comercial / sin licencia (CodeFormer = S-Lab no comercial; OSDFace = sin
+# LICENSE). Para uso personal se reactivan con VB_NO_COMERCIAL=1. Reemplazos limpios de
+# caras: RestoreFormer++ (Apache) y PMRF (MIT), ya integrados.
+INCLUIR_NO_COMERCIAL = os.environ.get("VB_NO_COMERCIAL") == "1"
+MOTORES_NO_COMERCIALES = {"codeformer", "osdface"}
 
 # ---------------------------------------------------------------- constantes
 
@@ -837,7 +845,6 @@ def texto_sistema(lang):
         motores.insert(3, ("MetalFX — escalado rápido de video (Apple)",
                            metalfx.disponible(), "bash install/extras_metalfx.sh", False))
     motores += [
-        ("CodeFormer — restaurar caras", faces.disponible(), "bash install/extras_caras.sh", False),
         ("DDColor — colorizar B/N", color.disponible(), "bash install/extras_color.sh", False),
         ("FaithDiff — restauración fiel (MIT)", faithdiff.disponible(),
          "bash install/extras_faithdiff.sh", True),
@@ -845,8 +852,6 @@ def texto_sistema(lang):
          "bash install/extras_diffbir.sh", True),
         ("PMRF — caras (MIT)", pmrf.disponible(),
          "bash install/extras_pmrf.sh", True),
-        ("OSDFace — caras ⚠️ sin licencia (solo pruebas)", osdface.disponible(),
-         "bash install/extras_osdface.sh", True),
         ("InstantIR — restauración instantánea", instantir.disponible(),
          "bash install/extras_instantir.sh", True),
         ("FlashVSR — modo rápido", HW["flashvsr"] and flashvsr.disponible(),
@@ -896,6 +901,15 @@ def texto_sistema(lang):
         ("IOPaint+LaMa — borrar objetos con máscara (Apache-2.0)", iopaint_lama.disponible(),
          "bash install/extras_iopaint_lama.sh", False),
     ]
+    # Motores de caras NO comerciales: ocultos en el build que se vende; solo con
+    # VB_NO_COMERCIAL=1 (uso personal). Reemplazo comercial = RestoreFormer++/PMRF.
+    if INCLUIR_NO_COMERCIAL:
+        motores += [
+            ("CodeFormer — caras ⚠️ S-Lab NO comercial (uso personal)",
+             faces.disponible(), "bash install/extras_caras.sh", False),
+            ("OSDFace — caras ⚠️ sin licencia (uso personal)", osdface.disponible(),
+             "bash install/extras_osdface.sh", True),
+        ]
     listos, instalables, no_aplican = [], [], []
     for nombre, ok, inst, solo_nvidia in motores:
         if ok:
@@ -970,10 +984,10 @@ def motores_imagen():
         m.append("seedvr2_img")
     if instantir.disponible():
         m.append("instantir")
-    if faces.disponible():
-        m.append("codeformer")
-    if osdface.disponible():
-        m.append("osdface")    # ⚠️ sin licencia: solo pruebas
+    if faces.disponible() and INCLUIR_NO_COMERCIAL:
+        m.append("codeformer")  # S-Lab NO comercial → oculto salvo VB_NO_COMERCIAL=1
+    if osdface.disponible() and INCLUIR_NO_COMERCIAL:
+        m.append("osdface")    # ⚠️ sin licencia → oculto salvo VB_NO_COMERCIAL=1
     if restormer.disponible():
         m.append("restormer")  # deblur / lluvia / ruido real, MIT
     if retinexformer.disponible():

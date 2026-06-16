@@ -106,11 +106,13 @@ en este orden:
       engine escribe `_vb_batch.py` en el repo que recorre pares con
       `Model.multi_inference(... time_list=[...])`. Verificar API del modelo, ckpt
       (Google Drive → EMAVFI_GDRIVE) y que `.cuda()` no rompa.
-17. **⚠️ RIESGO LEGAL (build comercial)**: el barrido multi-agente confirmó que
-    **CodeFormer** (licencia S-Lab = NO comercial) y **OSDFace** (sin LICENSE) están
-    embebidos, y **FaithDiff** no tiene licencia clara. Para vender: retirarlos o
-    dejarlos como plugin opt-in que descarga el usuario, y quedarse con **PMRF**
-    (MIT) + **RestoreFormer++** (Apache, ya integrado) para caras. PENDIENTE.
+17. **RIESGO LEGAL — SANEADO (2026-06-16)**: **CodeFormer** (S-Lab NO comercial) y
+    **OSDFace** (sin LICENSE) ahora se EXCLUYEN del build que se vende por defecto
+    (`app.INCLUIR_NO_COMERCIAL`, flag `VB_NO_COMERCIAL=1` los reactiva para uso
+    personal). Reemplazo de caras en el build comercial: **RestoreFormer++** (Apache)
+    + **PMRF** (MIT) + DiffBIR-face. **FaithDiff: confirmado MIT vía gh api** (el repo
+    jychen9811/FaithDiff TIENE LICENSE MIT) → es comercial-OK, se mantiene como motor
+    recomendado (la duda del barrido era infundada).
 18. **Motores del ROADMAP integrados (2026-06-15, construidos con workflow multi-
     agente; NO probados en GPU salvo matting → verificar en la 4080).** Todos
     licencia comercial. Imagen (tab Imágenes): NAFNet, SCUNet, FBCNN, FFTformer
