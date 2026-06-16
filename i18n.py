@@ -828,6 +828,18 @@ T = {
         "es": "Look de cine — halation + bloom (FFmpeg)",
         "en": "Film look — halation + bloom (FFmpeg)",
         "fr": "Rendu cinéma — halation + bloom (FFmpeg)"},
+    "m_lente": {
+        "es": "Corregir lente — distorsión (FFmpeg)",
+        "en": "Lens correction — distortion (FFmpeg)",
+        "fr": "Correction d'objectif — distorsion (FFmpeg)"},
+    "lente_k1": {
+        "es": "Distorsión k1 (− barril / + cojín)",
+        "en": "Distortion k1 (− barrel / + pincushion)",
+        "fr": "Distorsion k1 (− barillet / + coussinet)"},
+    "lente_k2": {
+        "es": "Distorsión k2 (ajuste fino)",
+        "en": "Distortion k2 (fine tune)",
+        "fr": "Distorsion k2 (réglage fin)"},
     "m_denoise": {
         "es": "Reducir ruido — hqdn3d (FFmpeg)",
         "en": "Denoise — hqdn3d (FFmpeg)",
@@ -856,6 +868,16 @@ T = {
         "fr": "Donne un **rendu cinéma** : *halation* (lueur rougeâtre sur les hautes lumières), "
               "*bloom* (diffusion des éclats) et vignettage optique. CPU/FFmpeg, sans GPU. À "
               "combiner avec les LUT et le grain."},
+    "n_lente": {
+        "es": "Corrige la **distorsión de lente** (barril/cojín) con el filtro nativo "
+              "`lenscorrection` de FFmpeg. Ajusta k1 (negativo para ojo de pez) y k2 (fino). "
+              "Sin GPU. Para gran angular / GoPro / drones.",
+        "en": "Fixes **lens distortion** (barrel/pincushion) with FFmpeg's native "
+              "`lenscorrection`. Adjust k1 (negative for fisheye) and k2 (fine). No GPU. For "
+              "wide-angle / GoPro / drones.",
+        "fr": "Corrige la **distorsion d'objectif** (barillet/coussinet) avec le filtre natif "
+              "`lenscorrection` de FFmpeg. Règle k1 (négatif pour fisheye) et k2 (fin). Sans GPU. "
+              "Pour grand-angle / GoPro / drones."},
     "n_limpiar": {
         "es": "Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y "
               "banding/posterización en degradados como cielos (deband). Filtros nativos "

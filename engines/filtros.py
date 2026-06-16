@@ -117,6 +117,31 @@ def cine(entrada, intensidad: float = 0.5):
     return str(salida)
 
 
+def corregir_lente(entrada, k1: float = 0.0, k2: float = 0.0):
+    """Corrige la **distorsión de lente** (barril/cojín) con el filtro nativo
+    `lenscorrection` de FFmpeg (LGPL, sin GPU).
+
+    k1 — distorsión de 2º orden: **negativo corrige barril** (ojo de pez), positivo
+         corrige cojín. Rango útil ~ -0.5 … 0.5.
+    k2 — distorsión de 4º orden (ajuste fino), mismo rango.
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_lente.mp4")
+    k1 = max(-1.0, min(1.0, float(k1)))
+    k2 = max(-1.0, min(1.0, float(k2)))
+    vf = f"lenscorrection=k1={k1:.3f}:k2={k2:.3f}:i=bilinear"
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+        "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+    ]
+    yield f"▶ corregir lente (k1={k1:.3f}, k2={k2:.3f}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
 def denoise(entrada, luma: float = 3.0, chroma: float = 2.0):
     """Reduce el ruido de video con hqdn3d.
 
