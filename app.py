@@ -644,39 +644,6 @@ def hacer_comparar_frame(lang):
     return comparar
 
 
-def hacer_comparar_looks(lang, es_video):
-    """Compara los LUTs SELECCIONADOS (LUT 1/2/3) sobre el frame del medio YA
-    cargado en el preview, sin subir nada. En video toma el frame donde el usuario
-    paró la barra (pos la rellena el JS); en imagen usa la imagen cargada.
-
-    Streaming de (galeria, mensaje); galeria = [(ruta, etiqueta)…] con el Original
-    primero. Reutiliza engines.preview_multi.comparar_looks."""
-    from engines import preview_multi
-
-    def comparar(*args):
-        # Video: (pos, medio, l1,m1,l2,m2,l3,m3) · Imagen: (medio, l1,m1,l2,m2,l3,m3)
-        if es_video:
-            pos, medio, l1, m1, l2, m2, l3, m3 = args
-        else:
-            medio, l1, m1, l2, m2, l3, m3 = args
-            pos = 0.3
-        if not medio:
-            yield [], t("cmp_luts_sin_medio", lang)
-            return
-        looks = [(lid, float(mz), luts.NOMBRES.get(lid, lid))
-                 for lid, mz in ((l1, m1), (l2, m2), (l3, m3))
-                 if lid and lid != "ninguno"]
-        if not looks:
-            yield [], t("cmp_luts_elige", lang)
-            return
-        galeria = []
-        for galeria, _msg in preview_multi.comparar_looks(medio, pos, looks):
-            yield galeria, t("cmp_luts_trab", lang) if galeria else _msg
-        yield galeria, ""
-
-    return comparar
-
-
 def hacer_borrar(lang):
     """Borrar objetos: el usuario pinta de blanco lo que sobra en el lienzo
     (gr.ImageEditor) y LaMa (IOPaint) rellena el hueco. Construye la máscara desde
@@ -1371,25 +1338,6 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                            label=t("l_mezcla", lang))
                         comps += [lk, mz]
 
-                    # ---- Comparar los LUTs elegidos sobre el medio YA cargado ----
-                    # (sin subir nada; en video, el frame donde paraste la barra)
-                    if fuente is not None:
-                        gr.Markdown(t("cmp_luts_intro", lang), elem_classes="size-preview")
-                        _cmp_btn = gr.Button(t("cmp_luts_boton", lang), size="sm",
-                                             elem_classes="cta")
-                        _cmp_msg = gr.Markdown("", elem_classes="size-preview")
-                        _cmp_gal = gr.Gallery(label=t("cmp_luts_galeria", lang), columns=2,
-                                              height="auto", object_fit="contain",
-                                              show_label=True, elem_classes="vb-frame-cmp")
-                        _luts3 = [comps[0], comps[1], comps[2], comps[3], comps[4], comps[5]]
-                        if es_video:
-                            _cmp_btn.click(hacer_comparar_looks(lang, True),
-                                           [pos, fuente] + _luts3,
-                                           [_cmp_gal, _cmp_msg], js=_JS_POS)
-                        else:
-                            _cmp_btn.click(hacer_comparar_looks(lang, False),
-                                           [fuente] + _luts3, [_cmp_gal, _cmp_msg])
-
                 def sl(lo, hi, v, paso, clave):
                     comps.append(gr.Slider(lo, hi, value=v, step=paso,
                                            label=t(clave, lang)))
@@ -1451,7 +1399,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                             elem_classes="aviso-sin-motor")
             with gr.Row():
                 with gr.Column(elem_classes="col-controls", min_width=300):
-                    video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input")
+                    video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input",
+                                        sources=["upload"])
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
                         boton_v = gr.Button(t("boton_video", lang), variant="primary",
@@ -1487,7 +1436,7 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 # --- Centro: resultado + comparación por el frame del propio video ---
                 with gr.Column(elem_classes="col-stage", min_width=320):
                     video_out = gr.Video(label=t("resultado_preview", lang),
-                                         elem_id="vb-result")
+                                         elem_id="vb-result", sources=["upload"])
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
                     comparador_v = gr.HTML(label=t("comparador_video", lang))
@@ -1635,7 +1584,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                             elem_classes="aviso-sin-motor")
             with gr.Row():
                 with gr.Column(elem_classes="col-controls"):
-                    img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang))
+                    img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang),
+                                      sources=["upload", "clipboard"])
                     motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
                                        value=ids_i[0], label=t("motor", lang),
                                        elem_classes="engine-picker")
