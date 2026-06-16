@@ -58,14 +58,14 @@ def interpolar(video, mult=2):
     ]
     try:
         yield f"🚀 FILM · x{factor} (movimiento grande / slow-mo fotorrealista)"
-        yield "ℹ️ Extrayendo frames…"
+        yield "📊 Paso 1/3 · Extrayendo frames…"
         yield from correr(ff.cmd_extraer_frames(video, seq))
-        yield "ℹ️ Interpolando con FILM (la primera vez carga TensorFlow)…"
+        yield "📊 Paso 2/3 · Interpolando con FILM (la primera vez carga TensorFlow)…"
         yield from correr(cmd, cwd=FILM_DIR)
         # FILM deja interpolated.mp4 y/o interpolated_frames/ dentro de `seq`.
         frames_int = sorted((seq / "interpolated_frames").glob("*.png"))
         if frames_int:
-            yield "ℹ️ Reensamblando a los fps originales (cámara lenta)…"
+            yield "📊 Paso 3/3 · Reensamblando a los fps originales (cámara lenta)…"
             salida = SALIDAS / f"{video.stem}_film_x{factor}.mp4"
             yield from correr(ff.cmd_reensamblar(
                 seq / "interpolated_frames", "*.png", f"{fps_orig:.5f}",

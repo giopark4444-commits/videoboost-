@@ -98,15 +98,15 @@ def interpolar(video, mult=2):
 
     try:
         yield f"🚀 EMA-VFI · x{mult} (interpolación SOTA / slow-mo)"
-        yield "ℹ️ Extrayendo frames…"
+        yield "📊 Paso 1/3 · Extrayendo frames…"
         yield from correr(ff.cmd_extraer_frames(video, in_dir))
-        yield "ℹ️ Interpolando (primera vez carga el modelo; requiere NVIDIA)…"
+        yield "📊 Paso 2/3 · Interpolando (primera vez carga el modelo; requiere NVIDIA)…"
         yield from correr([py, "_vb_batch.py", "--in_dir", str(in_dir),
                            "--out_dir", str(out_dir), "--n", int(mult)],
                           cwd=EMA_DIR)
         if not any(out_dir.glob("*.png")):
             raise RuntimeError("EMA-VFI terminó pero no generó frames.")
-        yield "ℹ️ Reensamblando a los fps originales (cámara lenta)…"
+        yield "📊 Paso 3/3 · Reensamblando a los fps originales (cámara lenta)…"
         salida = SALIDAS / f"{video.stem}_emavfi_x{mult}.mp4"
         yield from correr(ff.cmd_reensamblar(out_dir, "f_%08d.png",
                                              f"{fps_orig:.5f}", video, salida))

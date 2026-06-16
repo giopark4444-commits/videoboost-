@@ -383,18 +383,34 @@ def _pct_de_linea(linea, total_frames, total_seg):
     return None
 
 
-def _barra(frac=None):
-    """Actualiza la barra de avance minimalista (HTML) DEBAJO de la consola.
+def _barra(frac=None, global_frac=None, fase=""):
+    """Actualiza la barra de avance (HTML) DEBAJO de la consola.
 
-    `frac` None → oculta (no hay proceso). 0–1 → visible con ese porcentaje.
+    `frac`        None → oculta (no hay proceso). 0–1 → barra del SUB-PROCESO actual.
+    `global_frac` 0–1  → añade ARRIBA una segunda barra de progreso GLOBAL del render
+                         (estilo cola de After Effects/Premiere); None → no se muestra.
+    `fase`        texto opcional para la barra global (p.ej. "Paso 2/3").
     """
     if frac is None:
         return gr.update(visible=False, value="")
     pct = max(0, min(100, round(frac * 100)))
-    return gr.update(
-        visible=True,
-        value=(f"<div class='vb-bar'><div class='vb-bar-fill' style='width:{pct}%'>"
-               f"</div></div><div class='vb-bar-pct'>{pct}%</div>"))
+    html = ""
+    if global_frac is not None:
+        g = max(0, min(100, round(global_frac * 100)))
+        etq = f"Render global · {fase}" if fase else "Render global"
+        html += (f"<div class='vb-bar-lbl'>{etq}</div>"
+                 f"<div class='vb-bar vb-bar-g'><div class='vb-bar-fill' "
+                 f"style='width:{g}%'></div></div><div class='vb-bar-pct'>{g}%</div>")
+    html += (f"<div class='vb-bar-lbl vb-bar-lbl2'>Proceso actual</div>"
+             if global_frac is not None else "")
+    html += (f"<div class='vb-bar'><div class='vb-bar-fill' style='width:{pct}%'>"
+             f"</div></div><div class='vb-bar-pct'>{pct}%</div>")
+    return gr.update(visible=True, value=html)
+
+
+# Marca de fase que los motores multi-etapa emiten en el log ("📊 Paso 2/3 · …")
+# para alimentar la barra de progreso GLOBAL.
+_RE_FASE = re.compile(r"[Pp]aso\s+(\d+)\s*/\s*(\d+)")
 
 
 def hacer_procesar_video(lang):
@@ -430,14 +446,21 @@ def hacer_procesar_video(lang):
                                            ruido=int(ruido))
             consumo = _consumir(gen, log)
             salida = None
-            pct = 0.0
+            pct, fase_cur, fase_tot = 0.0, 1, 1
             while True:
                 try:
                     texto = next(consumo)
-                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    linea = log[-1] if log else ""
+                    mf = _RE_FASE.search(linea)
+                    if mf:
+                        fase_cur, fase_tot = int(mf.group(1)), int(mf.group(2))
+                        pct = 0.0  # nueva fase: el % del sub-proceso reinicia
+                    frac = _pct_de_linea(linea, total_f, total_s)
                     if frac is not None:
                         pct = frac
-                    yield texto, None, "", oculto, _barra(pct)
+                    glob = (((fase_cur - 1) + pct) / fase_tot) if fase_tot > 1 else None
+                    fase_txt = f"Paso {fase_cur}/{fase_tot}" if fase_tot > 1 else ""
+                    yield texto, None, "", oculto, _barra(pct, glob, fase_txt)
                 except StopIteration as fin:
                     salida = fin.value
                     break
@@ -518,14 +541,21 @@ def hacer_aplicar_filtros(lang):
                 return
             consumo = _consumir(gen, log)
             salida = None
-            pct = 0.0
+            pct, fase_cur, fase_tot = 0.0, 1, 1
             while True:
                 try:
                     texto = next(consumo)
-                    frac = _pct_de_linea(log[-1] if log else "", total_f, total_s)
+                    linea = log[-1] if log else ""
+                    mf = _RE_FASE.search(linea)
+                    if mf:
+                        fase_cur, fase_tot = int(mf.group(1)), int(mf.group(2))
+                        pct = 0.0
+                    frac = _pct_de_linea(linea, total_f, total_s)
                     if frac is not None:
                         pct = frac
-                    yield texto, None, "", oculto, _barra(pct)
+                    glob = (((fase_cur - 1) + pct) / fase_tot) if fase_tot > 1 else None
+                    fase_txt = f"Paso {fase_cur}/{fase_tot}" if fase_tot > 1 else ""
+                    yield texto, None, "", oculto, _barra(pct, glob, fase_txt)
                 except StopIteration as fin:
                     salida = fin.value
                     break

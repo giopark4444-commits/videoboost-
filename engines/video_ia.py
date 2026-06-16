@@ -50,10 +50,10 @@ def mejorar(video, modelo="ruido"):
     in_dir.mkdir(), out_dir.mkdir()
     try:
         yield f"✨ Mejora IA por fotograma · {modelo}"
-        yield "ℹ️ Extrayendo frames…"
+        yield "📊 Paso 1/3 · Extrayendo frames…"
         yield from correr(ff.cmd_extraer_frames(video, in_dir))
         n = len(list(in_dir.glob("*.png")))
-        yield f"ℹ️ {n} frames. Procesando con IA (una carga del modelo; puede tardar)…"
+        yield f"📊 Paso 2/3 · Procesando {n} frames con IA (una carga del modelo)…"
 
         if modelo == "ruido":
             yield from restormer.procesar_carpeta(in_dir, out_dir, "Real_Denoising")
@@ -76,7 +76,7 @@ def mejorar(video, modelo="ruido"):
             shutil.copy(p, seq / f"f_{i:08d}.png")
 
         salida = SALIDAS / f"{video.stem}_ia_{modelo}.mp4"
-        yield "ℹ️ Reensamblando video…"
+        yield "📊 Paso 3/3 · Reensamblando video…"
         yield from correr(ff.cmd_reensamblar(seq, "f_%08d.png", f"{fps:.5f}",
                                              video, salida))
         return str(salida)

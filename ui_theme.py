@@ -307,6 +307,13 @@ footer{display:none !important;}
   transition:width .25s cubic-bezier(.22,1,.36,1);}
 .vb-bar-pct{font-size:11px; opacity:.6; text-align:right; margin-top:3px;
   font-variant-numeric:tabular-nums; letter-spacing:.02em;}
+/* Etiquetas y barra de progreso GLOBAL del render (estilo cola de AE/Premiere) */
+.vb-bar-lbl{font-size:11px; font-weight:600; opacity:.75; margin:2px 0 3px;
+  letter-spacing:.01em;}
+.vb-bar-lbl2{margin-top:10px; opacity:.55; font-weight:500;}
+.vb-bar-g{height:7px;}
+.vb-bar-g .vb-bar-fill{background:var(--vb-accent);
+  background-image:linear-gradient(90deg, var(--vb-accent), var(--vb-accent-soft));}
 
 /* Galería del comparador de LUTs (dentro de los looks): miniaturas compactas */
 .vb-frame-cmp{margin-top:6px;}
