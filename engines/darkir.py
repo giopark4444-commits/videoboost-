@@ -22,14 +22,41 @@ from pathlib import Path
 from engines import SALIDAS, VENDOR, correr, python_venv
 
 DARKIR_DIR = VENDOR / "DarkIR"
-# Config de inferencia por defecto del repo (all-in-one LOL-Blur).
-CONFIG = "./options/inference/LOLBlur.yml"
+
+# El repo tiene dos modelos: DarkIR_64width.pt (width=64) y DarkIR_384.pt (width=32).
+# Solo DarkIR_384.pt está en HuggingFace; usamos el que esté disponible.
+_PESO_64 = DARKIR_DIR / "models" / "DarkIR_64width.pt"
+_PESO_384 = DARKIR_DIR / "models" / "DarkIR_384.pt"
+
+# Config temporal que escribimos para usar DarkIR_384 cuando no está el _64width.
+_CONFIG_384 = """#### red
+network:
+  name: DarkIR
+  img_channels: 3
+  width: 32
+  middle_blk_num_enc: 2
+  middle_blk_num_dec: 2
+  enc_blk_nums: [1, 2, 3]
+  dec_blk_nums: [3, 1, 1]
+  dilations: [1, 4, 9]
+  extra_depth_wise: True
+save:
+  path: ./models/DarkIR_384.pt
+Resize: False
+"""
+
+
+def _config_activo() -> tuple:
+    """Devuelve (ruta_config, existe_peso)."""
+    if _PESO_64.exists():
+        return "./options/inference/LOLBlur.yml", True
+    if _PESO_384.exists():
+        return "./options/inference/_vb_384.yml", True
+    return "./options/inference/LOLBlur.yml", False
 
 
 def disponible() -> bool:
-    # Requiere el script y que el peso ya esté descargado (no es automático).
-    peso = DARKIR_DIR / "models" / "DarkIR_64width.pt"
-    return (DARKIR_DIR / "inference.py").exists() and peso.exists()
+    return (DARKIR_DIR / "inference.py").exists() and (_PESO_64.exists() or _PESO_384.exists())
 
 
 def mejorar(entrada):
@@ -39,12 +66,18 @@ def mejorar(entrada):
     if not disponible():
         raise RuntimeError(
             "DarkIR no está instalado (o falta el peso). Corre "
-            "install/extras_darkir.sh (o .bat) y coloca el modelo en "
-            "vendor/DarkIR/models/DarkIR_64width.pt."
+            "install/extras_darkir.sh y espera a que descargue desde HuggingFace."
         )
     entrada = Path(entrada)
     py = python_venv(".venv-darkir", "install/extras_darkir.sh")
     cuda = hardware.info_sistema()["cuda"]
+
+    config_yml, _ = _config_activo()
+    # Si usamos el modelo 384, escribimos la config temporal.
+    if config_yml.endswith("_vb_384.yml"):
+        cfg_path = DARKIR_DIR / "options" / "inference" / "_vb_384.yml"
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text(_CONFIG_384)
 
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_darkir_"))
     in_dir = tmp / "in"
@@ -57,7 +90,7 @@ def mejorar(entrada):
     out_dir.mkdir(parents=True, exist_ok=True)
     prev = {p for p in out_dir.glob("*")}
 
-    cmd = [py, "inference.py", "-p", CONFIG, "-i", in_dir]
+    cmd = [py, "inference.py", "-p", config_yml, "-i", in_dir]
 
     # Sobrescribimos el CUDA_VISIBLE_DEVICES="1" hardcodeado del script: en CUDA
     # exponemos la GPU 0 (la 4080); en Mac lo vaciamos para no confundir a torch.
