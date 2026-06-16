@@ -130,7 +130,9 @@ IMG_CON_PROMPT = ("faithdiff", "instantir", "iclight")
 _FORMATOS_VIDEO = [
     ("H.264 MP4", "h264"),
     ("H.265 HEVC", "h265"),
-    ("ProRes 422", "prores"),
+    ("ProRes 422 HQ", "prores"),
+    ("ProRes 4444 (10-bit + alfa)", "prores4444"),
+    ("ProRes 4444 XQ (máxima calidad)", "prores4444xq"),
     ("WebM VP9", "webm"),
 ]
 _FORMATOS_IMG = [
@@ -184,6 +186,13 @@ def _transcodificar_video(entrada: str, formato: str, log: list) -> str:
                     "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"], ".mp4"),
         "prores": (["-c:v", "prores_ks", "-profile:v", "3",
                     "-c:a", "pcm_s16le"], ".mov"),
+        # ProRes 4444 (perfil 4) y 4444 XQ (perfil 5): 4:4:4 a 10/12-bit con canal
+        # alfa. prores_ks lo soporta de sobra; ProRes RAW NO se puede codificar con
+        # FFmpeg (Apple no licencia el encoder), así que no se ofrece.
+        "prores4444": (["-c:v", "prores_ks", "-profile:v", "4",
+                        "-pix_fmt", "yuva444p10le", "-c:a", "pcm_s16le"], ".mov"),
+        "prores4444xq": (["-c:v", "prores_ks", "-profile:v", "5",
+                          "-pix_fmt", "yuva444p10le", "-c:a", "pcm_s16le"], ".mov"),
         "webm":   (["-c:v", "libvpx-vp9", "-crf", "32", "-b:v", "0",
                     "-c:a", "libopus", "-b:a", "128k"], ".webm"),
     }
