@@ -52,6 +52,7 @@ MOTORES_VIDEO_NOTAS = {
     "dut_stab": "n_dut_stab",
     "grano": "n_grano", "lut": "n_lut",
     "desentrelazar": "n_desentrelazar", "denoise": "n_denoise", "limpiar": "n_limpiar",
+    "cine": "n_cine",
     "estabilizar": "n_estabilizar",
 }
 MOTORES_IMG_NOTAS = {
@@ -443,6 +444,8 @@ def hacer_aplicar_filtros(lang):
                 gen = filtros.estabilizar(base, suavidad=int(est_suav), zoom=float(est_zoom))
             elif filtro == "limpiar":
                 gen = filtros.limpiar(base)
+            elif filtro == "cine":
+                gen = filtros.cine(base)
             else:
                 yield t("filtros_sin_base", lang), salida_actual, "", oculto, _barra(None)
                 return
@@ -962,7 +965,7 @@ def filtros_video():
     antes de descargar: revelado/LUT, grano, desentrelazar, ruido, estabilizar."""
     if not HW["ffmpeg"]:
         return []
-    f = ["lut", "grano", "desentrelazar", "denoise", "limpiar"]
+    f = ["lut", "grano", "desentrelazar", "denoise", "limpiar", "cine"]
     if filtros.ESTABILIZA_OK:   # vidstab (2 pasadas) o deshake (integrado)
         f.append("estabilizar")
     return f
@@ -1299,7 +1302,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 ids_f = filtros_video()
                 # Filtros "simples" (grano/desentrelazar/ruido/estabilizar): sus
                 # opciones van JUNTAS en un solo grupo. El revelado (lut) va aparte.
-                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar", "limpiar"}
+                _SIMPLES = {"grano", "desentrelazar", "denoise", "estabilizar", "limpiar", "cine"}
                 _CON_CTRL = _SIMPLES | {"lut"}
                 with gr.Column(elem_classes="col-aside", min_width=220):
                     gr.Markdown(f"### {t('filtros_titulo', lang)}\n{t('filtros_intro', lang)}",

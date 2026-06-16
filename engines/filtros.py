@@ -84,6 +84,39 @@ def limpiar(entrada, fuerza: str = "default"):
     return str(salida)
 
 
+def cine(entrada, intensidad: float = 0.5):
+    """Look de **película**: añade *halation* (resplandor rojizo alrededor de las
+    altas luces), *bloom* (difusión suave de los brillos) y un *viñeteado óptico*.
+    100% FFmpeg/CPU, sin GPU. Complementa al grano y a los LUTs.
+
+    intensidad — 0.0–1.0 (mezcla del resplandor; default 0.5).
+    Generador: cede líneas de log; retorna la ruta del archivo de salida.
+    """
+    entrada = Path(entrada)
+    salida = SALIDAS / (entrada.stem + "_cine.mp4")
+    op = max(0.0, min(1.0, float(intensidad)))
+    # 1) aislar las altas luces, 2) difuminarlas (bloom) y teñirlas de rojo/cálido
+    #    (halation del haluro de plata), 3) mezclarlas en "screen" sobre la base,
+    #    4) viñeteado óptico suave.
+    vf = (
+        "split=2[base][hi];"
+        "[hi]curves=master='0/0 0.55/0 0.75/0.5 1/1',"
+        "gblur=sigma=16,"
+        "colorbalance=rm=0.20:gm=0.02:bm=-0.08[glow];"
+        f"[base][glow]blend=all_mode=screen:all_opacity={op:.2f},"
+        "vignette=PI/4.5"
+    )
+    cmd = [
+        ffmpeg(), "-y", "-i", str(entrada),
+        "-vf", vf,
+        "-c:v", "libx264", "-crf", "17", "-preset", "medium",
+        "-pix_fmt", "yuv420p", "-c:a", "copy", str(salida),
+    ]
+    yield f"▶ cine (halation+bloom, intensidad={op:.2f}): {entrada.name} → {salida.name}"
+    yield from correr(cmd)
+    return str(salida)
+
+
 def denoise(entrada, luma: float = 3.0, chroma: float = 2.0):
     """Reduce el ruido de video con hqdn3d.
 

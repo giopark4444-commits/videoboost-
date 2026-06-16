@@ -824,6 +824,10 @@ T = {
         "es": "Quitar artefactos de compresión (FFmpeg)",
         "en": "Remove compression artifacts (FFmpeg)",
         "fr": "Enlever les artefacts de compression (FFmpeg)"},
+    "m_cine": {
+        "es": "Look de cine — halation + bloom (FFmpeg)",
+        "en": "Film look — halation + bloom (FFmpeg)",
+        "fr": "Rendu cinéma — halation + bloom (FFmpeg)"},
     "m_denoise": {
         "es": "Reducir ruido — hqdn3d (FFmpeg)",
         "en": "Denoise — hqdn3d (FFmpeg)",
@@ -842,6 +846,16 @@ T = {
         "fr": "Supprime l'entrelacement des vidéos TV/caméra avec **bwdif** (BobWeaver, "
               "LGPL) : mieux que yadif sur les lignes fines et le mouvement. Repli sur "
               "yadif si absent. Sans GPU, rapide."},
+    "n_cine": {
+        "es": "Da un **look de película**: *halation* (resplandor rojizo en las altas luces), "
+              "*bloom* (difusión de los brillos) y viñeteado óptico. CPU/FFmpeg, sin GPU. "
+              "Combínalo con los LUTs y el grano para el acabado cine.",
+        "en": "Adds a **film look**: *halation* (reddish glow on highlights), *bloom* (light "
+              "diffusion) and optical vignette. CPU/FFmpeg, no GPU. Combine with LUTs and grain "
+              "for a cinematic finish.",
+        "fr": "Donne un **rendu cinéma** : *halation* (lueur rougeâtre sur les hautes lumières), "
+              "*bloom* (diffusion des éclats) et vignettage optique. CPU/FFmpeg, sans GPU. À "
+              "combiner avec les LUT et le grain."},
     "n_limpiar": {
         "es": "Quita **artefactos de compresión**: bloques de H.264/JPEG (deblock) y "
               "banding/posterización en degradados como cielos (deband). Filtros nativos "
