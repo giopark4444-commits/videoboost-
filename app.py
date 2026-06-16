@@ -1,4 +1,4 @@
-"""VideoBoost — mejora de videos e imágenes con IA, 100% local.
+"""PixelBooster — mejora de videos e imágenes con IA, 100% local.
 
 Interfaz Gradio multilingüe (español / English / français). Detecta el hardware
 al arrancar y solo ofrece los motores que pueden funcionar en esta máquina
@@ -7,6 +7,7 @@ Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 """
 
 import base64
+import contextlib
 import io
 import json
 import os
@@ -21,6 +22,7 @@ import gradio as gr
 
 import hardware
 import licencias
+import ajustes
 import ui_theme
 from engines import ffmpeg_utils as ff
 from engines import (birefnet, color, darkir, dehazeformer, diffbir, dreamclear,
@@ -32,6 +34,7 @@ from engines import (birefnet, color, darkir, dehazeformer, diffbir, dreamclear,
                      seedvr2_mlx, shadowformer, video_ia, vulkan)
 from i18n import IDIOMAS, idioma_por_defecto, t
 
+VERSION = "1.0"
 HW = hardware.info_sistema()
 
 # Saneamiento legal del build que se VENDE: por defecto se EXCLUYEN los motores con
@@ -880,45 +883,113 @@ def hacer_vista_previa(lang):
     return vista_previa
 
 
-def header_html(lang):
-    if HW["cuda"]:
-        gpu = f"NVIDIA {HW['gpu']} · {HW['vram_gb']} GB VRAM"
-    elif HW["mps"]:
-        gpu = f"Apple Silicon · {HW['ram_gb']} {t('mem_unificada', lang)}"
-    else:
-        gpu = t("gpu_generica", lang)
-    tier = f"{t('nivel', lang)} {HW['nivel']} · {t('nivel_' + str(HW['nivel']), lang)}"
+def picker_temas_html(lang):
+    """Galería de temas: 3 claros + 3 oscuros, cada uno con un swatch (fondo +
+    superficie + acento). Al pulsar aplica el tema en cliente (window.vbTema)."""
+    def card(tid):
+        v = ui_theme.TEMAS[tid]["vars"]
+        return (
+            f'<button type="button" class="vb-tema" data-tema="{tid}" '
+            f"onclick=\"window.vbTema('{tid}');return false;\">"
+            f'<span class="vb-tema-sw" style="--c1:{v["--vb-bg"]};'
+            f'--c2:{v["--vb-surface"]};--c3:{v["--vb-accent"]}"></span>'
+            f'<span class="vb-tema-nom">{t("tema_" + tid, lang)}</span></button>')
+
+    def grupo(titulo, ids):
+        cards = "".join(card(tid) for tid in ids)
+        return (f'<div class="vb-temas-grupo"><span class="vb-temas-tit">{titulo}</span>'
+                f'<div class="vb-temas-row">{cards}</div></div>')
+
     return (
-        '<div id="vb-header">'
-        f'<h1 class="vb-title">{t("titulo", lang)}</h1>'
-        f'<p class="vb-sub-text">{t("subtitulo", lang)}</p>'
-        '<div class="vb-sub">'
-        f'<span class="vb-pill"><span class="vb-dot"></span>{gpu}</span>'
-        f'<span class="vb-tier">{tier}</span>'
-        '</div></div>'
-    )
+        '<div class="vb-temas">'
+        + grupo(t("ap_grupo_claros", lang), ui_theme.TEMAS_CLAROS)
+        + grupo(t("ap_grupo_oscuros", lang), ui_theme.TEMAS_OSCUROS)
+        + '</div>')
 
 
-# --- Tema: JS de cliente (claro/oscuro/personalizado, persistente) -----------
-_JS_APLICAR = """
-window.vbAcento = (c) => { const s = document.body.style;
-  ['--vb-accent','--button-primary-background-fill','--button-primary-background-fill-hover',
-   '--color-accent','--primary-500','--primary-600'].forEach(v => s.setProperty(v, c));
-  s.setProperty('--vb-accent-soft', c + '22'); };
-window.vbFondo = (c) => { const s = document.body.style;
-  ['--vb-bg','--body-background-fill','--background-fill-secondary'].forEach(v => s.setProperty(v, c)); };
-window.vbModo = (m) => { document.body.classList.toggle('dark', m === 'oscuro');
-  localStorage.setItem('vb_modo', m); };
-"""
+def picker_fuentes_html(lang):
+    """Selector de tipografía: cada botón se previsualiza en su propia fuente y
+    al pulsar la aplica en cliente (window.vbFuente)."""
+    botones = "".join(
+        f'<button type="button" class="vb-fuente" data-fuente="{fid}" '
+        f"onclick=\"window.vbFuente('{fid}');return false;\" "
+        # comillas simples: las dobles romperían el atributo style (preview)
+        f"style=\"font-family:{', '.join(ui_theme.FUENTES[fid]).replace(chr(34), chr(39))}\">"
+        f'{t("fuente_" + fid, lang)}</button>'
+        for fid in ui_theme.FUENTES_ORDEN)
+    return (f'<span class="vb-tipo-tit">{t("aj_tipografia", lang)}</span>'
+            f'<div class="vb-fuentes">{botones}</div>')
 
+
+def gpu_resumen(lang):
+    """Línea legible del equipo detectado (GPU/chip + memoria)."""
+    if HW["cuda"]:
+        return f"NVIDIA {HW['gpu']} · {HW['vram_gb']} GB VRAM"
+    if HW["mps"]:
+        return f"Apple Silicon · {HW['ram_gb']:.0f} GB {t('mem_unificada', lang)}"
+    return t("gpu_generica", lang)
+
+
+def texto_niveles(lang):
+    """Explica los 3 niveles, de qué dependen y cuál te tocó (y por qué)."""
+    n = HW["nivel"]
+    if HW["mps"]:
+        porque = t("aj_nivel_why_mac", lang)
+    elif HW["cuda"]:
+        porque = t("aj_nivel_why_cuda", lang)
+    else:
+        porque = t("aj_nivel_why_gen", lang)
+    niv = lambda k: t("nivel", lang) + f" {k} · " + t(f"nivel_{k}", lang)
+    return "\n".join([
+        f"### {t('aj_niveles_tit', lang)}",
+        t("aj_niveles_intro", lang),
+        "",
+        f"- **{niv(1)}** _({t('aj_nivel_min', lang)})_ — {t('aj_nivel1', lang)}",
+        f"- **{niv(2)}** — {t('aj_nivel2', lang)}",
+        f"- **{niv(3)}** _({t('aj_nivel_max', lang)})_ — {t('aj_nivel3', lang)}",
+        "",
+        f"**{t('aj_nivel_tuyo', lang)}: {niv(n)}** — {porque}",
+    ])
+
+
+def texto_requisitos(lang):
+    """Tarjeta gráfica mínima e ideal para PC y Mac."""
+    return t("req_txt", lang)
+
+
+# --- Tema + tipografía: JS de cliente (aplicación y persistencia) -------------
+# vbTema()/vbFuente() viven en ui_theme; aquí los cargamos al inicio aplicando lo
+# guardado (o los valores por defecto).
 _JS_CARGA = """() => {
   %s
-  try {
-    const m = localStorage.getItem('vb_modo'); if (m) window.vbModo(m);
-    const a = localStorage.getItem('vb_acento'); if (a) window.vbAcento(a);
-    const f = localStorage.getItem('vb_fondo'); if (f) window.vbFondo(f);
-  } catch(e) {}
-}""" % _JS_APLICAR
+  %s
+  try { window.vbTema(localStorage.getItem('vb_tema') || '%s'); } catch (e) {}
+  try { window.vbFuente(localStorage.getItem('vb_fuente') || '%s'); } catch (e) {}
+  // Clic en el logo PixelBooster (zona a la izquierda de las pestañas) → inicio
+  // (primera pestaña). Gradio solo conmuta con la secuencia completa de eventos,
+  // no con .click(); por eso la replicamos. Delegado en document para sobrevivir
+  // a los re-render de @gr.render.
+  if (!window.__vbLogoNav) {
+    window.__vbLogoNav = true;
+    const irAPestana = (btn) => {
+      const r = btn.getBoundingClientRect();
+      const o = {bubbles:true, cancelable:true, composed:true, view:window,
+                 clientX: Math.round(r.left + r.width/2),
+                 clientY: Math.round(r.top + r.height/2)};
+      ['pointerdown','mousedown','pointerup','mouseup','click'].forEach(ty => {
+        const E = (ty[0] === 'p' && window.PointerEvent) ? PointerEvent : MouseEvent;
+        btn.dispatchEvent(new E(ty, o));
+      });
+    };
+    document.addEventListener('click', (e) => {
+      const wrap = e.target && e.target.closest && e.target.closest('.tab-wrapper');
+      if (!wrap) return;
+      const first = wrap.querySelector('.tab-container[role="tablist"] button');
+      if (first && e.clientX < first.getBoundingClientRect().left) irAPestana(first);
+    });
+  }
+}""" % (ui_theme.temas_js(), ui_theme.fuentes_js(),
+        ui_theme.TEMA_DEFECTO, ui_theme.FUENTE_DEFECTO)
 
 # Lee el tiempo ACTUAL del reproductor de resultado/preview (#vb-result) y lo
 # convierte en fracción 0–1, para que "este frame" sea justo donde el usuario paró
@@ -928,15 +999,6 @@ _JS_POS = ("(pos, ...rest) => { const v = document.querySelector('#vb-result vid
            "|| document.querySelector('#vb-input video'); "
            "if (v && v.duration) pos = v.currentTime / v.duration; "
            "return [pos, ...rest]; }")
-_JS_MODO = "(m) => { window.vbModo(m); }"
-_JS_ACENTO = "(c) => { window.vbAcento(c); localStorage.setItem('vb_acento', c); }"
-_JS_FONDO = "(c) => { window.vbFondo(c); localStorage.setItem('vb_fondo', c); }"
-_JS_RESET = ("() => { ['vb_modo','vb_acento','vb_fondo'].forEach(k => "
-             "localStorage.removeItem(k)); document.body.classList.remove('dark'); "
-             "['--vb-accent','--vb-accent-soft','--vb-bg','--button-primary-background-fill',"
-             "'--button-primary-background-fill-hover','--color-accent','--primary-500',"
-             "'--primary-600','--body-background-fill','--background-fill-secondary']"
-             ".forEach(v => document.body.style.removeProperty(v)); }")
 
 
 def texto_sistema(lang):
@@ -1055,6 +1117,22 @@ def texto_sistema(lang):
     if licencias.requiere_licencia() and lic:
         filas.append(f"\n🔑 {t('lic_activada', lang)} **{lic.get('cliente', '?')}**")
     return "\n".join(filas)
+
+
+def texto_acerca(lang):
+    """Rubro 'Acerca de': versión y licencias de los motores incluidos."""
+    return "\n".join([
+        f"**PixelBooster** · v{VERSION}",
+        "",
+        t("aj_acerca_intro", lang),
+        "",
+        f"### {t('aj_acerca_lic', lang)}",
+        "- FaithDiff — **MIT**",
+        "- SeedVR2 · FlashVSR · InstantIR · DDColor · DiffBIR — **Apache-2.0**",
+        "- PMRF — **MIT**",
+        "- Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan) — **BSD/MIT**",
+        "- CodeFormer — NTU S-Lab (" + t("aj_acerca_revisar", lang) + ")",
+    ])
 
 
 def motores_video():
@@ -1178,7 +1256,7 @@ def _nota_video(motor, lang):
 _GR6 = int(gr.__version__.split(".")[0]) >= 6
 _APARIENCIA = dict(theme=ui_theme.TEMA, css=ui_theme.CSS, js=_JS_CARGA)
 
-with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
+with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
     idioma = gr.Radio(IDIOMAS, value=idioma_por_defecto(), show_label=False,
                       container=False, elem_id="vb-lang", scale=0)
     # Cambia al activar la licencia para que la UI completa se re-renderice.
@@ -1186,31 +1264,8 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
 
     @gr.render(inputs=[idioma, lic_tick])
     def ui(lang, _tick):
-        gr.HTML(header_html(lang))
-
-        # --- Apariencia: claro / oscuro / personalizado (persistente) ---
-        with gr.Accordion(t("ap_titulo", lang), open=False):
-            modo = gr.Radio(
-                [(t("ap_claro", lang), "claro"), (t("ap_oscuro", lang), "oscuro"),
-                 (t("ap_custom", lang), "custom")],
-                value="claro", label=t("ap_modo", lang))
-            with gr.Row():
-                acento = gr.ColorPicker(value="#c96442", label=t("ap_acento", lang),
-                                        visible=False)
-                fondo = gr.ColorPicker(value="#faf9f5", label=t("ap_fondo", lang),
-                                       visible=False)
-            reset = gr.Button(t("ap_reset", lang), size="sm")
-
-            def _mostrar_custom(m):
-                v = (m == "custom")
-                return gr.update(visible=v), gr.update(visible=v)
-
-            modo.change(_mostrar_custom, modo, [acento, fondo])
-            modo.change(None, modo, None, js=_JS_MODO)
-            acento.change(None, acento, None, js=_JS_ACENTO)
-            fondo.change(None, fondo, None, js=_JS_FONDO)
-            reset.click(lambda: ("claro", "#c96442", "#faf9f5"), None,
-                        [modo, acento, fondo]).then(None, None, None, js=_JS_RESET)
+        # El título "PixelBooster" ahora es un logo integrado en la barra de
+        # pestañas (CSS .tab-nav::before en ui_theme), así que no hay cabecera.
 
         # --- Activación (solo si la build exige licencia y no está activada) ---
         if licencias.requiere_licencia() and not licencias.activa():
@@ -1395,7 +1450,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                                 label=t("batch", lang))
                     formato_v = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
-                        value="h264",
+                        value=ajustes.formato_video(),
                         label=t("formato_salida_v", lang))
                     gr.Markdown(t("formato_nota", lang), elem_classes="formato-nota")
                     preview = gr.Markdown(elem_classes="size-preview")
@@ -1601,7 +1656,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                         ids_i[0] == "lut", fuente=img_in, es_video=False)
                     formato_i = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_IMG],
-                        value="png",
+                        value=ajustes.formato_img(),
                         label=t("formato_salida_i", lang))
                     preview_i = gr.Markdown(elem_classes="size-preview")
                     with gr.Row():
@@ -1772,7 +1827,7 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                                            label=t("lote_resolucion", lang))
                     lote_fmt = gr.Dropdown(
                         [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
-                        value="h264",
+                        value=ajustes.formato_video(),
                         label=t("formato_salida_v", lang))
                     with gr.Row():
                         lote_btn = gr.Button(t("lote_procesar", lang),
@@ -1790,10 +1845,9 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 lote_log)
             lote_cancelar.click(fn=None, cancels=[ev_lote])
 
-        with gr.Tab(t("tab_sistema", lang)):
-            gr.Markdown(texto_sistema(lang), elem_classes="sys-card")
-
-            # --- Mantenimiento: re-descargar / comprobar versión por motor ---
+        with gr.Tab(t("tab_ajustes", lang)):
+            # Datos para el rubro de Mantenimiento (se calculan antes de pintar
+            # las columnas para saber si hay motores gestionables).
             _MANT_NOMBRES = {
                 "seedvr2": "SeedVR2 — restauración IA",
                 "vulkan": "Real-ESRGAN · Real-CUGAN · waifu2x · RIFE (Vulkan)",
@@ -1845,40 +1899,107 @@ with gr.Blocks(title="VideoBoost", **({} if _GR6 else _APARIENCIA)) as demo:
                 return True  # vulkan, codeformer, ddcolor sirven en cualquier equipo
 
             _gestionables = [m for m in mantenimiento.MOTORES if _mant_aplica(m)]
-            if _gestionables:
-                gr.Markdown(f"### {t('mant_titulo', lang)}\n{t('mant_intro', lang)}")
-                mant_log = gr.Textbox(label=t("mant_log", lang), lines=8, max_lines=8,
-                                      elem_classes="console", visible=False)
 
-                def _hacer_mant(funcion, motor):
-                    def correr_mant():
-                        log = []
-                        yield gr.update(value="", visible=True)
-                        for linea in funcion(motor):
-                            log.append(linea)
-                            yield gr.update(value="\n".join(log[-200:]), visible=True)
-                    return correr_mant
+            @contextlib.contextmanager
+            def _seccion(titulo):
+                """Tarjeta de sección (no colapsable): título + contenido."""
+                with gr.Group(elem_classes="aj-card"):
+                    gr.Markdown("### " + titulo)
+                    yield
 
-                def _hacer_abrir(motor):
-                    def abrir():
-                        return gr.update(value=mantenimiento.abrir_carpeta(motor),
-                                         visible=True)
-                    return abrir
+            # Tres columnas siempre desplegadas; cada sección muestra todo.
+            with gr.Row(elem_classes="aj-cols", equal_height=False):
+                # ───────── Columna IZQUIERDA: Idioma · Apariencia · Salida · Equipo ─────────
+                with gr.Column():
+                    with _seccion("🌐 " + t("aj_idioma", lang)):
+                        idioma_sel = gr.Radio(IDIOMAS, value=lang, show_label=False,
+                                              container=False, elem_classes="aj-idioma")
+                        # Espejo del selector real (disparador de @gr.render, oculto
+                        # arriba). .input → solo cuando el usuario elige.
+                        idioma_sel.input(lambda v: v, idioma_sel, idioma)
+                    with _seccion(t("ap_titulo", lang)):
+                        gr.HTML(picker_temas_html(lang))
+                        gr.HTML(picker_fuentes_html(lang))
+                    with _seccion("📁 " + t("aj_salida", lang)):
+                        gr.Markdown(t("aj_salida_intro", lang))
+                        aj_fmt_v = gr.Dropdown(
+                            [(lbl, val) for lbl, val in _FORMATOS_VIDEO],
+                            value=ajustes.formato_video(), label=t("formato_salida_v", lang))
+                        aj_fmt_i = gr.Dropdown(
+                            [(lbl, val) for lbl, val in _FORMATOS_IMG],
+                            value=ajustes.formato_img(), label=t("formato_salida_i", lang))
+                        aj_msg = gr.Markdown(elem_classes="formato-nota")
 
-                for _m in _gestionables:
-                    _u = mantenimiento.ubicacion(_m)
-                    _detalle = _u["tamano"] if _u["existe"] else t("mant_no_descargado", lang)
-                    with gr.Row():
-                        gr.Markdown(
-                            f"**{_MANT_NOMBRES[_m]}**  \n"
-                            f"{t('mant_ubic', lang)}: `{_u['ruta']}` · {_detalle}",
-                            elem_classes="mant-info")
-                        _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
-                        _btn_re = gr.Button(t("mant_redescargar", lang), size="sm")
-                        _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
-                    _btn_open.click(_hacer_abrir(_m), None, mant_log)
-                    _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
-                    _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
+                        def _guardar_fmt_v(v):
+                            ajustes.guardar(formato_video=v)
+                            return "✓ " + t("aj_guardado", lang)
+
+                        def _guardar_fmt_i(v):
+                            ajustes.guardar(formato_img=v)
+                            return "✓ " + t("aj_guardado", lang)
+
+                        aj_fmt_v.change(_guardar_fmt_v, aj_fmt_v, aj_msg)
+                        aj_fmt_i.change(_guardar_fmt_i, aj_fmt_i, aj_msg)
+
+                    with _seccion("🖥️ " + t("aj_equipo", lang)):
+                        gr.Markdown(f"#### {gpu_resumen(lang)}")
+                        gr.Markdown(texto_sistema(lang))
+                        gr.Markdown(texto_niveles(lang))
+                        gr.Markdown(texto_requisitos(lang))
+
+                # ───────── Columna DERECHA: Guía · Mantenimiento · Licencia · Acerca ─────────
+                with gr.Column():
+                    with _seccion("📖 " + t("aj_guia", lang)):
+                        gr.Markdown(t("aj_guia_txt", lang))
+
+                    if _gestionables:
+                        with _seccion("🔧 " + t("mant_titulo", lang)):
+                            gr.Markdown(t("mant_intro", lang))
+                            mant_log = gr.Textbox(label=t("mant_log", lang), lines=8,
+                                                  max_lines=8, elem_classes="console",
+                                                  visible=False)
+
+                            def _hacer_mant(funcion, motor):
+                                def correr_mant():
+                                    log = []
+                                    yield gr.update(value="", visible=True)
+                                    for linea in funcion(motor):
+                                        log.append(linea)
+                                        yield gr.update(value="\n".join(log[-200:]),
+                                                        visible=True)
+                                return correr_mant
+
+                            def _hacer_abrir(motor):
+                                def abrir():
+                                    return gr.update(value=mantenimiento.abrir_carpeta(motor),
+                                                     visible=True)
+                                return abrir
+
+                            for _m in _gestionables:
+                                _u = mantenimiento.ubicacion(_m)
+                                _detalle = _u["tamano"] if _u["existe"] else t("mant_no_descargado", lang)
+                                gr.Markdown(
+                                    f"**{_MANT_NOMBRES[_m]}**  \n"
+                                    f"{t('mant_ubic', lang)}: `{_u['ruta']}` · {_detalle}",
+                                    elem_classes="mant-info")
+                                with gr.Row():
+                                    _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
+                                    _btn_re = gr.Button(t("mant_redescargar", lang), size="sm")
+                                    _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
+                                _btn_open.click(_hacer_abrir(_m), None, mant_log)
+                                _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
+                                _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
+
+                    if licencias.requiere_licencia():
+                        with _seccion("🔑 " + t("aj_licencia", lang)):
+                            _lic = licencias.activa()
+                            if _lic:
+                                gr.Markdown(f"🔑 {t('lic_activada', lang)} **{_lic.get('cliente', '?')}**")
+                            else:
+                                gr.Markdown(t("lic_texto", lang))
+
+                    with _seccion("ℹ️ " + t("aj_acerca", lang)):
+                        gr.Markdown(texto_acerca(lang))
 
 
 if __name__ == "__main__":

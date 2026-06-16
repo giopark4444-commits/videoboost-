@@ -21,11 +21,7 @@ def idioma_por_defecto() -> str:
 T = {
     # ---- generales ----
     "titulo": {
-        "es": "VideoBoost", "en": "VideoBoost", "fr": "VideoBoost"},
-    "subtitulo": {
-        "es": "Mejora de video e imagen con IA · 100% local",
-        "en": "AI video & image enhancement · 100% local",
-        "fr": "Amélioration vidéo et image par IA · 100% local"},
+        "es": "PixelBooster", "en": "PixelBooster", "fr": "PixelBooster"},
     "tab_video": {"es": "Video", "en": "Video", "fr": "Vidéo"},
     "tab_imagenes": {"es": "Imágenes", "en": "Images", "fr": "Images"},
     "tab_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
@@ -526,18 +522,207 @@ T = {
 
     # ---- apariencia / tema ----
     "ap_titulo": {"es": "🎨 Apariencia", "en": "🎨 Appearance", "fr": "🎨 Apparence"},
-    "ap_modo": {"es": "Tema", "en": "Theme", "fr": "Thème"},
-    "ap_claro": {"es": "Claro", "en": "Light", "fr": "Clair"},
-    "ap_oscuro": {"es": "Oscuro", "en": "Dark", "fr": "Sombre"},
-    "ap_custom": {"es": "Personalizado", "en": "Custom", "fr": "Personnalisé"},
-    "ap_acento": {"es": "Color de acento", "en": "Accent color", "fr": "Couleur d'accent"},
-    "ap_fondo": {"es": "Color de fondo", "en": "Background color", "fr": "Couleur de fond"},
-    "ap_reset": {"es": "Restablecer", "en": "Reset", "fr": "Réinitialiser"},
+    "aj_tipografia": {"es": "Tipografía", "en": "Typography", "fr": "Typographie"},
+    "fuente_sistema": {"es": "Sistema", "en": "System", "fr": "Système"},
+    "fuente_grotesca": {"es": "Grotesca", "en": "Grotesque", "fr": "Grotesque"},
+    "fuente_redonda": {"es": "Redonda", "en": "Rounded", "fr": "Arrondie"},
+    "fuente_serif": {"es": "Serif", "en": "Serif", "fr": "Serif"},
+    "fuente_mono": {"es": "Mono", "en": "Mono", "fr": "Mono"},
+    "ap_grupo_claros": {"es": "Claros", "en": "Light", "fr": "Clairs"},
+    "ap_grupo_oscuros": {"es": "Oscuros", "en": "Dark", "fr": "Sombres"},
+    "tema_arcilla": {"es": "Arcilla", "en": "Clay", "fr": "Argile"},
+    "tema_niebla": {"es": "Niebla", "en": "Mist", "fr": "Brume"},
+    "tema_menta": {"es": "Menta", "en": "Mint", "fr": "Menthe"},
+    "tema_noche": {"es": "Noche", "en": "Night", "fr": "Nuit"},
+    "tema_medianoche": {"es": "Índigo", "en": "Indigo", "fr": "Indigo"},
+    "tema_carbon": {"es": "Carbón", "en": "Carbon", "fr": "Charbon"},
+
+    # ---- pestaña Ajustes ----
+    "tab_ajustes": {"es": "Ajustes", "en": "Settings", "fr": "Réglages"},
+    "aj_guia": {"es": "Guía", "en": "Guide", "fr": "Guide"},
+    "aj_guia_txt": {
+        "es": (
+            "**PixelBooster** mejora tus videos e imágenes con inteligencia "
+            "artificial, **100% en tu equipo**: nada se sube a internet.\n\n"
+            "### Cómo usarlo\n"
+            "1. Abre la pestaña **Video** o **Imágenes** y sube tu archivo.\n"
+            "2. Elige un **motor** de mejora — cada uno trae una nota de para "
+            "qué sirve y cuándo conviene.\n"
+            "3. Ajusta la **resolución/escala** y, si quieres, los **filtros** "
+            "(revelado, LUT, grano analógico…).\n"
+            "4. Pulsa **Mejorar** y compara el antes/después con el deslizador.\n"
+            "5. Descarga el resultado en el formato que prefieras (lo recuerdas "
+            "abajo en **Salida por defecto**).\n\n"
+            "### Consejos\n"
+            "- En **Equipo y motores** ves qué motores tienes listos y el comando "
+            "para instalar los que falten.\n"
+            "- Usa la pestaña **Lote** para procesar varios archivos de una vez.\n"
+            "- Elige aquí mismo tu **tema** y tu **idioma**, en *Apariencia*."),
+        "en": (
+            "**PixelBooster** enhances your videos and images with AI, **100% on "
+            "your machine**: nothing is uploaded to the internet.\n\n"
+            "### How to use it\n"
+            "1. Open the **Video** or **Images** tab and upload your file.\n"
+            "2. Pick an enhancement **engine** — each one has a note on what it "
+            "does and when to use it.\n"
+            "3. Set the **resolution/scale** and, optionally, the **filters** "
+            "(color grade, LUT, film grain…).\n"
+            "4. Click **Enhance** and compare before/after with the slider.\n"
+            "5. Download the result in your preferred format (remembered below "
+            "in **Default output**).\n\n"
+            "### Tips\n"
+            "- **Hardware & engines** shows which engines are ready and the "
+            "command to install the missing ones.\n"
+            "- Use the **Batch** tab to process several files at once.\n"
+            "- Choose your **theme** and **language** right here, in *Appearance*."),
+        "fr": (
+            "**PixelBooster** améliore vos vidéos et images grâce à l'IA, **100% "
+            "sur votre machine** : rien n'est envoyé sur internet.\n\n"
+            "### Comment l'utiliser\n"
+            "1. Ouvrez l'onglet **Vidéo** ou **Images** et importez votre "
+            "fichier.\n"
+            "2. Choisissez un **moteur** d'amélioration — chacun a une note sur "
+            "son usage.\n"
+            "3. Réglez la **résolution/échelle** et, au besoin, les **filtres** "
+            "(étalonnage, LUT, grain argentique…).\n"
+            "4. Cliquez sur **Améliorer** et comparez avant/après avec le "
+            "curseur.\n"
+            "5. Téléchargez le résultat au format souhaité (mémorisé plus bas "
+            "dans **Sortie par défaut**).\n\n"
+            "### Astuces\n"
+            "- **Matériel et moteurs** indique les moteurs prêts et la commande "
+            "pour installer ceux qui manquent.\n"
+            "- Utilisez l'onglet **Lot** pour traiter plusieurs fichiers à la "
+            "fois.\n"
+            "- Choisissez ici votre **thème** et votre **langue**, dans "
+            "*Apparence*."),
+    },
+    "aj_idioma": {"es": "Idioma", "en": "Language", "fr": "Langue"},
+    "aj_equipo": {"es": "Equipo y motores", "en": "Hardware & engines",
+                  "fr": "Matériel et moteurs"},
+    "aj_salida": {"es": "Salida por defecto", "en": "Default output",
+                  "fr": "Sortie par défaut"},
+    "aj_salida_intro": {
+        "es": "Formato de exportación recordado para video e imagen (se aplica a "
+              "las nuevas mejoras).",
+        "en": "Remembered export format for video and images (applies to new "
+              "enhancements).",
+        "fr": "Format d'export mémorisé pour la vidéo et les images (s'applique "
+              "aux nouvelles améliorations)."},
+    "aj_guardado": {"es": "Preferencia guardada", "en": "Preference saved",
+                    "fr": "Préférence enregistrée"},
+    "aj_licencia": {"es": "Licencia", "en": "License", "fr": "Licence"},
+    "aj_acerca": {"es": "Acerca de", "en": "About", "fr": "À propos"},
+    "aj_acerca_intro": {
+        "es": "App 100% local para mejorar video e imagen con IA.",
+        "en": "100% local app to enhance video and images with AI.",
+        "fr": "Application 100% locale pour améliorer vidéo et images avec l'IA."},
+    "aj_acerca_lic": {"es": "Licencias de los motores", "en": "Engine licenses",
+                      "fr": "Licences des moteurs"},
+    "aj_acerca_revisar": {"es": "revisar para uso comercial",
+                          "en": "review for commercial use",
+                          "fr": "à vérifier pour usage commercial"},
+    "aj_niveles_tit": {"es": "Sobre los niveles", "en": "About the tiers",
+                       "fr": "À propos des niveaux"},
+    "aj_niveles_intro": {
+        "es": "Hay **3 niveles**, de menor a mayor potencia. PixelBooster te "
+              "asigna uno automáticamente según tu GPU y memoria:",
+        "en": "There are **3 tiers**, from lowest to highest power. PixelBooster "
+              "assigns you one automatically from your GPU and memory:",
+        "fr": "Il y a **3 niveaux**, du plus faible au plus puissant. PixelBooster "
+              "vous en attribue un automatiquement selon votre GPU et mémoire :"},
+    "aj_nivel_min": {"es": "más bajo", "en": "lowest", "fr": "le plus bas"},
+    "aj_nivel_max": {"es": "más alto", "en": "highest", "fr": "le plus haut"},
+    "req_txt": {
+        "es": (
+            "### Tarjeta gráfica recomendada\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Mínima para usar la app:** cualquier GPU con Vulkan (Intel, AMD "
+            "o NVIDIA GTX) — mejora con Real-ESRGAN (Nivel 1).\n"
+            "- **Mínima para IA (SeedVR2):** NVIDIA con 8 GB de VRAM (p. ej. "
+            "RTX 3060) — Nivel 2.\n"
+            "- **Ideal:** NVIDIA con 16 GB+ de VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Nivel 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Mínima:** cualquier chip M (M1) — Real-ESRGAN (Nivel 1).\n"
+            "- **Recomendada:** chip M con 16 GB+ de RAM unificada — SeedVR2 3B "
+            "(Nivel 2).\n"
+            "- **Ideal:** M Pro / Max / Ultra con 32–64 GB+ — SeedVR2 a máxima "
+            "calidad. *(En Mac el tope es Nivel 2: el Nivel 3 es exclusivo de "
+            "NVIDIA.)*"),
+        "en": (
+            "### Recommended graphics card\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Minimum to run the app:** any Vulkan-capable GPU (Intel, AMD or "
+            "NVIDIA GTX) — enhances with Real-ESRGAN (Tier 1).\n"
+            "- **Minimum for AI (SeedVR2):** NVIDIA with 8 GB VRAM (e.g. "
+            "RTX 3060) — Tier 2.\n"
+            "- **Ideal:** NVIDIA with 16 GB+ VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Tier 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Minimum:** any M chip (M1) — Real-ESRGAN (Tier 1).\n"
+            "- **Recommended:** M chip with 16 GB+ unified RAM — SeedVR2 3B "
+            "(Tier 2).\n"
+            "- **Ideal:** M Pro / Max / Ultra with 32–64 GB+ — SeedVR2 at top "
+            "quality. *(On Mac the ceiling is Tier 2: Tier 3 is NVIDIA-only.)*"),
+        "fr": (
+            "### Carte graphique recommandée\n"
+            "**PC (Windows / Linux · NVIDIA)**\n"
+            "- **Minimum pour utiliser l'app :** tout GPU compatible Vulkan "
+            "(Intel, AMD ou NVIDIA GTX) — améliore avec Real-ESRGAN (Niveau 1).\n"
+            "- **Minimum pour l'IA (SeedVR2) :** NVIDIA avec 8 Go de VRAM (ex. "
+            "RTX 3060) — Niveau 2.\n"
+            "- **Idéal :** NVIDIA avec 16 Go+ de VRAM (RTX 4080 / 4090) — SeedVR2 "
+            "7B + FlashVSR (Niveau 3).\n\n"
+            "**Mac (Apple Silicon)**\n"
+            "- **Minimum :** toute puce M (M1) — Real-ESRGAN (Niveau 1).\n"
+            "- **Recommandé :** puce M avec 16 Go+ de RAM unifiée — SeedVR2 3B "
+            "(Niveau 2).\n"
+            "- **Idéal :** M Pro / Max / Ultra avec 32–64 Go+ — SeedVR2 en "
+            "qualité maximale. *(Sur Mac le plafond est le Niveau 2 : le Niveau "
+            "3 est réservé à NVIDIA.)*"),
+    },
+    "aj_nivel3": {
+        "es": "NVIDIA con 16 GB+ de VRAM (ej. RTX 4080): SeedVR2 7B + FlashVSR.",
+        "en": "NVIDIA with 16 GB+ VRAM (e.g. RTX 4080): SeedVR2 7B + FlashVSR.",
+        "fr": "NVIDIA avec 16 Go+ de VRAM (ex. RTX 4080) : SeedVR2 7B + FlashVSR."},
+    "aj_nivel2": {
+        "es": "NVIDIA de 8–12 GB **o Mac con chip Apple (M) y 16 GB+ de RAM "
+              "unificada**: SeedVR2.",
+        "en": "NVIDIA 8–12 GB **or a Mac with Apple (M) chip and 16 GB+ unified "
+              "RAM**: SeedVR2.",
+        "fr": "NVIDIA 8–12 Go **ou Mac avec puce Apple (M) et 16 Go+ de RAM "
+              "unifiée** : SeedVR2."},
+    "aj_nivel1": {
+        "es": "cualquier GPU con Vulkan (Intel, AMD, GTX antiguas, Mac): "
+              "Real-ESRGAN y similares.",
+        "en": "any Vulkan-capable GPU (Intel, AMD, older GTX, Mac): Real-ESRGAN "
+              "and similar.",
+        "fr": "tout GPU compatible Vulkan (Intel, AMD, anciennes GTX, Mac) : "
+              "Real-ESRGAN et similaires."},
+    "aj_nivel_tuyo": {"es": "Tu equipo", "en": "Your machine",
+                      "fr": "Votre matériel"},
+    "aj_nivel_why_mac": {
+        "es": "tiene chip Apple Silicon con memoria unificada suficiente "
+              "(16 GB+). En Mac la «VRAM» es la RAM que comparten CPU y GPU.",
+        "en": "has an Apple Silicon chip with enough unified memory (16 GB+). On "
+              "Mac the “VRAM” is the RAM shared by CPU and GPU.",
+        "fr": "possède une puce Apple Silicon avec assez de mémoire unifiée "
+              "(16 Go+). Sur Mac, la « VRAM » est la RAM partagée CPU/GPU."},
+    "aj_nivel_why_cuda": {
+        "es": "tiene una GPU NVIDIA con suficiente VRAM para los motores de IA.",
+        "en": "has an NVIDIA GPU with enough VRAM for the AI engines.",
+        "fr": "possède un GPU NVIDIA avec assez de VRAM pour les moteurs d'IA."},
+    "aj_nivel_why_gen": {
+        "es": "usa motores Vulkan (sin GPU NVIDIA ni Apple Silicon detectada).",
+        "en": "uses Vulkan engines (no NVIDIA GPU or Apple Silicon detected).",
+        "fr": "utilise des moteurs Vulkan (aucun GPU NVIDIA ni Apple Silicon "
+              "détecté)."},
 
     # ---- activación de licencia ----
     "lic_titulo": {
-        "es": "Activar VideoBoost", "en": "Activate VideoBoost",
-        "fr": "Activer VideoBoost"},
+        "es": "Activar PixelBooster", "en": "Activate PixelBooster",
+        "fr": "Activer PixelBooster"},
     "lic_texto": {
         "es": "Pega tu clave de licencia para activar la app en esta máquina. "
               "Solo hace falta una vez y no necesita internet.",
@@ -1188,18 +1373,18 @@ T = {
               "d'image, installez les moteurs :"},
     "como_instalar_mac": {
         "es": "En Terminal, dentro de la carpeta de la app: `bash install/instalar_mac.sh` "
-              "(descarga SeedVR2, varios GB). Luego reinicia VideoBoost.",
+              "(descarga SeedVR2, varios GB). Luego reinicia PixelBooster.",
         "en": "In Terminal, inside the app folder: `bash install/instalar_mac.sh` "
-              "(downloads SeedVR2, several GB). Then restart VideoBoost.",
+              "(downloads SeedVR2, several GB). Then restart PixelBooster.",
         "fr": "Dans le Terminal, dans le dossier de l'app : `bash install/instalar_mac.sh` "
-              "(télécharge SeedVR2, plusieurs Go). Puis relancez VideoBoost."},
+              "(télécharge SeedVR2, plusieurs Go). Puis relancez PixelBooster."},
     "como_instalar_nvidia": {
         "es": "En la terminal, dentro de la carpeta de la app: `bash install/instalar_nvidia.sh` "
-              "(o `install\\INSTALAR_NVIDIA.bat` en Windows). Luego reinicia VideoBoost.",
+              "(o `install\\INSTALAR_NVIDIA.bat` en Windows). Luego reinicia PixelBooster.",
         "en": "In the terminal, inside the app folder: `bash install/instalar_nvidia.sh` "
-              "(or `install\\INSTALAR_NVIDIA.bat` on Windows). Then restart VideoBoost.",
+              "(or `install\\INSTALAR_NVIDIA.bat` on Windows). Then restart PixelBooster.",
         "fr": "Dans le terminal, dans le dossier de l'app : `bash install/instalar_nvidia.sh` "
-              "(ou `install\\INSTALAR_NVIDIA.bat` sous Windows). Puis relancez VideoBoost."},
+              "(ou `install\\INSTALAR_NVIDIA.bat` sous Windows). Puis relancez PixelBooster."},
 
     # ---- vista previa de motor + resolución ----
     "vp_motor": {"es": "Motor", "en": "Engine", "fr": "Moteur"},
