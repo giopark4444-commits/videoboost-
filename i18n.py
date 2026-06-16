@@ -1483,6 +1483,10 @@ T = {
     "mant_no_descargado": {
         "es": "(aún no descargado)", "en": "(not downloaded yet)",
         "fr": "(pas encore téléchargé)"},
+    "mant_instalado": {
+        "es": "Instalado", "en": "Installed", "fr": "Installé"},
+    "mant_no_inst": {
+        "es": "No instalado", "en": "Not installed", "fr": "Non installé"},
 }
 
 

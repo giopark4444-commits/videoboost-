@@ -402,6 +402,27 @@ footer{display:none !important;}
   background:var(--vb-accent-soft) !important; padding:1px 6px !important;
   border-radius:6px !important; word-break:break-all;}
 
+/* Mantenimiento: nuevo diseño paralelo */
+.mant-motor{border:1px solid var(--vb-border) !important; border-radius:12px !important;
+  padding:10px 14px !important; margin-bottom:10px !important;
+  background:var(--vb-surface) !important;}
+.mant-header{display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-bottom:8px; font-size:13px;}
+.mant-badge{display:inline-flex; align-items:center; gap:4px; font-size:11px;
+  font-weight:700; padding:2px 9px; border-radius:20px; white-space:nowrap;}
+.mant-ok{background:color-mix(in srgb,#22c55e 14%,transparent);
+  color:#16a34a; border:1px solid color-mix(in srgb,#22c55e 30%,transparent);}
+.mant-no{background:color-mix(in srgb,#ef4444 10%,transparent);
+  color:#dc2626; border:1px solid color-mix(in srgb,#ef4444 25%,transparent);}
+.mant-nombre{font-weight:600; color:var(--vb-ink); flex:1;}
+.mant-btns{gap:6px !important; flex-wrap:wrap;}
+.mant-btns button{font-size:12px !important; padding:4px 10px !important;}
+.mant-console-mini{margin-top:8px !important;}
+.mant-lw{font-family:ui-monospace,SFMono-Regular,monospace; font-size:11.5px;
+  line-height:1.6; color:var(--vb-ink); background:var(--vb-bg);
+  border:1px solid var(--vb-border); border-radius:8px; padding:8px 12px;
+  max-height:160px; overflow-y:auto; word-break:break-all;}
+
 /* Selector de temas (galería de swatches) */
 .vb-temas{display:flex; flex-direction:column; gap:18px; padding:4px 2px 2px;}
 .vb-temas-tit{display:block; font-size:11.5px; font-weight:700; letter-spacing:.06em;

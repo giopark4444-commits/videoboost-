@@ -8,6 +8,7 @@ Vulkan). La UI se regenera completa al cambiar de idioma (gr.render).
 
 import base64
 import contextlib
+import html as _html
 import io
 import json
 import os
@@ -1948,40 +1949,67 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     if _gestionables:
                         with _seccion("🔧 " + t("mant_titulo", lang)):
                             gr.Markdown(t("mant_intro", lang))
-                            mant_log = gr.Textbox(label=t("mant_log", lang), lines=8,
-                                                  max_lines=8, elem_classes="console",
-                                                  visible=False)
 
-                            def _hacer_mant(funcion, motor):
+                            def _hacer_mant_html(funcion, motor):
                                 def correr_mant():
-                                    log = []
-                                    yield gr.update(value="", visible=True)
-                                    for linea in funcion(motor):
-                                        log.append(linea)
-                                        yield gr.update(value="\n".join(log[-200:]),
-                                                        visible=True)
+                                    lineas = []
+                                    yield gr.update(
+                                        value='<div class="mant-lw"><em>Iniciando…</em></div>',
+                                        visible=True)
+                                    try:
+                                        for linea in funcion(motor):
+                                            lineas.append(_html.escape(linea))
+                                            yield gr.update(
+                                                value=('<div class="mant-lw">'
+                                                       + "<br>".join(lineas[-40:])
+                                                       + '</div>'),
+                                                visible=True)
+                                    except Exception as ex:
+                                        lineas.append("❌ " + _html.escape(str(ex)))
+                                        yield gr.update(
+                                            value=('<div class="mant-lw">'
+                                                   + "<br>".join(lineas[-40:])
+                                                   + '</div>'),
+                                            visible=True)
                                 return correr_mant
 
-                            def _hacer_abrir(motor):
+                            def _hacer_abrir_html(motor):
                                 def abrir():
-                                    return gr.update(value=mantenimiento.abrir_carpeta(motor),
-                                                     visible=True)
+                                    msg = mantenimiento.abrir_carpeta(motor)
+                                    return gr.update(
+                                        value=f'<div class="mant-lw">{_html.escape(msg)}</div>',
+                                        visible=True)
                                 return abrir
 
                             for _m in _gestionables:
                                 _u = mantenimiento.ubicacion(_m)
-                                _detalle = _u["tamano"] if _u["existe"] else t("mant_no_descargado", lang)
-                                gr.Markdown(
-                                    f"**{_MANT_NOMBRES[_m]}**  \n"
-                                    f"{t('mant_ubic', lang)}: `{_u['ruta']}` · {_detalle}",
-                                    elem_classes="mant-info")
-                                with gr.Row():
-                                    _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
-                                    _btn_re = gr.Button(t("mant_redescargar", lang), size="sm")
-                                    _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
-                                _btn_open.click(_hacer_abrir(_m), None, mant_log)
-                                _btn_re.click(_hacer_mant(mantenimiento.redescargar, _m), None, mant_log)
-                                _btn_ver.click(_hacer_mant(mantenimiento.comprobar, _m), None, mant_log)
+                                _inst = _u["existe"]
+                                _badge_cls = "mant-ok" if _inst else "mant-no"
+                                _badge_txt = ("✅ " + t("mant_instalado", lang)
+                                              if _inst else "❌ " + t("mant_no_inst", lang))
+                                _tam = f" &nbsp;·&nbsp; {_html.escape(_u['tamano'])}" if _u["tamano"] else ""
+
+                                with gr.Group(elem_classes="mant-motor"):
+                                    gr.HTML(
+                                        f'<div class="mant-header">'
+                                        f'<span class="mant-badge {_badge_cls}">{_badge_txt}</span>'
+                                        f'<span class="mant-nombre">{_html.escape(_MANT_NOMBRES[_m])}</span>'
+                                        f'{_tam}'
+                                        f'</div>')
+                                    with gr.Row(elem_classes="mant-btns"):
+                                        _btn_open = gr.Button(t("mant_abrir", lang), size="sm")
+                                        _btn_re = gr.Button(t("mant_redescargar", lang), size="sm",
+                                                            variant="primary")
+                                        _btn_ver = gr.Button(t("mant_comprobar", lang), size="sm")
+                                    _motor_log = gr.HTML("", elem_classes="mant-console-mini",
+                                                         visible=False)
+
+                                _btn_open.click(_hacer_abrir_html(_m), outputs=_motor_log,
+                                                concurrency_limit=None)
+                                _btn_re.click(_hacer_mant_html(mantenimiento.redescargar, _m),
+                                              outputs=_motor_log, concurrency_limit=None)
+                                _btn_ver.click(_hacer_mant_html(mantenimiento.comprobar, _m),
+                                               outputs=_motor_log, concurrency_limit=None)
 
                     if licencias.requiere_licencia():
                         with _seccion("🔑 " + t("aj_licencia", lang)):
