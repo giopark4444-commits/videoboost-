@@ -25,6 +25,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Lanzadores de desarrollo locales (los oficiales son PixelBooster.command/.bat)
+VideoBoost.command
+VideoBoost.bat
+VideoBoost-dev.command
+
 # Archivos de video/imagen de prueba
 *.mp4
 *.mkv

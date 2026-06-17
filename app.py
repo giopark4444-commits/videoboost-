@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 import traceback
 from pathlib import Path
@@ -58,6 +59,7 @@ _CAT_IMG = [
     ("fbcnn", "ambas"), ("dehazeformer", "ambas"), ("hvi_cidnet", "ambas"),
     ("darkir", "ambas"), ("dsrnet", "ambas"), ("shadowformer", "ambas"),
     ("restoreformerpp", "ambas"), ("inspyrenet", "ambas"), ("birefnet", "ambas"),
+    ("iopaint_lama", "ambas"),
 ]
 _CAT_VIDEO = [
     ("flashvsr", "nvidia"), ("film", "nvidia"), ("ema_vfi", "nvidia"),
@@ -124,6 +126,7 @@ MOTORES_IMG_NOTAS = {
     "inspyrenet": "n_inspyrenet", "birefnet": "n_birefnet",
     "restoreformerpp": "n_restoreformerpp", "dsrnet": "n_dsrnet",
     "shadowformer": "n_shadowformer", "iclight": "n_iclight",
+    "iopaint_lama": "n_iopaint_lama",
 }
 # Presets de grano analógico (etiqueta i18n ↔ id de engines/grano.py)
 GRANO_PRESETS = ["fino", "clasico", "alta_iso", "super8", "bn_plata"]
@@ -247,6 +250,46 @@ def _convertir_imagen(entrada: str, formato: str) -> str:
 
 def _listar_presets_revelado() -> list[str]:
     return sorted(p.stem for p in _PRESET_DIR.glob("*.json"))
+
+
+def _html_galeria_luts(items, lang: str = "es") -> str:
+    """Página HTML autónoma con el frame visto a través de TODOS los LUTs.
+
+    Las imágenes se incrustan en base64 para que la página sea independiente y se
+    pueda abrir en una pestaña NUEVA del navegador (vía Blob URL) sin depender del
+    servidor de archivos de Gradio. `items` = lista de (ruta_jpg, nombre)."""
+    celdas = []
+    for ruta, nombre in items:
+        try:
+            b64 = base64.b64encode(Path(ruta).read_bytes()).decode("ascii")
+        except Exception:
+            continue
+        celdas.append(
+            f'<figure><img src="data:image/jpeg;base64,{b64}" alt="">'
+            f'<figcaption>{_html.escape(str(nombre))}</figcaption></figure>')
+    if not celdas:
+        return ""
+    titulo = _html.escape(t("luts_galeria", lang))
+    cuerpo = "\n".join(celdas)
+    return (
+        '<!doctype html><html lang="' + _html.escape(lang) + '"><head>'
+        '<meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        '<title>' + titulo + '</title><style>'
+        ':root{color-scheme:dark}'
+        'body{margin:0;background:#16150f;color:#e9e4d6;padding:22px;'
+        'font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}'
+        'h1{font-size:18px;font-weight:600;margin:0 0 16px;letter-spacing:-.01em}'
+        '.grid{display:grid;gap:18px;'
+        'grid-template-columns:repeat(auto-fill,minmax(520px,1fr))}'
+        'figure{margin:0;background:#1f1e17;border-radius:12px;overflow:hidden;'
+        'border:1px solid rgba(255,255,255,.06)}'
+        'img{display:block;width:100%;height:auto;background:#000}'
+        'figcaption{padding:8px 10px;font-size:13px;color:#cfc8b8}'
+        '</style></head><body>'
+        '<h1>' + titulo + '</h1>'
+        '<div class="grid">' + cuerpo + '</div>'
+        '</body></html>')
 
 
 def _estado_modelos() -> dict:
@@ -593,13 +636,15 @@ def hacer_preview_filtro(lang):
     """Vista previa rápida (un frame) de cómo quedará el filtro, sin aplicarlo."""
     from engines import preview as _prev
 
-    def previsualizar(pos, salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
+    def previsualizar(pos_seg, salida_actual, video_orig, filtro, g_preset, g_int, g_tam,
                       g_color, den_luma, den_croma, *rev):
         base = salida_actual or video_orig
         if not base:
             return f"<p class='size-preview'>{t('filtros_sin_base', lang)}</p>"
         try:
-            pos = max(0.0, min(1.0, float(pos or 0.3)))
+            from engines import luts as _luts_mod
+            _dur = _luts_mod.get_video_duration(base)
+            pos = min(float(pos_seg or 3) / max(_dur, 0.1), 0.999) if _dur > 0 else 0.3
             antes, despues, soporta = _prev.previsualizar(
                 base, filtro, pos=pos, g_preset=g_preset, g_int=g_int, g_tam=g_tam,
                 g_color=g_color, den_luma=float(den_luma), den_croma=float(den_croma),
@@ -627,10 +672,12 @@ def hacer_preview_filtro(lang):
 def hacer_comparar_frame(lang):
     """Compara entrada vs resultado en el frame exacto donde el usuario pausó el
     video (la posición la rellena el JS con el tiempo del reproductor)."""
-    def comparar(pos, video_in, video_out):
+    def comparar(pos_seg, video_in, video_out):
         if not video_out:
             return f"<p class='size-preview'>{t('cmp_sin_resultado', lang)}</p>"
-        pos = max(0.0, min(1.0, float(pos or 0.3)))
+        from engines import luts as _luts_mod
+        _dur = _luts_mod.get_video_duration(video_out)
+        pos = min(float(pos_seg or 3) / max(_dur, 0.1), 0.999) if _dur > 0 else 0.3
         fa = ff.extraer_frame_preview(video_in, pos) if video_in else None
         fd = ff.extraer_frame_preview(video_out, pos)
         try:
@@ -699,9 +746,15 @@ def hacer_borrar(lang):
 
 
 def hacer_procesar_imagen(lang):
-    def procesar(imagen, motor, prompt, escala, resolucion, fidelidad,
+    _borrar = hacer_borrar(lang)
+
+    def procesar(imagen, editor, motor, prompt, escala, resolucion, fidelidad,
                  tarea_rest, g_preset, g_int, g_tam, g_color, formato_img, *rev):
         oculto = gr.update(visible=False)
+        # "Borrar objetos" (IOPaint+LaMa) usa el lienzo de máscara, no la imagen normal.
+        if motor == "iopaint_lama":
+            yield from _borrar(editor)
+            return
         if not imagen:
             yield t("sube_imagen", lang), "", oculto
             return
@@ -1005,6 +1058,38 @@ _JS_CARGA = """() => {
       }, 40);
     });
   }
+  // El historial (columna central) y los paneles de la derecha pueden crecer más
+  // que la primera columna (controles). Para que TODAS terminen en el mismo borde
+  // inferior que la columna de la izquierda, limitamos su altura a la de los
+  // controles y dejamos que hagan scroll por dentro. Solo en la fila de 4 columnas
+  // del modo Video (la única con .col-revelado) y solo en layout ancho.
+  if (!window.__vbColSync) {
+    window.__vbColSync = true;
+    const sincronizarColumnas = () => {
+      const apilado = window.innerWidth <= 1280;   // mismo punto que el @media del CSS
+      document.querySelectorAll('.col-revelado').forEach((rev) => {
+        const fila = rev.parentElement;
+        if (!fila) return;
+        const ctrl = fila.querySelector(':scope > .col-controls');
+        if (!ctrl) return;
+        const alto = ctrl.offsetHeight;
+        ['col-stage', 'col-aside', 'col-revelado'].forEach((c) => {
+          const col = fila.querySelector(':scope > .' + c);
+          if (!col) return;
+          if (apilado || !alto) {
+            col.style.maxHeight = '';
+            col.style.overflowY = '';
+          } else {
+            col.style.maxHeight = alto + 'px';
+            col.style.overflowY = 'auto';
+          }
+        });
+      });
+    };
+    window.addEventListener('resize', sincronizarColumnas);
+    setInterval(sincronizarColumnas, 700);   // re-aplica tras los re-render de @gr.render
+    sincronizarColumnas();
+  }
 }""" % (ui_theme.temas_js(), ui_theme.fuentes_js(),
         ui_theme.TEMA_DEFECTO, ui_theme.FUENTE_DEFECTO)
 
@@ -1217,7 +1302,8 @@ def motores_imagen():
                      ("hvi_cidnet", hvi_cidnet), ("darkir", darkir),
                      ("inspyrenet", inspyrenet), ("birefnet", birefnet),
                      ("restoreformerpp", restoreformerpp), ("dsrnet", dsrnet),
-                     ("shadowformer", shadowformer), ("iclight", iclight)):
+                     ("shadowformer", shadowformer), ("iclight", iclight),
+                     ("iopaint_lama", iopaint_lama)):
         if mod.disponible():
             m.append(mid)
     if color.disponible():
@@ -1318,9 +1404,11 @@ html,body{background:#1a1917 !important;}
     },180);
     var ck=setInterval(function(){
       if(done)return;
-      // Espera a que haya al menos 3 pestañas renderizadas CON texto Y haya pasado minEnd
-      var btns=document.querySelectorAll('.gradio-container .tab-nav button');
-      if(btns.length>=3 && btns[0] && btns[0].textContent.trim() && Date.now()>=minEnd){
+      // Espera a que las pestañas estén renderizadas CON texto Y haya pasado minEnd.
+      // Gradio actual marca las pestañas con [role=tab]; las versiones viejas usaban
+      // .tab-nav button. Aceptamos ambas para no quedarnos pegados al splash.
+      var btns=document.querySelectorAll('.gradio-container [role="tab"], .gradio-container .tab-nav button');
+      if(btns.length>=2 && btns[0] && btns[0].textContent.trim() && Date.now()>=minEnd){
         finish();
       }
     },250);
@@ -1395,7 +1483,8 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             preset.change(sincronizar, preset, [inten, tam, col])
             return g, preset, inten, tam, col
 
-        def grupo_revelado(visible, fuente=None, pos=None, es_video=False):
+        def grupo_revelado(visible, fuente=None, pos=None, es_video=False,
+                           presets_externos=None, picker_externo=False):
             """Panel de revelado estilo Lumetri con presets save/load.
 
             Devuelve el grupo y la lista plana de 24 componentes
@@ -1408,18 +1497,56 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             opciones = [(t("l_ninguno", lang), "ninguno")] + \
                        [(n, k) for k, n in luts.NOMBRES.items()]
             comps = []  # 24 componentes en orden plano (_PRESET_KEYS)
+            _ref_video = None
+            _frame_slider = None
+            _frame_thumb = None
+            _btn_ver_luts = None
+            _lut_gallery = None
+
             with gr.Group(visible=visible) as g:
-                # ---- presets: en un acordeón colapsado para no estorbar ----
-                with gr.Accordion(t("preset_seccion", lang), open=False):
-                    preset_selector = gr.Dropdown(
-                        _listar_presets_revelado(), label=t("preset_cargar", lang),
-                        value=None, interactive=True, container=True)
-                    with gr.Row(equal_height=True):
-                        preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
-                                                   scale=3, container=True)
-                        preset_guardar_btn = gr.Button(t("preset_guardar", lang),
-                                                       scale=1, size="sm")
-                    preset_msg = gr.Markdown("", elem_classes="size-preview")
+                # ---- frame picker + visor LUTs (arriba del todo) ----
+                # picker_externo=True (tab Video): el botón "Ver frame con todos los
+                # LUTs" vive en la columna del medio (junto al «Segundo del frame») y
+                # abre los frames en una pestaña nueva, así que aquí NO duplicamos
+                # miniatura/slider/galería.
+                if fuente is not None and not picker_externo:
+                    with gr.Column(elem_classes="lut-frame-picker"):
+                        if es_video:
+                            _frame_thumb = gr.Image(
+                                show_label=False,
+                                interactive=False, height=160,
+                                show_download_button=False,
+                                elem_classes="lut-frame-thumb")
+                            _frame_slider = gr.Slider(
+                                0.0, 120.0, value=2.0, step=0.5,
+                                label=t("luts_frame_seg", lang))
+                        _btn_ver_luts = gr.Button(
+                            t("luts_ver_todos", lang), size="sm",
+                            elem_classes="luts-ver-btn")
+                    _lut_gallery = gr.Gallery(
+                        label=t("luts_galeria", lang),
+                        visible=False, columns=4, height=380,
+                        elem_classes="lut-gallery-wrap",
+                        object_fit="cover", allow_preview=True)
+
+                # ---- presets: acordeón colapsado. Si el llamador ya los construyó
+                #      en otra columna (presets_externos), aquí solo enlazamos refs. ----
+                if presets_externos is None:
+                    with gr.Accordion(t("preset_seccion", lang), open=False):
+                        preset_selector = gr.Dropdown(
+                            _listar_presets_revelado(), label=t("preset_cargar", lang),
+                            value=None, interactive=True, container=True)
+                        with gr.Row(equal_height=True):
+                            preset_nombre = gr.Textbox(label=t("preset_nombre", lang),
+                                                       scale=3, container=True)
+                            preset_guardar_btn = gr.Button(t("preset_guardar", lang),
+                                                           scale=1, size="sm")
+                        preset_msg = gr.Markdown("", elem_classes="size-preview")
+                else:
+                    preset_selector = presets_externos["selector"]
+                    preset_nombre = presets_externos["nombre"]
+                    preset_guardar_btn = presets_externos["guardar"]
+                    preset_msg = presets_externos["msg"]
 
                 # ---- looks ----
                 with gr.Accordion(t("l_sec_looks", lang), open=True):
@@ -1457,19 +1584,6 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     sl(0.0, 10.0, 0.0, 0.5, "l_ruido_red")
                     sl(0.0, 1.0, 0.0, 0.05, "l_vineta")
 
-                # ---- visor: frame con todos los LUTs a la vez ----
-                if fuente is not None:
-                    _btn_ver_luts = gr.Button(
-                        t("luts_ver_todos", lang), size="sm",
-                        elem_classes="luts-ver-btn")
-                    _lut_gallery = gr.Gallery(
-                        label=t("luts_galeria", lang),
-                        visible=False, columns=4, height=380,
-                        elem_classes="lut-gallery-wrap",
-                        object_fit="cover", allow_preview=True)
-                else:
-                    _btn_ver_luts = None
-                    _lut_gallery = None
 
             # ---- lógica presets ----
             def _guardar(nombre, *vals):
@@ -1497,23 +1611,47 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             preset_selector.change(
                 _cargar, preset_selector, comps)
 
-            # ---- visor LUT: click genera galería con todos los LUTs ----
+            # ---- visor LUT: handlers ----
             if _btn_ver_luts is not None and _lut_gallery is not None:
-                _lut_inps = [fuente] + ([pos] if pos is not None else [])
+                if _frame_slider is not None:
+                    # — modo video: frame picker activo —
+                    def _actualizar_thumb_lut(f, sec):
+                        if not f:
+                            return None
+                        return luts.extract_frame_at_sec(f, sec)
+                    _frame_slider.change(_actualizar_thumb_lut,
+                                         [fuente, _frame_slider], _frame_thumb)
 
-                def _handler_ver_luts(*args):
-                    _fuente = args[0]
-                    _pos = float(args[1]) if len(args) > 1 else 0.3
-                    if not _fuente:
-                        return gr.update(visible=False, value=[])
-                    items = luts.vista_previa_todos_luts(
-                        _fuente, es_video=es_video, pos_frac=_pos)
-                    if not items:
-                        return gr.update(visible=False, value=[])
-                    return gr.update(visible=True, value=items)
+                    def _ajustar_slider_lut(f):
+                        if not f: return gr.update()
+                        dur = luts.get_video_duration(f)
+                        return gr.update(maximum=max(dur - 0.5, 1.0),
+                                         value=min(2.0, dur * 0.05))
+                    fuente.change(_ajustar_slider_lut, fuente, _frame_slider)
 
-                _btn_ver_luts.click(
-                    _handler_ver_luts, inputs=_lut_inps, outputs=_lut_gallery)
+                    def _generar_galeria_video(f, sec):
+                        if not f:
+                            return gr.update(visible=False, value=[])
+                        dur = luts.get_video_duration(f)
+                        frac = min(float(sec) / max(dur, 1.0), 0.999)
+                        items = luts.vista_previa_todos_luts(f, es_video=True,
+                                                              pos_frac=frac)
+                        if not items:
+                            return gr.update(visible=False, value=[])
+                        return gr.update(visible=True, value=items)
+                    _btn_ver_luts.click(_generar_galeria_video,
+                                        [fuente, _frame_slider], _lut_gallery)
+                else:
+                    # — modo imagen: sin frame picker —
+                    def _generar_galeria_img(f):
+                        if not f:
+                            return gr.update(visible=False, value=[])
+                        items = luts.vista_previa_todos_luts(f, es_video=False,
+                                                              pos_frac=0)
+                        if not items:
+                            return gr.update(visible=False, value=[])
+                        return gr.update(visible=True, value=items)
+                    _btn_ver_luts.click(_generar_galeria_img, fuente, _lut_gallery)
 
             return g, comps
 
@@ -1525,7 +1663,7 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             with gr.Row():
                 with gr.Column(elem_classes="col-controls", min_width=300):
                     video_in = gr.Video(label=t("video_entrada", lang), elem_id="vb-input",
-                                        sources=["upload", "webcam"],
+                                        sources=["upload"],
                                         elem_classes="vb-upload")
                     # Botón de mejorar ARRIBA del selector de motores.
                     with gr.Row():
@@ -1561,20 +1699,43 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     preview = gr.Markdown(elem_classes="size-preview")
                 # --- Centro: resultado + comparación por el frame del propio video ---
                 with gr.Column(elem_classes="col-stage", min_width=320):
-                    video_out = gr.Video(label=t("resultado_preview", lang),
-                                         elem_id="vb-result", sources=["upload", "webcam"],
-                                         elem_classes="vb-upload")
+                    video_out = gr.Video(
+                        label=None, show_label=False,
+                        elem_id="vb-result", sources=["upload"],
+                        elem_classes="vb-upload vb-main-player")
                     descarga_v = gr.DownloadButton(t("descargar_v", lang), visible=False,
                                                    elem_classes="cta")
-                    comparador_v = gr.HTML(label=t("comparador_video", lang))
-                    # Posición (fracción 0-1) que el JS rellena con el tiempo actual
-                    # del reproductor de resultado/entrada.
-                    pos_frac = gr.Number(0.3, visible=False)
-                    log_v = gr.Textbox(label=t("progreso", lang), lines=12, max_lines=12,
+                    comparador_v = gr.HTML(elem_classes="cmp-html")
+                    pos_thumb_cmp = gr.Image(
+                        interactive=False, show_label=False,
+                        elem_classes="cmp-frame-thumb", show_download_button=False,
+                        visible=False)
+                    pos_seg = gr.Slider(
+                        0.0, 300.0, value=3.0, step=0.5,
+                        label=t("cmp_frame_seg", lang),
+                        elem_classes="cmp-pos-slider", visible=False)
+                    # Botón "Ver frame con todos los LUTs": justo bajo el selector de
+                    # segundo del frame. Al pulsarlo abre el frame visto a través de
+                    # todos los LUTs en una PESTAÑA NUEVA del navegador (lut_html_v
+                    # lleva el HTML autónomo y el .then() lo abre con un Blob URL).
+                    btn_luts_v = gr.Button(
+                        t("luts_ver_todos", lang), size="sm",
+                        elem_classes="luts-ver-btn", visible=False)
+                    lut_html_v = gr.Textbox(visible=False)
+                    log_v = gr.Textbox(label=t("progreso", lang), lines=9, max_lines=9,
                                        elem_classes="console")
                     # Barra de avance minimalista, DEBAJO de la consola; solo visible
                     # mientras un proceso corre (la ceden procesar/aplicar).
                     barra_v = gr.HTML("", visible=False, elem_classes="vb-bar-wrap")
+                    # Historial: cada video renderizado (mejorar o aplicar filtro) se
+                    # va apilando aquí en el orden en que se generó.
+                    hist_state_v = gr.State([])
+                    gr.Markdown(f"#### {t('historial', lang)}",
+                                elem_classes="hist-head")
+                    hist_gallery_v = gr.Gallery(
+                        show_label=False, columns=3, height="auto",
+                        object_fit="cover", allow_preview=True,
+                        elem_classes="hist-gallery")
 
                 # --- Columna 3: elegir filtro (botón Aplicar ARRIBA) ---
                 ids_f = filtros_video()
@@ -1594,6 +1755,19 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                         elem_classes="engine-picker")
                     nota_filtro = gr.Markdown(t(MOTORES_VIDEO_NOTAS[ids_f[0]], lang),
                                               elem_classes="engine-note")
+                    # Presets del revelado (guardar/cargar este look): aquí, justo
+                    # debajo de "Ajuste de imagen" — no en la 4ª columna.
+                    with gr.Accordion(t("preset_seccion", lang), open=False,
+                                      visible=ids_f[0] == "lut") as acc_presets_v:
+                        preset_selector_v = gr.Dropdown(
+                            _listar_presets_revelado(), label=t("preset_cargar", lang),
+                            value=None, interactive=True, container=True)
+                        with gr.Row(equal_height=True):
+                            preset_nombre_v = gr.Textbox(label=t("preset_nombre", lang),
+                                                         scale=3, container=True)
+                            preset_guardar_btn_v = gr.Button(t("preset_guardar", lang),
+                                                             scale=1, size="sm")
+                        preset_msg_v = gr.Markdown("", elem_classes="size-preview")
 
                 # --- Columna 4 (derecha): los AJUSTES del filtro elegido ---
                 #     (revelado/LUTs/presets, grano, ruido o estabilizar; se abre
@@ -1623,7 +1797,12 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                             [(t("ia_" + k, lang), k) for k in video_ia.MODELOS],
                             value="ruido", label=t("ia_modelo", lang))
                     grupo_l_v, rev_v = grupo_revelado(
-                        ids_f[0] == "lut", fuente=video_out, pos=pos_frac, es_video=True)
+                        ids_f[0] == "lut", fuente=video_out, es_video=True,
+                        picker_externo=True,
+                        presets_externos={"selector": preset_selector_v,
+                                          "nombre": preset_nombre_v,
+                                          "guardar": preset_guardar_btn_v,
+                                          "msg": preset_msg_v})
 
             def controles_v(motor):
                 return (
@@ -1643,11 +1822,22 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             # que SIEMPRE haya un video con barra que mover y elegir el frame, aun
             # antes de mejorar. Tras mejorar, el resultado lo reemplaza.
             video_in.change(lambda v: v, video_in, video_out)
+
+            def _push_hist(video, hist):
+                """Apila el último video renderizado al historial (en orden)."""
+                hist = list(hist or [])
+                if video and (not hist or hist[-1] != video):
+                    hist.append(video)
+                galeria = [(v, f"#{i + 1}") for i, v in enumerate(hist)]
+                return hist, gr.update(value=galeria)
+
             ev_v = boton_v.click(
                 hacer_procesar_video(lang),
                 [video_in, motor_v, escala, ruido, mult, resolucion, modelo_sv2,
                  batch_sv2, formato_v],
                 [log_v, video_out, comparador_v, descarga_v, barra_v])
+            ev_v.then(_push_hist, [video_out, hist_state_v],
+                      [hist_state_v, hist_gallery_v])
             cancelar_v.click(fn=None, cancels=[ev_v])
 
             # --- Filtros (post-proceso): controles, vista previa y aplicar ---
@@ -1657,20 +1847,22 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                     gr.update(visible=filtro in _SIMPLES),  # grupo único grano/ruido/estabilizar
                     gr.update(visible=filtro == "lut"),     # panel revelado
                     gr.update(visible=filtro in _CON_CTRL), # 4ª columna (se abre si hay ajustes)
+                    gr.update(visible=filtro == "lut"),     # presets (en la 3ª col)
                 )
 
             filtro_v.change(controles_filtro, filtro_v,
-                            [nota_filtro, grupo_simples, grupo_l_v, col_revelado])
+                            [nota_filtro, grupo_simples, grupo_l_v, col_revelado,
+                             acc_presets_v])
 
             # Vista previa EN VIVO del filtro (sin botones): el comparador central se
             # actualiza solo al cambiar de filtro o tocar un LUT/control.
-            _prev_in = [pos_frac, video_out, video_in, filtro_v, gpre_v, gint_v,
+            _prev_in = [pos_seg, video_out, video_in, filtro_v, gpre_v, gint_v,
                         gtam_v, gcol_v, den_luma, den_croma, *rev_v]
             _prev_fn = hacer_preview_filtro(lang)
 
             def _auto_prev(componente, evento="change"):
                 """Engancha el auto-preview (en vivo) a un control del filtro."""
-                getattr(componente, evento)(_prev_fn, _prev_in, comparador_v, js=_JS_POS)
+                getattr(componente, evento)(_prev_fn, _prev_in, comparador_v)
 
             _auto_prev(filtro_v)  # al cambiar de filtro
             # LUTs en vivo: dropdowns (change) y mezclas (release, al soltar).
@@ -1681,12 +1873,88 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
             for _c in (gint_v, gtam_v, den_luma, den_croma):
                 _auto_prev(_c, "release")
 
-            boton_filtro.click(
+            # Slider de frame: el thumbnail se actualiza AL SOLTAR (release), NO en
+            # cada tick (change). Con .change se encolaba un ffmpeg (~0.5 s) por cada
+            # paso del slider y el selector "se quedaba procesando" varios segundos.
+            # Una sola extracción al soltar (seek por keyframe) es prácticamente
+            # instantánea.
+            def _thumb_cmp(v, s):
+                if not v: return None
+                return luts.extract_frame_at_sec(v, float(s))
+            pos_seg.release(_thumb_cmp, [video_out, pos_seg], pos_thumb_cmp)
+            pos_seg.release(_prev_fn, _prev_in, comparador_v)
+
+            # Al cargar/actualizar el video: ajustar el slider, pintar de una vez el
+            # primer frame en el thumbnail (para que no quede vacío hasta mover el
+            # slider) y mostrar el picker + el botón de LUTs.
+            def _ajustar_slider(v):
+                if not v:
+                    return (gr.update(visible=False),
+                            gr.update(visible=False, value=None),
+                            gr.update(visible=False))
+                dur = luts.get_video_duration(v)
+                val = min(3.0, dur * 0.05)
+                thumb = luts.extract_frame_at_sec(v, val)
+                return (gr.update(maximum=max(dur - 0.5, 1.0),
+                                  value=val, visible=True),
+                        gr.update(value=thumb, visible=True),
+                        gr.update(visible=True))
+            video_out.change(_ajustar_slider, video_out,
+                             [pos_seg, pos_thumb_cmp, btn_luts_v])
+
+            # "Ver frame con todos los LUTs" → contacto de TODOS los LUTs sobre el
+            # frame elegido, abierto en una PESTAÑA NUEVA del navegador (no en línea).
+            # Como generar las ~21 miniaturas tarda varios segundos, se muestra una
+            # BARRA DE AVANCE (la misma de abajo, vb-bar-wrap) y el botón pasa a
+            # "⏳ Generando…" para que no parezca que se trabó. El trabajo corre en un
+            # hilo y aquí solo vamos cediendo el % a medida que avanza.
+            _etq_luts = t("luts_ver_todos", lang)
+            def _luts_nuevatab(v, sec):
+                if not v:
+                    yield "", _barra(None), gr.update()
+                    return
+                dur = luts.get_video_duration(v)
+                frac = min(float(sec) / max(dur, 1.0), 0.999)
+                total = len(luts.luts_todos()) + 1
+                estado = {"hechos": 0, "items": None}
+
+                def _cb(hechos, _tot):
+                    estado["hechos"] = hechos
+
+                def _trabajo():
+                    estado["items"] = luts.vista_previa_todos_luts(
+                        v, es_video=True, pos_frac=frac, progress_cb=_cb)
+
+                hilo = threading.Thread(target=_trabajo, daemon=True)
+                hilo.start()
+                # botón en "generando" + barra visible desde el primer instante
+                yield "", _barra(0.03), gr.update(value=t("luts_generando", lang),
+                                                  interactive=False)
+                while hilo.is_alive():
+                    time.sleep(0.2)
+                    yield "", _barra(max(0.03, estado["hechos"] / total)), gr.update()
+                hilo.join()
+                items = estado["items"] or []
+                html = _html_galeria_luts(items, lang) if items else ""
+                yield html, _barra(None), gr.update(value=_etq_luts, interactive=True)
+            btn_luts_v.click(
+                _luts_nuevatab, [video_out, pos_seg],
+                [lut_html_v, barra_v, btn_luts_v]).then(
+                None, lut_html_v, None,
+                js="(h)=>{if(!h)return;"
+                   "const b=new Blob([h],{type:'text/html'});"
+                   "const u=URL.createObjectURL(b);"
+                   "window.open(u,'_blank');"
+                   "setTimeout(()=>URL.revokeObjectURL(u),60000);}")
+
+            ev_f = boton_filtro.click(
                 hacer_aplicar_filtros(lang),
                 [video_out, video_in, filtro_v, gpre_v, gint_v, gtam_v, gcol_v,
                  den_luma, den_croma, est_suav, est_zoom, lente_k1, lente_k2,
                  ia_modelo, formato_v, *rev_v],
                 [log_v, video_out, comparador_v, descarga_v, barra_v])
+            ev_f.then(_push_hist, [video_out, hist_state_v],
+                      [hist_state_v, hist_gallery_v])
 
         with gr.Tab(t("tab_imagenes", lang)):
             ids_i = motores_imagen()
@@ -1705,7 +1973,7 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                            "darkir": "i_darkir", "inspyrenet": "i_inspyrenet",
                            "birefnet": "i_birefnet", "restoreformerpp": "i_restoreformerpp",
                            "dsrnet": "i_dsrnet", "shadowformer": "i_shadowformer",
-                           "iclight": "i_iclight"}
+                           "iclight": "i_iclight", "iopaint_lama": "i_iopaint_lama"}
             if not _hay_mejorador_imagen():
                 gr.Markdown(f"{t('sin_mejorador_i', lang)}\n\n{_como_instalar(lang)}",
                             elem_classes="aviso-sin-motor")
@@ -1713,7 +1981,15 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                 with gr.Column(elem_classes="col-controls"):
                     img_in = gr.Image(type="filepath", label=t("imagen_entrada", lang),
                                       sources=["upload", "webcam", "clipboard"],
-                                      elem_classes="vb-upload")
+                                      elem_classes="vb-upload",
+                                      visible=ids_i[0] != "iopaint_lama")
+                    # Lienzo de pintar máscara (solo para "borrar objetos" / IOPaint+LaMa)
+                    borrar_editor_i = gr.ImageEditor(
+                        label=t("borrar_lienzo", lang), type="numpy",
+                        brush=gr.Brush(colors=["#ffffff"], default_size=28,
+                                       color_mode="fixed"),
+                        layers=True, sources=["upload", "clipboard"],
+                        visible=ids_i[0] == "iopaint_lama")
                     motor_i = gr.Radio([(t(etiquetas_i[i], lang), i) for i in ids_i],
                                        value=ids_i[0], label=t("motor", lang),
                                        elem_classes="engine-picker")
@@ -1738,7 +2014,7 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                                                   "darkir", "inspyrenet",
                                                                   "birefnet", "restoreformerpp",
                                                                   "dsrnet", "shadowformer",
-                                                                  "iclight"))
+                                                                  "iclight", "iopaint_lama"))
                     resolucion_i = gr.Dropdown([1080, 1440, 2160, 2880, 4320], value=2160,
                                                label=t("resolucion_obj", lang),
                                                visible=ids_i[0] in ("seedvr2_img", "seedvr2_mlx_img"))
@@ -1787,17 +2063,20 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                                                     "dehazeformer", "hvi_cidnet", "darkir",
                                                     "inspyrenet", "birefnet",
                                                     "restoreformerpp", "dsrnet",
-                                                    "shadowformer", "iclight")),
+                                                    "shadowformer", "iclight",
+                                                    "iopaint_lama")),
                     gr.update(visible=motor in ("seedvr2_img", "seedvr2_mlx_img")),
                     gr.update(visible=motor == "codeformer"),
                     gr.update(visible=motor == "restormer"),
                     gr.update(visible=motor == "grano"),
                     gr.update(visible=motor == "lut"),
+                    gr.update(visible=motor != "iopaint_lama"),   # img_in
+                    gr.update(visible=motor == "iopaint_lama"),   # borrar_editor_i
                 )
 
             motor_i.change(controles_i, motor_i,
                            [nota_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                            tarea_rest_i, grupo_g_i, grupo_l_i])
+                            tarea_rest_i, grupo_g_i, grupo_l_i, img_in, borrar_editor_i])
 
             _puede_8k_img = (HW["cuda"] and HW["vram_gb"] >= 16) or (HW["mps"] and HW["ram_gb"] >= 48)
 
@@ -1816,40 +2095,11 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
 
             ev_i = boton_i.click(
                 hacer_procesar_imagen(lang),
-                [img_in, motor_i, prompt_i, escala_i, resolucion_i, fidelidad_i,
-                 tarea_rest_i, gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
+                [img_in, borrar_editor_i, motor_i, prompt_i, escala_i, resolucion_i,
+                 fidelidad_i, tarea_rest_i, gpre_i, gint_i, gtam_i, gcol_i, formato_i, *rev_i],
                 [log_i, img_out, descarga_i])
             cancelar_i.click(fn=None, cancels=[ev_i])
 
-
-        # ---------------------------------------------------------------- Borrar objetos
-        with gr.Tab(t("tab_borrar", lang)):
-            if not iopaint_lama.disponible():
-                gr.Markdown(f"{t('borrar_instalar', lang)}\n\n"
-                            f"`bash install/extras_iopaint_lama.sh`",
-                            elem_classes="aviso-sin-motor")
-            gr.Markdown(t("borrar_intro", lang))
-            with gr.Row():
-                with gr.Column(elem_classes="col-controls", min_width=420):
-                    borrar_editor = gr.ImageEditor(
-                        label=t("borrar_lienzo", lang), type="numpy",
-                        brush=gr.Brush(colors=["#ffffff"], default_size=28,
-                                       color_mode="fixed"),
-                        layers=True, sources=["upload", "clipboard"])
-                    with gr.Row():
-                        boton_borrar = gr.Button(t("borrar_boton", lang),
-                                                 variant="primary", elem_classes="cta")
-                        cancelar_borrar = gr.Button(t("cancelar", lang),
-                                                    variant="stop", size="sm")
-                with gr.Column(elem_classes="col-stage", min_width=320):
-                    borrar_out = gr.HTML()
-                    descarga_borrar = gr.DownloadButton(t("descargar", lang),
-                                                        visible=False, elem_classes="cta")
-                    log_borrar = gr.Textbox(label=t("progreso", lang), lines=10,
-                                            max_lines=10, elem_classes="console")
-            ev_b = boton_borrar.click(hacer_borrar(lang), borrar_editor,
-                                      [log_borrar, borrar_out, descarga_borrar])
-            cancelar_borrar.click(fn=None, cancels=[ev_b])
 
         # ---------------------------------------------------------------- Galería
         with gr.Tab(t("tab_galeria", lang)):
@@ -2114,8 +2364,73 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                         aj_fmt_i.change(_guardar_fmt_i, aj_fmt_i, aj_msg)
 
                     with _seccion(t("luts_import_titulo", lang)):
+                        # Botón para abrir la carpeta de LUTs en Finder/Explorer
+                        with gr.Row():
+                            _btn_abrir_luts = gr.Button(
+                                t("luts_abrir_carpeta", lang), size="sm",
+                                scale=0, min_width=180,
+                                elem_classes="luts-folder-btn")
+                        _abrir_luts_msg = gr.Markdown(elem_classes="formato-nota")
+
+                        def _abrir_carpeta_luts():
+                            import subprocess, sys
+                            d = luts.LUTS_DIR
+                            d.mkdir(parents=True, exist_ok=True)
+                            if sys.platform == "darwin":
+                                subprocess.Popen(["open", str(d)])
+                            elif sys.platform == "win32":
+                                subprocess.Popen(["explorer", str(d)])
+                            else:
+                                subprocess.Popen(["xdg-open", str(d)])
+                            return f"📂 `{d}`"
+
+                        _btn_abrir_luts.click(_abrir_carpeta_luts,
+                                              outputs=_abrir_luts_msg)
+
+                        # Listado de todos los LUTs disponibles por categoría
+                        def _html_lista_luts():
+                            categorias = {
+                                "Negativo color": [
+                                    "portra400", "portra160", "portra800", "ektar100",
+                                    "gold200", "ultramax400", "colorplus200",
+                                    "superia400", "c200", "cinestill800t", "cinestill400d"],
+                                "Diapositiva": ["velvia50", "provia100f", "ektachrome100"],
+                                "Blanco y negro": [
+                                    "trix400", "hp5", "tmax400",
+                                    "delta3200", "acros100", "fp4"],
+                            }
+                            integrados = set(luts.LOOKS.keys())
+                            custom = [f.stem for f in luts.LUTS_DIR.glob("*.cube")
+                                      if luts.LUTS_DIR.exists() and f.stem not in integrados]
+
+                            html = f'<div style="margin-top:8px">'
+                            for grupo, ids in categorias.items():
+                                html += f'<div class="lut-lista-grupo">{_html.escape(grupo)}</div>'
+                                html += '<div class="lut-lista-chips">'
+                                for lk in ids:
+                                    nombre = luts.NOMBRES.get(lk, lk)
+                                    html += f'<span class="lut-chip">{_html.escape(nombre)}</span>'
+                                html += '</div>'
+
+                            if custom:
+                                html += '<div class="lut-lista-grupo">Personalizados</div>'
+                                html += '<div class="lut-lista-chips">'
+                                for lk in custom:
+                                    html += f'<span class="lut-chip lut-chip-custom">{_html.escape(lk)}</span>'
+                                html += '</div>'
+
+                            total = len(integrados) + len(custom)
+                            html += f'<div style="font-size:11px;color:var(--vb-muted);margin-top:4px">{total} LUTs en total</div>'
+                            html += '</div>'
+                            return html
+
+                        gr.HTML(_html_lista_luts(), elem_classes="lut-lista-wrap")
+
+                        # Importar LUT personalizado
+                        gr.Markdown(f"**{t('luts_import_archivo', lang)}**",
+                                    elem_classes="formato-nota")
                         lut_file = gr.File(
-                            label=t("luts_import_archivo", lang),
+                            label="",
                             file_types=[".cube", ".3dl"],
                             type="filepath")
                         lut_import_msg = gr.Markdown(elem_classes="formato-nota")
@@ -2123,8 +2438,7 @@ with gr.Blocks(title="PixelBooster", **({} if _GR6 else _APARIENCIA)) as demo:
                         def _importar_lut(path):
                             if not path:
                                 return ""
-                            msg = luts.importar_lut(path)
-                            return msg
+                            return luts.importar_lut(path)
 
                         lut_file.change(_importar_lut, lut_file, lut_import_msg)
 

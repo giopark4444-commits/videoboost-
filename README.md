@@ -75,6 +75,13 @@ faltan y con qué comando instalarlos. Útil antes del primer uso.
 | **Real-ESRGAN** | El todoterreno clásico para video real. | Cualquier GPU |
 | **Real-CUGAN / waifu2x** | Anime (con ruido / limpio). | Cualquier GPU |
 | **RIFE** | Multiplica los fps (30→60/120). | Cualquier GPU |
+| **Cámara lenta (Practical-RIFE / FILM / EMA-VFI)** | Interpola fotogramas y reensambla a los fps originales = slow-mo real (×2/×4). Practical-RIFE también en Mac. | NVIDIA (Practical-RIFE: + Mac M) |
+| **Estabilización IA (DUT)** | Estabiliza el encuadre con red neuronal. | Solo NVIDIA |
+
+Además, los filtros de post-proceso del tab Video se aplican **al resultado ya
+mejorado** (encadenables): revelado/LUT, grano analógico, look de cine, corregir
+lente, reducir ruido, desentrelazar (bwdif), quitar artefactos de compresión y
+estabilizar — todos por FFmpeg, en cualquier máquina.
 
 ### Imágenes
 
@@ -82,12 +89,15 @@ faltan y con qué comando instalarlos. Útil antes del primer uso.
 |---|---|---|
 | **FaithDiff** (CVPR 2025) | Restauración fiel; supera a SUPIR y ~4× más rápido. **MIT (comercial).** | Solo NVIDIA |
 | **InstantIR** (instantX) | Restauración instantánea, **licencia Apache 2.0** (comercial). | Solo NVIDIA |
-| **CodeFormer** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. | NVIDIA o Mac M |
+| **Caras (RestoreFormer++ / PMRF / DiffBIR / CodeFormer)** | Restauración de **caras** (ojos, dientes, piel). El "face model" tipo HitPaw. RestoreFormer++ (Apache) y PMRF (MIT) son los comerciales; CodeFormer queda fuera del build de venta. | NVIDIA (CodeFormer + Mac M) |
 | **DDColor** | **Colorizar** fotos en blanco y negro. El "colorize model" tipo HitPaw. | NVIDIA (Mac: CPU) |
+| **Borrar objetos (IOPaint + LaMa)** | Pinta la máscara sobre lo que sobra en el lienzo y LaMa rellena el hueco con textura natural. | Mac M y NVIDIA |
+| **Restauración especializada** | NAFNet / SCUNet / Restormer (deblur, ruido, lluvia), FBCNN (artefactos JPEG), Retinexformer / HVI-CIDNet / DarkIR (poca luz), DehazeFormer (niebla), ShadowFormer (sombras), DSRNet (reflejos), HAT / FaithDiff / InstantIR / DreamClear (super-resolución). | Mayoría solo NVIDIA |
+| **Quitar fondo (matting: InSPyReNet + BiRefNet)** | Recorte/máscara de alta calidad del sujeto. | NVIDIA y **Mac M (MPS)** |
 | **SeedVR2** | El motor de video sobre una imagen suelta. | NVIDIA 8 GB+ o Mac M |
 | **Real-ESRGAN** | Escalado instantáneo. | Cualquier GPU |
 | **Grano analógico** | Emulación orgánica de grano de film (video e imagen), presets tipo Portra/Tri-X/Super 8, parámetros ajustables. | Cualquier máquina (CPU/FFmpeg) |
-| **Revelado de color** | Panel estilo Lumetri: hasta 3 LUTs apilados (20 carretes icónicos) + exposición, temperatura, tinte, contraste, saturación, vibranza, sombras/altas, nitidez y viñeta. | Cualquier máquina (CPU/FFmpeg) |
+| **Revelado de color + Looks de película** | Panel estilo Lumetri: hasta 3 LUTs apilados (20 carretes icónicos) + exposición, temperatura, tinte, contraste, saturación, vibranza, sombras/altas, nitidez y viñeta. Botón **«Ver el frame con todos los LUTs»** abre una hoja de contraste grande (en pestaña aparte) sobre el fotograma que elijas. | Cualquier máquina (CPU/FFmpeg) |
 
 ### ¿Y los de pago (Topaz, Magnific, HitPaw)?
 
@@ -104,14 +114,17 @@ temporal), luego RIFE sobre el resultado (más fps). Resolución **y** fluidez.
 
 ## Licencias
 
-Todos los motores incluidos permiten **uso comercial**:
+El build que se vende por defecto solo incluye motores con **uso comercial**:
 - **FaithDiff**: **MIT** — el motor de imagen recomendado por defecto.
-- SeedVR2, FlashVSR e **InstantIR** y **DDColor**: **Apache 2.0** (sin restricción de uso).
+- SeedVR2, FlashVSR, **InstantIR**, **DDColor**, **RestoreFormer++** (caras): **Apache 2.0**.
+- **PMRF** (caras): **MIT**.
 - Real-ESRGAN, Real-CUGAN, waifu2x, RIFE: BSD/MIT/Apache.
-- **CodeFormer** (caras): NTU S-Lab License — revisa sus términos para uso comercial.
 
-> Los motores no comerciales (HYPIR, SUPIR) se retiraron deliberadamente para evitar
-> restricciones de licencia. Sus reemplazos de licencia libre son FaithDiff e InstantIR.
+> Los motores **sin licencia comercial** se aíslan del build de venta: HYPIR y SUPIR
+> se retiraron por completo; **CodeFormer** (NTU S-Lab) y **OSDFace** (sin licencia)
+> quedan **excluidos por defecto** y solo se reactivan para uso personal con la
+> variable `VB_NO_COMERCIAL=1`. En caras, los reemplazos comerciales son
+> RestoreFormer++ (Apache), PMRF (MIT) y DiffBIR-face (Apache).
 
 ## Venta con licencias (opcional)
 

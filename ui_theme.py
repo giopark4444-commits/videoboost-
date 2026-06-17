@@ -207,7 +207,13 @@ footer{display:none !important;}
 .col-controls{flex:0 0 320px !important; max-width:320px;}
 .col-aside{flex:0 0 250px !important; max-width:250px;}
 .col-revelado{flex:0 0 330px !important; max-width:330px;}
-.col-stage{flex:1 1 0 !important; min-width:0;}
+/* Escenario (resultado): ~25% más angosto que antes → tope de ancho cómodo.
+   El espacio sobrante a la derecha queda como margen, da aire al panel de LUTs. */
+.col-stage{flex:1 1 0 !important; min-width:0; max-width:640px;}
+/* Cuando una columna se limita en alto (ver sincronizarColumnas en app.py) y su
+   contenido sobra, debe hacer SCROLL por dentro, no comprimir el reproductor ni
+   las miniaturas. Sus hijos directos mantienen su alto natural. */
+.col-stage > *, .col-aside > *, .col-revelado > *{flex-shrink:0 !important;}
 @media (max-width:1280px){
   .col-controls, .col-aside, .col-revelado, .col-stage{
     flex:1 1 100% !important; max-width:none !important;}
@@ -299,15 +305,39 @@ footer{display:none !important;}
 .engine-otros strong{color:#8c857a !important;}
 .dark .engine-otros, .dark .engine-otros p{color:#8b8478 !important;}
 
-/* Recuadro de carga compacto: el botón de soltar vacío medía ~240px y malgastaba
-   espacio; lo bajamos y dejamos los iconos subir/webcam centrados justo debajo.
-   Solo afecta al estado VACÍO (cuando hay video/imagen cargado, el reproductor
-   mantiene su tamaño normal). */
-.vb-upload button.boundedheight{min-height:96px !important; height:96px !important;}
+/* ── Columna central: resultado + comparador + miniatura, MISMO tamaño ──────
+   Los tres vienen del MISMO clip (mismo aspecto). Con ancho 100% de la columna
+   y aspecto natural quedan idénticos, SIN recortes ni zoom. */
+.vb-main-player video{
+  width:100% !important; height:auto !important;
+  object-fit:contain !important;
+  border-radius:12px !important; background:#000 !important;}
+.vb-main-player > .label-wrap { display:none !important; }
+/* Comparador Antes/Después: ancho completo, aspecto natural (sin recortar) */
+.ba-cmp{width:100% !important;}
+.ba-cmp img, .ba-cmp .ba-before, .ba-cmp .ba-after{
+  width:100% !important; height:auto !important; object-fit:contain !important;}
+/* Video de entrada (otra columna): recuadro neto del ancho de su columna */
+.vb-upload video{
+  width:100% !important; height:auto !important;
+  object-fit:contain !important;
+  border-radius:12px !important; background:#000 !important;}
+
+/* ── Todos los uploads (entrada, procesado, imagen) ─────────────────── */
+/* Estado VACÍO: recuadro compacto que CRECE para mostrar todo el texto
+   ("Drop Video Here / Click to Upload"). Con height fijo se recortaba la
+   última línea (sobre todo tras quitar la cinta de webcam). */
+.vb-upload button.boundedheight{min-height:128px !important; height:auto !important;}
 .vb-upload .upload-container{min-height:0 !important;}
-/* La fila de iconos (subir/webcam) traía un borde superior de 1px que cruzaba el
-   recuadro: lo quitamos (es solo estético). */
 .vb-upload .source-selection{margin-top:2px !important; border-top:none !important;}
+/* Estado CARGADO: ocultar la cinta de iconos (subir/webcam) y decoraciones.
+   En cuanto hay un <video> o <img> dentro, la barra de fuentes sobra. */
+.vb-upload:has(video) .source-selection,
+.vb-upload:has(img) .source-selection,
+.vb-upload:has(video) .icon-wrap,
+.vb-upload:has(img) .icon-wrap,
+.vb-upload:has(video) .drop-label,
+.vb-upload:has(img) .drop-label { display:none !important; }
 
 /* Barra de avance minimalista, justo debajo de la consola (solo durante el proceso) */
 .vb-bar-wrap{padding:6px 2px 0 !important;}
@@ -324,6 +354,12 @@ footer{display:none !important;}
 .vb-bar-g{height:7px;}
 .vb-bar-g .vb-bar-fill{background:var(--vb-accent);
   background-image:linear-gradient(90deg, var(--vb-accent), var(--vb-accent-soft));}
+
+/* Historial de renders: tira de miniaturas debajo del escenario */
+.hist-head{margin-top:14px !important; margin-bottom:2px !important;}
+.hist-head h4{margin:0 !important; font-size:14px !important; opacity:.85;}
+.hist-gallery{border-radius:10px;}
+.hist-gallery .grid-wrap{max-height:none !important;}
 
 /* Galería del comparador de LUTs (dentro de los looks): miniaturas compactas */
 .vb-frame-cmp{margin-top:6px;}
@@ -464,6 +500,48 @@ footer{display:none !important;}
   text-align:center !important; padding:4px 2px !important; background:var(--vb-surface) !important;
   color:var(--vb-ink) !important;}
 .lut-import-row{display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;}
+.luts-folder-btn{width:auto !important; min-width:0 !important; padding:4px 14px !important;
+  font-size:12px !important; height:30px !important; align-self:flex-start !important;}
+
+/* ---- frame picker del comparador ---- */
+.cmp-pos-slider{margin-top:4px !important;}
+/* Miniatura del frame = EXACTAMENTE igual que el reproductor de arriba: ancho
+   completo de la columna y alto por aspecto natural. Sin la altura fija de antes
+   (height=130 en app.py letterboxeaba la imagen y la dejaba pequeña/centrada).
+   Anulamos también la altura de los contenedores internos de gr.Image. */
+.cmp-frame-thumb{margin-top:8px !important; width:100% !important;}
+.cmp-frame-thumb .image-container,
+.cmp-frame-thumb .image-frame,
+.cmp-frame-thumb button,
+.cmp-frame-thumb .wrap{
+  width:100% !important; height:auto !important; max-height:none !important;}
+.cmp-frame-thumb img{
+  border-radius:12px !important; object-fit:contain !important; background:#000 !important;
+  width:100% !important; height:auto !important; max-height:none !important;}
+.cmp-html{margin-top:8px !important;}
+/* gr.HTML envuelve el contenido en un .html-container.padding con 12px laterales
+   que NO tienen el video ni la imagen (esos van a ras del bloque). Eso dejaba el
+   comparador Antes/Después más angosto que el reproductor de arriba y la miniatura
+   de abajo. Lo quitamos para que ocupe TODO el ancho de la columna, igual que ellos. */
+.cmp-html .html-container{padding-left:0 !important; padding-right:0 !important;}
+
+/* ---- frame picker de LUTs ---- */
+.lut-frame-picker{margin-bottom:10px; padding:8px 10px; background:var(--vb-surface);
+  border:1px solid var(--vb-border); border-radius:10px;}
+.lut-frame-thumb img{
+  border-radius:10px !important; object-fit:cover !important;
+  width:100% !important; height:150px !important;}
+.lut-frame-thumb > .label-wrap{display:none !important;}
+.luts-ver-btn{margin-top:8px !important; width:100% !important;}
+
+/* Lista de LUTs en Ajustes */
+.lut-lista-grupo{margin:10px 0 6px; font-size:10.5px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--vb-muted);}
+.lut-lista-chips{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;}
+.lut-chip{font-size:11.5px; padding:3px 10px; border-radius:20px;
+  background:var(--vb-surface); border:1px solid var(--vb-border);
+  color:var(--vb-ink); white-space:nowrap;}
+.lut-chip-custom{border-color:var(--vb-accent); color:var(--vb-accent);}
 
 /* Responsive */
 @media (max-width:760px){

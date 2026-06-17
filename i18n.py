@@ -53,9 +53,30 @@ T = {
     "luts_ver_todos": {
         "es": "🎞️ Ver frame con todos los LUTs", "en": "🎞️ Preview frame with all LUTs",
         "fr": "🎞️ Voir l'image avec tous les LUTs"},
+    "luts_generando": {
+        "es": "⏳ Generando previsualizaciones…", "en": "⏳ Generating previews…",
+        "fr": "⏳ Génération des aperçus…"},
+    "cmp_frame_seg": {
+        "es": "Segundo del frame", "en": "Frame position (s)",
+        "fr": "Seconde du fotogramme"},
+    "luts_ref_video": {
+        "es": "Video de referencia", "en": "Reference video",
+        "fr": "Vidéo de référence"},
+    "luts_frame_seg": {
+        "es": "Segundo del frame", "en": "Frame position (s)",
+        "fr": "Seconde du fotogramme"},
+    "luts_frame_thumb": {
+        "es": "Frame seleccionado", "en": "Selected frame",
+        "fr": "Image sélectionnée"},
     "luts_import_titulo": {
-        "es": "🎨 LUTs personalizados", "en": "🎨 Custom LUTs",
-        "fr": "🎨 LUTs personnalisés"},
+        "es": "🎨 Mis LUTs", "en": "🎨 My LUTs",
+        "fr": "🎨 Mes LUTs"},
+    "luts_abrir_carpeta": {
+        "es": "📂 Abrir carpeta de LUTs", "en": "📂 Open LUTs folder",
+        "fr": "📂 Ouvrir le dossier des LUTs"},
+    "luts_lista_titulo": {
+        "es": "LUTs disponibles", "en": "Available LUTs",
+        "fr": "LUTs disponibles"},
     "luts_import_archivo": {
         "es": "Importar archivo .cube", "en": "Import .cube file",
         "fr": "Importer un fichier .cube"},
@@ -98,6 +119,7 @@ T = {
         "fr": "Images par lot (plus = meilleure cohérence, plus de mémoire)"},
     "boton_video": {"es": "Mejorar video", "en": "Enhance video", "fr": "Améliorer la vidéo"},
     "progreso": {"es": "Progreso", "en": "Progress", "fr": "Progression"},
+    "historial": {"es": "Historial", "en": "History", "fr": "Historique"},
     "resultado": {"es": "Resultado", "en": "Result", "fr": "Résultat"},
     "resultado_preview": {
         "es": "Resultado / preview (mueve la barra y elige el frame)",
@@ -394,6 +416,10 @@ T = {
         "es": "IC-Light — reiluminación (NVIDIA)",
         "en": "IC-Light — relighting (NVIDIA)",
         "fr": "IC-Light — ré-éclairage (NVIDIA)"},
+    "i_iopaint_lama": {
+        "es": "🧹 Borrar objetos (IOPaint + LaMa)",
+        "en": "🧹 Remove objects (IOPaint + LaMa)",
+        "fr": "🧹 Effacer des objets (IOPaint + LaMa)"},
     "n_restormer": {
         "es": "Transformer de restauración (MIT). Quita **desenfoque de movimiento y de "
               "enfoque, lluvia y ruido real** en una pasada determinista (no inventa textura). "
@@ -525,6 +551,16 @@ T = {
         "fr": "**Ré-éclaire** l'image par diffusion (SD1.5) selon le prompt et une direction de "
               "lumière, en conservant le sujet (Apache-2.0). Lourd → NVIDIA. Décris la lumière dans "
               "le prompt (ex. « lumière chaude de coucher de soleil à gauche »)."},
+    "n_iopaint_lama": {
+        "es": "**Borra objetos** de la foto: pinta de blanco encima de lo que sobra en el "
+              "lienzo y LaMa (IOPaint) rellena el hueco con textura natural (Apache-2.0). "
+              "Sube la imagen al lienzo, pinta la máscara y pulsa el botón. Mac y NVIDIA.",
+        "en": "**Removes objects** from the photo: paint white over what you want gone on the "
+              "canvas and LaMa (IOPaint) fills the gap with natural texture (Apache-2.0). "
+              "Upload the image to the canvas, paint the mask and press the button. Mac and NVIDIA.",
+        "fr": "**Efface des objets** de la photo : peignez en blanc ce qui doit disparaître sur "
+              "le canevas et LaMa (IOPaint) comble le trou avec une texture naturelle (Apache-2.0). "
+              "Chargez l'image, peignez le masque et appuyez sur le bouton. Mac et NVIDIA."},
     "rest_tarea": {"es": "Tarea (Restormer)", "en": "Task (Restormer)", "fr": "Tâche (Restormer)"},
     "rest_motion_deblurring": {
         "es": "Quitar desenfoque de movimiento", "en": "Motion deblur", "fr": "Flou de mouvement"},

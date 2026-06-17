@@ -226,6 +226,32 @@ def _cadena_detalle(a):
 _LUT_PREV_DIR = SALIDAS / "lut_previews"
 
 
+def get_video_duration(path) -> float:
+    """Duración en segundos del video (0.0 si falla)."""
+    try:
+        info = ff.info_video(Path(str(path)))
+        return float(info.get("duracion") or info.get("duration") or 0.0)
+    except Exception:
+        return 0.0
+
+
+def extract_frame_at_sec(path, sec: float) -> str | None:
+    """Extrae un frame en `sec` segundos; devuelve ruta JPEG temporal o None."""
+    _LUT_PREV_DIR.mkdir(parents=True, exist_ok=True)
+    out = _LUT_PREV_DIR / f"_pick_{sec:.3f}.jpg"
+    try:
+        subprocess.run(
+            [ff.ffmpeg(), "-y", "-ss", f"{max(sec, 0):.3f}", "-i", str(path),
+             "-frames:v", "1", "-q:v", "3", "-vf", "scale=480:-2:flags=lanczos",
+             str(out)],
+            capture_output=True, timeout=20)
+        if out.exists() and out.stat().st_size > 0:
+            return str(out)
+    except Exception:
+        pass
+    return None
+
+
 def luts_todos() -> list:
     """IDs de todos los LUTs disponibles: integrados + .cube importados."""
     integrados = list(LOOKS.keys())
@@ -234,11 +260,14 @@ def luts_todos() -> list:
 
 
 def vista_previa_todos_luts(entrada, es_video: bool = False,
-                             pos_frac: float = 0.3) -> list:
+                             pos_frac: float = 0.3, progress_cb=None) -> list:
     """Genera miniaturas de TODOS los LUTs sobre un frame/imagen.
 
     Devuelve lista de (path_str, caption) para gr.Gallery.
     Ejecuta los FFmpeg en paralelo (4 workers).
+
+    `progress_cb(hechos, total)` (opcional) se invoca desde el hilo llamante a
+    medida que cada miniatura queda lista, para alimentar una barra de avance.
     """
     if not entrada:
         return []
@@ -264,17 +293,32 @@ def vista_previa_todos_luts(entrada, es_video: bool = False,
     _LUT_PREV_DIR.mkdir(parents=True, exist_ok=True)
 
     todos = luts_todos()
-    resultados_ord = [None] * (len(todos) + 1)  # +1 para el original
+    total = len(todos) + 1                      # +1 para el original
+    resultados_ord = [None] * total
+    hechos = 0
+
+    def _avisar():
+        if progress_cb:
+            try:
+                progress_cb(hechos, total)
+            except Exception:
+                pass
+
+    # Miniaturas grandes (720px de ancho) para verse nítidas y grandes en la
+    # pestaña aparte; el lado largo lo fija el origen.
+    _ESCALA = "scale=720:-2:flags=lanczos"
 
     # Original sin LUT
     orig_out = _LUT_PREV_DIR / "_original.jpg"
     subprocess.run(
         [ff.ffmpeg(), "-y", "-i", str(fuente_img),
-         "-vf", "scale=300:-2:flags=lanczos",
+         "-vf", _ESCALA,
          "-frames:v", "1", "-q:v", "3", str(orig_out)],
         capture_output=True, timeout=30)
     if orig_out.exists():
         resultados_ord[0] = (str(orig_out), "Original")
+    hechos += 1
+    _avisar()
 
     def aplicar_uno(idx, lk):
         try:
@@ -290,7 +334,7 @@ def vista_previa_todos_luts(entrada, es_video: bool = False,
             out = _LUT_PREV_DIR / f"{lk}.jpg"
             r = subprocess.run(
                 [ff.ffmpeg(), "-y", "-i", str(fuente_img),
-                 "-vf", f"scale=300:-2:flags=lanczos,lut3d='{lut_esc}'",
+                 "-vf", f"{_ESCALA},lut3d='{lut_esc}'",
                  "-frames:v", "1", "-q:v", "3", str(out)],
                 capture_output=True, timeout=30)
             if r.returncode == 0 and out.exists():
@@ -306,6 +350,8 @@ def vista_previa_todos_luts(entrada, es_video: bool = False,
             idx, item = fut.result()
             if item:
                 resultados_ord[idx] = item
+            hechos += 1
+            _avisar()
 
     if frame_tmp and frame_tmp.exists():
         frame_tmp.unlink(missing_ok=True)

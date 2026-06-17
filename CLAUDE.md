@@ -124,10 +124,28 @@ en este orden:
     por release/HF/gdrive con patrón `<ID>_GDRIVE`). Incertidumbres de cada uno en el
     spec del workflow; varios repos no traen CLI con argparse y el engine escribe un
     script `_vb_*.py` parcheado (FBCNN, EMA-VFI, IC-Light, etc.). **IOPaint+LaMa**
-    (borrar objetos) está instalable pero NO en el selector: **falta UI de máscara**.
+    (borrar objetos) YA está en el selector de Imágenes (id `iopaint_lama`): usa un
+    `gr.ImageEditor` como lienzo de máscara y el handler `hacer_borrar`; cuando el
+    motor seleccionado es `iopaint_lama`, `procesar` enruta al lienzo en vez de a la
+    imagen normal. Probado en Mac.
     Filtros FFmpeg nuevos (LGPL, probados en Mac): `filtros.desentrelazar` ahora usa
     **bwdif**, y `filtros.limpiar` (deblock+deband) = "Quitar artefactos de compresión".
     Ver `ROADMAP-MEJORAS.md` para lo que falta.
+19. **Visor de LUTs (tab Video / "Looks de película", 2026-06-16/17)**: el botón
+    "Ver el frame con todos los LUTs" genera miniaturas grandes (720px de origen) de
+    TODOS los LUTs sobre un frame y abre una **hoja de contraste HTML autónoma en
+    pestaña nueva** (`_html_galeria_luts`, grid `minmax(520px,1fr)` → ~3 columnas
+    grandes). En modo video hay **frame-picker** ("Segundo del frame": slider +
+    miniatura) para elegir sobre qué fotograma comparar; `luts.extract_frame_at_sec`
+    y `vista_previa_todos_luts(..., progress_cb)`. El acordeón se renombró a "Mis
+    LUTs" + botón "Abrir carpeta de LUTs". También se añadió **Historial** (columna
+    central del tab Video: cada video renderizado se apila para recuperarlo).
+    ⚠️ **Gradio hot-reload re-ejecuta app.py pero NO reinyecta el `css=` global**:
+    los cambios en `ui_theme.CSS` exigen **reiniciar el servidor entero** (matar +
+    relanzar); el CSS embebido en HTML generado en runtime (como esa hoja de LUTs) sí
+    se actualiza al recargar. Reiniciar mata las sesiones de pestañas abiertas →
+    recargar la pestaña (Cmd+R) tras un reinicio. Fix de la caja de subida:
+    `.vb-upload button.boundedheight{min-height:128px}` en `ui_theme.py`.
 
 ## Licencias de venta (licencias.py)
 
