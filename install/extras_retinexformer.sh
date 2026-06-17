@@ -31,15 +31,41 @@ if [ ! -d vendor/Retinexformer ]; then
   git clone --depth 1 https://github.com/caiyuanhao1998/Retinexformer.git vendor/Retinexformer
 fi
 
-# Dependencias del repo (las que lista su README) + basicsr. numpy<2 obligatorio
-# porque basicsr/skimage aún no son compatibles con numpy 2.x.
+# Dependencias del repo (las que lista su README). OJO: NO instalamos el paquete
+# `basicsr` de pip a propósito: el genérico (a) NO trae la arquitectura
+# RetinexFormer y (b) rompe al importar torchvision.transforms.functional_tensor
+# (eliminado en torchvision >= 0.17). Usamos el basicsr REESTRUCTURADO que el
+# repo trae embebido. numpy<2 obligatorio (skimage/basicsr no soportan numpy 2.x).
 pip install \
   matplotlib scikit-learn scikit-image opencv-python yacs joblib natsort \
   h5py tqdm tensorboard einops gdown addict future lmdb pyyaml requests \
-  scipy yapf lpips thop timm basicsr "numpy<2"
+  scipy yapf lpips thop timm "numpy<2"
 
-# Compilar/registrar el paquete del repo (sin extensiones CUDA: --no_cuda_ext).
-( cd vendor/Retinexformer && python setup.py develop --no_cuda_ext )
+# Por si una corrida previa dejó el basicsr de pip instalado (haría sombra al del
+# repo): quitarlo. Silencioso si no estaba.
+pip uninstall -y basicsr >/dev/null 2>&1 || true
+
+# Registrar el basicsr embebido SIN `python setup.py develop` (su build editable
+# falla en Python 3.12). Dos pasos:
+#   1) el repo NO trae basicsr/__init__.py de nivel superior -> lo creamos mínimo
+#      para que `basicsr` sea un paquete regular importable.
+#   2) un .pth en site-packages añade la raíz del repo a sys.path, así
+#      `import basicsr` resuelve a ESTE basicsr aunque el script corra desde
+#      Enhancement/. (Equivale a lo que haría `setup.py develop`.)
+INIT="vendor/Retinexformer/basicsr/__init__.py"
+if [ ! -f "$INIT" ]; then
+  cat > "$INIT" <<'PYINIT'
+# flake8: noqa
+# BasicSR reestructurado y embebido por Retinexformer (caiyuanhao1998, MIT).
+# El repo depende de `python setup.py develop` (build editable que falla en
+# Python 3.12) para registrar este paquete; PixelBooster lo suple con este
+# __init__ mínimo + un .pth (ver install/extras_retinexformer.sh).
+PYINIT
+fi
+REPO_ABS="$(cd vendor/Retinexformer && pwd)"
+SITEPKG="$(python -c 'import site; print(site.getsitepackages()[0])')"
+echo "$REPO_ABS" > "$SITEPKG/_retinexformer_repo.pth"
+echo "  basicsr embebido registrado vía .pth -> $REPO_ABS"
 
 # --- Pesos preentrenados (modelo por defecto: LOL_v2_real, poca luz real) -----
 # El repo publica los pesos en Google Drive / Baidu (carpeta pretrained_weights).

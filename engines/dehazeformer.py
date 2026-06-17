@@ -32,14 +32,15 @@ GUNET_DIR = VENDOR / "gUNet"
 
 # Variantes expuestas. Para cada una: (carpeta_repo, exp_por_defecto). El .pth vive
 # en {repo}/saved_models/{exp}/{modelo}.pth (estructura oficial de ambos repos).
-# "outdoor" es el caso típico de fotos/paisaje con calima; el peso indoor existe
-# pero está entrenado en escenas sintéticas de interior (SOTS-IN).
+# Usamos "indoor" (RESIDE-IN): es el peso preentrenado que el repo publica y
+# documenta como ejemplo (save_models/indoor/dehazeformer-b.pth), y el único con
+# URL de descarga verificada. Generaliza razonablemente a neblina real.
 MODELOS = {
     # DehazeFormer (Transformer, calidad): base (-b) y grande (-l).
-    "dehazeformer-b": (DEHAZEFORMER_DIR, "outdoor"),
-    "dehazeformer-l": (DEHAZEFORMER_DIR, "outdoor"),
+    "dehazeformer-b": (DEHAZEFORMER_DIR, "indoor"),
+    "dehazeformer-l": (DEHAZEFORMER_DIR, "indoor"),
     # gUNet (modo rápido, U-Net gated): base (_b).
-    "gunet_b": (GUNET_DIR, "outdoor"),
+    "gunet_b": (GUNET_DIR, "indoor"),
 }
 
 # Script de inferencia que se inyecta en el repo (reusa SUS utils y SU factory).
