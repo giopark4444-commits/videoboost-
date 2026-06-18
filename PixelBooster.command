@@ -37,9 +37,24 @@ if [ ! -d .venv ]; then
   echo ""
 fi
 
-# 3. Arrancar (app.py abre el navegador solo)
-echo "Abriendo PixelBooster en tu navegador…"
+# 3. Arrancar en un puerto FIJO propio de PixelBooster (7870+).
+#    Sin esto, Gradio auto-escanea desde 7860 y choca con otras apps tuyas (Image
+#    Studio en 7860, audio-layers en 7861…), así que PixelBooster caía cada vez en
+#    un puerto distinto y la pestaña/marcador guardado apuntaba a otra app → "no
+#    abre bien". Fijamos 7870; si estuviera ocupado tomamos el primer libre hacia
+#    arriba (así nunca falla al enlazar).
+source .venv/bin/activate
+export GRADIO_SERVER_PORT="$(python - <<'PORT'
+import socket
+for p in range(7870, 7890):
+    with socket.socket() as s:
+        if s.connect_ex(("127.0.0.1", p)) != 0:   # connect falla => puerto libre
+            print(p); break
+else:
+    print(7870)
+PORT
+)"
+echo "Abriendo PixelBooster en tu navegador…  →  http://127.0.0.1:$GRADIO_SERVER_PORT"
 echo "Para cerrar la app: cierra esta ventana."
 echo ""
-source .venv/bin/activate
 python app.py || fallo
