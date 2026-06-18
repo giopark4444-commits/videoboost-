@@ -214,7 +214,16 @@ footer{display:none !important;}
    contenido sobra, debe hacer SCROLL por dentro, no comprimir el reproductor ni
    las miniaturas. Sus hijos directos mantienen su alto natural. */
 .col-stage > *, .col-aside > *, .col-revelado > *{flex-shrink:0 !important;}
+/* Degradación responsive en DOS pasos (antes saltaba de 4 columnas a todo
+   apilado de golpe en 1280px → parecía "móvil" en cuanto encogías un poco la
+   ventana). Ahora: 4 columnas (≥1280) → 2×2 cómodo (760–1280) → 1 columna
+   (<760, tablet pequeña/móvil real). */
 @media (max-width:1280px){
+  .col-controls, .col-aside, .col-revelado, .col-stage{
+    flex:1 1 calc(50% - 12px) !important; max-width:none !important;
+    min-width:0 !important;}
+}
+@media (max-width:760px){
   .col-controls, .col-aside, .col-revelado, .col-stage{
     flex:1 1 100% !important; max-width:none !important;}
 }
