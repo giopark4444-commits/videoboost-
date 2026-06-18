@@ -175,9 +175,9 @@ T = {
 
     # ---- nombres de motores (video) ----
     "m_seedvr2": {
-        "es": "SeedVR2 — restauración IA (recomendado)",
-        "en": "SeedVR2 — AI restoration (recommended)",
-        "fr": "SeedVR2 — restauration IA (recommandé)"},
+        "es": "SeedVR2 (PyTorch) — restauración IA (máxima calidad)",
+        "en": "SeedVR2 (PyTorch) — AI restoration (max quality)",
+        "fr": "SeedVR2 (PyTorch) — restauration IA (qualité max)"},
     "m_seedvr2_mlx": {
         "es": "SeedVR2 (MLX) — IA nativa Apple Silicon",
         "en": "SeedVR2 (MLX) — native Apple Silicon AI",
@@ -1515,18 +1515,24 @@ T = {
 
     # ---- aviso SeedVR2 lento en Mac ----
     "n_seedvr2_mac_lento": {
-        "es": "⚠️ **En Mac (MPS) SeedVR2 es MUY lento** — minutos por cada segundo "
-              "de video; un clip de varios segundos puede tardar horas y parecer "
-              "«atascado» (no lo está, está procesando). Para uso normal usa "
-              "**Real-ESRGAN**; deja SeedVR2 para clips muy cortos.",
-        "en": "⚠️ **On Mac (MPS), SeedVR2 is VERY slow** — minutes per second of "
-              "video; a few-second clip can take hours and look “stuck” (it isn't, "
-              "it's processing). For everyday use pick **Real-ESRGAN**; keep SeedVR2 "
-              "for very short clips.",
-        "fr": "⚠️ **Sur Mac (MPS), SeedVR2 est TRÈS lent** — des minutes par seconde "
-              "de vidéo ; un clip de quelques secondes peut prendre des heures et "
-              "sembler « bloqué » (il ne l'est pas). Pour un usage courant, choisissez "
-              "**Real-ESRGAN** ; réservez SeedVR2 aux clips très courts."},
+        "es": "⚠️ **Esta es la versión PyTorch de SeedVR2 y en Mac (MPS) es LA MÁS "
+              "lenta** — ≈25 s por frame; un clip de pocos segundos puede tardar horas "
+              "y parecer «atascado» (no lo está, está procesando). En Mac, para la "
+              "misma IA pero **~5× más rápida** usa **SeedVR2 (MLX)**; para solo "
+              "escalar rápido, **MetalFX** o **Real-ESRGAN** (segundos). Deja esta "
+              "versión PyTorch para clips muy cortos o NVIDIA.",
+        "en": "⚠️ **This is the PyTorch build of SeedVR2 and on Mac (MPS) it's THE "
+              "slowest** — ≈25 s per frame; a few-second clip can take hours and look "
+              "“stuck” (it isn't, it's processing). On Mac, for the same AI but "
+              "**~5× faster** use **SeedVR2 (MLX)**; to just upscale fast use "
+              "**MetalFX** or **Real-ESRGAN** (seconds). Keep this PyTorch build for "
+              "very short clips or NVIDIA.",
+        "fr": "⚠️ **C'est la version PyTorch de SeedVR2 et sur Mac (MPS) c'est LA plus "
+              "lente** — ≈25 s par image ; un clip de quelques secondes peut prendre "
+              "des heures et sembler « bloqué » (il ne l'est pas). Sur Mac, pour la "
+              "même IA mais **~5× plus rapide**, utilisez **SeedVR2 (MLX)** ; pour "
+              "seulement upscaler vite, **MetalFX** ou **Real-ESRGAN** (secondes). "
+              "Réservez cette version PyTorch aux clips très courts ou à NVIDIA."},
 
     # ---- mantenimiento de motores (pestaña Sistema) ----
     "mant_titulo": {

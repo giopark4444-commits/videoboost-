@@ -84,6 +84,80 @@ def _correr_silencioso(cmd):
         yield linea
 
 
+# Velocidad medida en M1 Max: 3B int8, salida ~1280×720 ≈ 12 s/frame en régimen
+# (con el servidor abierto, condiciones reales de Gio). Es el suelo: la difusión
+# tiene pasos fijos y mflux no expone --steps. Escala con los píxeles de salida y
+# con el modelo (7B ~1.8× más lento). Mejor sobreestimar que subestimar el ETA.
+SEG_POR_FRAME_720 = 12.0
+
+
+def _seg_por_frame(w, h, resolucion, modelo):
+    nw, nh = dims_salida(w, h, resolucion)
+    factor = max((nw * nh) / (1280 * 720), 0.25)
+    s = SEG_POR_FRAME_720 * factor
+    if modelo and "7b" in str(modelo).lower():
+        s *= 1.8
+    return s
+
+
+def _fmt_dur(seg):
+    seg = int(round(seg))
+    h, m, s = seg // 3600, (seg % 3600) // 60, seg % 60
+    if h:
+        return f"~{h} h {m:02d} min"
+    if m:
+        return f"~{m} min {s:02d} s"
+    return f"~{s} s"
+
+
+def _aviso_tiempo_video(w, h, resolucion, n_frames, modelo):
+    """Aviso pre-vuelo (una vez): cuánto tardará y qué hacer si es mucho. SeedVR2
+    es difusión por frame: en Mac va a varios segundos por frame, así que un vídeo
+    de pocos segundos puede tardar minutos u horas. NO está colgado: es lento por
+    diseño. Para escalar rápido están MetalFX y Real-ESRGAN."""
+    spf = _seg_por_frame(w, h, resolucion, modelo)
+    if n_frames:
+        cuerpo = f"{n_frames} frames × ~{spf:.0f} s/frame ≈ {_fmt_dur(spf * n_frames)} en este Mac"
+    else:
+        cuerpo = f"~{spf:.0f} s por frame en este Mac"
+    return (
+        "⏳ SeedVR2 IA procesa FRAME a FRAME: " + cuerpo + ". NO está colgado, solo "
+        "es lento por diseño (la difusión tiene pasos fijos, no hay forma de "
+        "acelerarla salvo bajar la resolución). Para escalar vídeo largo en "
+        "segundos usa MetalFX o Real-ESRGAN; deja SeedVR2-MLX para clips cortos "
+        "donde quieras la máxima calidad IA. Truco: baja el «lado corto» (p. ej. "
+        "720) para ir bastante más rápido."
+    )
+
+
+def _correr_mlx_video(cmd, dir_out, total):
+    """Como _correr_silencioso pero, además, da progreso REAL: cuenta los PNG que
+    mflux va escribiendo en dir_out y emite `frame=N/total` para que la barra
+    global avance de verdad.
+
+    Por qué: la barra tqdm de mflux es POR FRAME (siempre «100%|1/1», reiniciándose
+    en cada frame), así que no refleja el avance de la carpeta y la barra global
+    parecía congelada toda la corrida. La ocultamos y la sustituimos por el conteo
+    de archivos (robusto ante cambios de log de mflux). La barra de DESCARGA de
+    pesos (lleva «B/s») SÍ se deja pasar para no perder ese feedback la 1ª vez."""
+    hechos = -1
+    for linea in correr(cmd):
+        oculta = (
+            "multiples of 16" in linea or "Rounding down" in linea
+            or "s/it]" in linea
+            or ("it/s]" in linea and "B/s" not in linea)
+        )
+        if not oculta:
+            yield linea
+        try:
+            n = sum(1 for _ in dir_out.glob("*.png"))
+        except OSError:
+            n = hechos
+        if n != hechos:
+            hechos = n
+            yield f"🖼️ frame={n}/{total}" if total else f"🖼️ frame={n}"
+
+
 def _cmd_base(resolucion, softness, modelo, quantize):
     cmd = [str(CLI), "--resolution", int(resolucion), "--softness", float(softness),
            "--seed", 42]
@@ -120,8 +194,10 @@ def mejorar(entrada, es_video=False, resolucion=1080, softness=0.5,
 
     # --- Video: frames → mflux (un solo proceso) → reensamblar con audio ---
     info = ff.info_video(entrada)
-    yield f"📹 {info['ancho']}x{info['alto']} · {info['fps']:.2f} fps · {info['frames']} frames"
+    n_frames = int(info.get("frames") or 0)
+    yield f"📹 {info['ancho']}x{info['alto']} · {info['fps']:.2f} fps · {n_frames} frames"
     yield _aviso_16(info["ancho"], info["alto"], resolucion)
+    yield _aviso_tiempo_video(info["ancho"], info["alto"], resolucion, n_frames, modelo)
     tmp = Path(tempfile.mkdtemp(prefix="videoboost_sv2mlx_"))
     dir_in, dir_out = tmp / "in", tmp / "out"
     dir_in.mkdir(), dir_out.mkdir()
@@ -135,7 +211,7 @@ def mejorar(entrada, es_video=False, resolucion=1080, softness=0.5,
         # --output requiere plantilla {image_name} para no sobreescribir.
         cmd = _cmd_base(resolucion, softness, modelo, quantize) + [
             "--image-path", dir_in, "--output", str(dir_out / "{image_name}.png")]
-        yield from _correr_silencioso(cmd)
+        yield from _correr_mlx_video(cmd, dir_out, n_frames)
 
         salida = SALIDAS / f"{entrada.stem}_seedvr2mlx_{resolucion}p.mp4"
         yield "🎞️ Reensamblando con el audio original…"

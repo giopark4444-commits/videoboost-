@@ -80,6 +80,14 @@ def mejorar(entrada, resolucion=1080, modelo=None, batch_size=None, es_video=Tru
 
     yield f"🚀 SeedVR2 · modelo {modelo} · resolución {resolucion}p · batch {batch if es_video else '—'}"
     yield "ℹ️ La primera vez descargará el modelo de HuggingFace (puede tardar)."
+    if es_video and hw.get("mps") and not hw.get("cuda"):
+        yield (
+            "🐢 OJO en Mac: SeedVR2 en PyTorch/MPS va MUY lento (≈25 s por frame), "
+            "casi siempre demasiado para vídeo (un clip de pocos segundos puede "
+            "tardar horas). NO está colgado, es la versión más lenta en Apple "
+            "Silicon. Recomendado en Mac: usa «SeedVR2 (MLX)» (mismo modelo, ~5× "
+            "más rápido) o «MetalFX»/«Real-ESRGAN» si solo quieres escalar rápido."
+        )
     # El CLI exige `ffmpeg` en el PATH para --video_backend ffmpeg; garantizamos
     # que lo encuentre aunque solo tengamos el de imageio-ffmpeg o bin/.
     yield from correr(cmd, cwd=CLI.parent, env=ff.entorno_con_ffmpeg())
