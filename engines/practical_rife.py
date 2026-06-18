@@ -50,7 +50,11 @@ def interpolar(video, mult=2):
     fps_orig = ff.info_video(video).get("fps") or 0
     cmd = [py, "inference_video.py", f"--multi={mult}", f"--video={entrada}"]
     if fps_orig:                       # cámara lenta: mantener fps → duración ×mult
-        cmd.append(f"--fps={fps_orig:.5f}")
+        # OJO: inference_video.py declara --fps como type=int, así que un valor
+        # flotante ("24.00000") lo rechaza con "invalid int value". Redondeamos al
+        # entero más cercano (24/30/60…); para slow-mo basta con fijar los fps de
+        # salida ≈ a los del original para que los frames extra estiren la duración.
+        cmd.append(f"--fps={round(fps_orig)}")
 
     try:
         yield f"🚀 Practical-RIFE · x{mult} (slow-mo / fotogramas intermedios)"

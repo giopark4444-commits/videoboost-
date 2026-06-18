@@ -29,7 +29,40 @@ if [ ! -d vendor/Practical-RIFE ]; then
   git clone --depth 1 https://github.com/hzwer/Practical-RIFE.git vendor/Practical-RIFE
 fi
 pip install -r vendor/Practical-RIFE/requirements.txt 2>/dev/null || \
-  pip install numpy opencv-python torch torchvision sk-video tqdm
+  pip install numpy opencv-python torch torchvision tqdm
+
+# --- Parche: quitar la dependencia de scikit-video (sk-video) -------------------
+# sk-video está SIN mantenimiento y rompe con NumPy moderno (np.float eliminado en
+# >=1.24; el modo binario de np.fromstring eliminado en >=1.22), así que el lector
+# de video del repo fallaba siempre. El repo solo usa skvideo para LEER frames
+# (skvideo.io.vreader); lo sustituimos por un lector OpenCV (cv2 ya está importado)
+# que entrega RGB HWC uint8, idéntico. Idempotente.
+python - <<'PY'
+import pathlib
+f = pathlib.Path("vendor/Practical-RIFE/inference_video.py")
+s = f.read_text()
+if "_vb_vreader" not in s:
+    reader = (
+        "# PixelBooster: sk-video sin mantenimiento + roto con NumPy moderno; leemos\n"
+        "# los frames con OpenCV en RGB HWC uint8, idéntico a skvideo.io.vreader.\n"
+        "def _vb_vreader(_path):\n"
+        "    _cap = cv2.VideoCapture(_path)\n"
+        "    try:\n"
+        "        while True:\n"
+        "            _ok, _f = _cap.read()\n"
+        "            if not _ok:\n"
+        "                break\n"
+        "            yield _f[:, :, ::-1].copy()   # BGR -> RGB\n"
+        "    finally:\n"
+        "        _cap.release()\n"
+    )
+    s = s.replace("import skvideo.io\n", reader)
+    s = s.replace("skvideo.io.vreader(args.video)", "_vb_vreader(args.video)")
+    f.write_text(s)
+    print("  inference_video.py parcheado (sk-video -> OpenCV)")
+else:
+    print("  inference_video.py ya estaba parcheado")
+PY
 
 # --- Modelo (flownet.pkl + *.py en train_log/) ---
 # Los modelos de Practical-RIFE viven en Google Drive (sin URL directa). Opciones:

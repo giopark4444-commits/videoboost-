@@ -100,8 +100,10 @@ en este orden:
       salida y soporte MPS.
     - **FILM** (`engines/film.py`, Apache-2.0, NVIDIA/TensorFlow): `eval.interpolator_cli
       --pattern <dir> --model_path …/film_net/Style/saved_model --times_to_interpolate
-      K --output_video`, K=log2(mult). Pesos SavedModel por Google Drive (FILM_GDRIVE).
-      Verificar carpeta de salida (interpolated_frames/) y fps.
+      K --output_video`, K=log2(mult). ⛔ **DIFERIDO (2026-06-17)**: el engine espera un
+      **SavedModel de TF**, pero el peso público es un **TorchScript `.pt`** que NO casa
+      con el loader; correrlo exige reescribir el engine a TF o el loader a Torch. La
+      interpolación ya la cubren Practical-RIFE (corre en Mac) y EMA-VFI. `disponible()=False`.
     - **EMA-VFI** (`engines/ema_vfi.py`, Apache-2.0, NVIDIA): SIN CLI de video → el
       engine escribe `_vb_batch.py` en el repo que recorre pares con
       `Model.multi_inference(... time_list=[...])`. Verificar API del modelo, ckpt
@@ -146,6 +148,39 @@ en este orden:
     se actualiza al recargar. Reiniciar mata las sesiones de pestañas abiertas →
     recargar la pestaña (Cmd+R) tras un reinicio. Fix de la caja de subida:
     `.vb-upload button.boundedheight{min-height:128px}` en `ui_theme.py`.
+20. **Cableados 5 de 6 motores de Google Drive/HF (2026-06-17, commit `e7e002b`)**, todos
+    `disponible()=True` y verificados en la M1 Max: **Practical-RIFE** (MPS+NVIDIA),
+    **ShadowFormer** (`models/ShadowFormer/ISTD_model_best.pth`), **DSRNet**
+    (`models/DSRNet/dsrnet_l_epoch18.pt`), **DehazeFormer** (variante por defecto a
+    **"indoor"**/RESIDE-IN, el único peso con descarga verificada). **FILM** se difirió
+    (ver nota 16). **Retinexformer reescrito** para correr en Mac y arreglar su
+    instalación rota en py3.12: NO se instala el `basicsr` de pip (carece de la
+    arquitectura RetinexFormer **y** rompe por `torchvision.transforms.functional_tensor`,
+    eliminado en torchvision≥0.17); en su lugar se registra el **basicsr REESTRUCTURADO
+    embebido** del repo con un `basicsr/__init__.py` mínimo + un `.pth` en site-packages
+    (sustituye al `setup.py develop`, que falla con el build editable en py3.12 — mismo
+    patrón que el fix de CodeFormer en la nota 6 pero el script vive en `Enhancement/`,
+    un subdirectorio, por eso hace falta el `.pth` y no basta el `cwd`). El engine inyecta
+    un `_vb_infer.py` device-agnóstico (cuda/mps/cpu) y fuerza `opt['num_gpu']=0` para
+    evitar el `.cuda()` interno de `model_to_device` del repo (su `test_from_dataset.py`
+    está clavado a CUDA). Verificado E2E por MPS. Caveat: Transformer pesado, lento en
+    Mac; la poca luz también la dan HVI-CIDNet/DarkIR.
+21. **Practical-RIFE arreglado (2026-06-17)** — Gio reportó 4 motores Mac "no funcionan
+    bien"; tras reproducir, SOLO Practical-RIFE estaba roto (MetalFX, SeedVR2 y SeedVR2-MLX
+    dan salida correcta al invocarlos directo; SeedVR2 por MPS es CORRECTO pero MUY lento,
+    ~0.04 fps → impráctico en video, usar **SeedVR2-MLX**). Dos bugs encadenados en
+    `engines/practical_rife.py` + el repo vendorizado:
+    (a) pasábamos `--fps={fps:.5f}` (p.ej. `24.00000`) pero `inference_video.py` declara
+    `--fps` como `type=int` → `invalid int value`. Fix: `--fps={round(fps)}` (para slow-mo
+    basta fijar fps≈original para que los frames extra estiren la duración).
+    (b) `inference_video.py` lee los frames con **scikit-video (`sk-video`)**, sin
+    mantenimiento y ROTO con NumPy moderno (usa `np.float`, eliminado en ≥1.24, y el modo
+    binario de `np.fromstring`, eliminado en ≥1.22). Parchear `sk-video` era whack-a-mole
+    (3 incompatibilidades) → en su lugar **eliminamos la dependencia**: sustituimos
+    `skvideo.io.vreader` por un lector **OpenCV** (`cv2` ya estaba importado) que entrega
+    RGB HWC uint8, idéntico. El parche lo aplica `install/extras_practical_rife.sh` tras el
+    `git clone` (idempotente, busca `_vb_vreader`), porque `vendor/` está en `.gitignore`.
+    Verificado E2E por MPS: 24→47 frames a 24 fps (x2 slow-mo) en ~5 s.
 
 ## Licencias de venta (licencias.py)
 
