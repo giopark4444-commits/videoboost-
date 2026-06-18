@@ -913,10 +913,10 @@ def hacer_vista_previa(lang):
         if motor not in _ESCALADORES:
             # Filtros FFmpeg: no cambian la resolución (lo decimos sin ambigüedad).
             return f"{cab} · {w}×{h} — {t('vp_no_resol', lang)}"
-        # Escaladores: calculamos la resolución final.
-        if motor in ("seedvr2", "flashvsr"):
-            factor = int(resolucion or 1080) / min(w, h)
-            nw, nh = round(w * factor / 2) * 2, round(h * factor / 2) * 2
+        # Escaladores: calculamos la resolución final. SeedVR2 (incl. MLX) y
+        # FlashVSR escalan al "lado corto" pedido; el resto multiplica por escala.
+        if motor in ("seedvr2", "seedvr2_mlx", "flashvsr"):
+            nw, nh = seedvr2_mlx.dims_salida(w, h, resolucion or 1080)
         else:
             nw, nh = w * int(escala or 2), h * int(escala or 2)
         _8k = max(nw, nh) >= 7680
@@ -929,7 +929,21 @@ def hacer_vista_previa(lang):
             aviso = t("supera_4k", lang)
         else:
             aviso = ""
-        return f"{cab} · {w}×{h} {t('vp_sube_a', lang)} **{nw}×{nh}**{aviso}"
+        # SeedVR2 trabaja en múltiplos de 16: si la salida no lo es, mflux la
+        # ajusta solo (no es error). Lo decimos aquí y sugerimos resoluciones
+        # limpias para este aspect ratio, justo lo que pidió el usuario.
+        nota16 = ""
+        if motor in ("seedvr2", "seedvr2_mlx"):
+            if nw % 16 == 0 and nh % 16 == 0:
+                nota16 = f" · {t('vp_16_limpio', lang)}"
+            else:
+                limpias = seedvr2_mlx.resoluciones_limpias(w, h)
+                if limpias:
+                    sug = ", ".join(f"{r}px" for r in limpias)
+                    nota16 = " · " + t("vp_16_ajuste", lang).format(res=sug)
+                else:
+                    nota16 = " · " + t("vp_16_ajuste_sin", lang)
+        return f"{cab} · {w}×{h} {t('vp_sube_a', lang)} **{nw}×{nh}**{aviso}{nota16}"
 
     return vista_previa
 

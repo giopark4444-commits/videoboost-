@@ -1444,6 +1444,21 @@ T = {
         "en": "does not change resolution (color/cleanup only)",
         "fr": "ne change pas la résolution (couleur/nettoyage seulement)"},
     "vp_sube_a": {"es": "sube a", "en": "upscales to", "fr": "passe à"},
+    "vp_16_limpio": {
+        "es": "✓ múltiplos de 16 (resultado limpio)",
+        "en": "✓ multiples of 16 (clean result)",
+        "fr": "✓ multiples de 16 (résultat net)"},
+    "vp_16_ajuste": {
+        "es": "ⓘ no es múltiplo de 16: SeedVR2 lo ajusta solo (no es error). "
+              "Resultado más limpio con lado corto {res}",
+        "en": "ⓘ not a multiple of 16: SeedVR2 auto-adjusts it (not an error). "
+              "Cleanest result with short side {res}",
+        "fr": "ⓘ pas un multiple de 16 : SeedVR2 l'ajuste seul (pas une erreur). "
+              "Résultat le plus net avec côté court {res}"},
+    "vp_16_ajuste_sin": {
+        "es": "ⓘ no es múltiplo de 16: SeedVR2 lo ajusta solo (no es error)",
+        "en": "ⓘ not a multiple of 16: SeedVR2 auto-adjusts it (not an error)",
+        "fr": "ⓘ pas un multiple de 16 : SeedVR2 l'ajuste seul (pas une erreur)"},
 
     # ---- formato / descarga de video ----
     "formato_nota": {
