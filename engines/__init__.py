@@ -1,6 +1,7 @@
 """Rutas compartidas y ejecución de subprocesos con log en vivo."""
 
 import subprocess
+from collections import deque
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -38,15 +39,19 @@ def correr(cmd, cwd=None, env=None):
         cwd=str(cwd) if cwd else None,
         env=env,
     )
+    cola = deque(maxlen=15)  # últimas líneas, para que el error diga POR QUÉ falló
     try:
         for linea in proc.stdout:
             linea = linea.rstrip()
             if linea:
+                cola.append(linea)
                 yield linea
         proc.wait()
         if proc.returncode != 0:
+            detalle = "\n".join(cola)
             raise RuntimeError(
                 f"El comando falló (código {proc.returncode}): {' '.join(cmd[:6])}…"
+                + (f"\n— Últimas líneas del programa:\n{detalle}" if detalle else "")
             )
     finally:
         if proc.poll() is None:

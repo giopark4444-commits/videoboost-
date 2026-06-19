@@ -213,10 +213,35 @@ def mejorar(entrada, es_video=False, resolucion=1080, softness=0.5,
             "--image-path", dir_in, "--output", str(dir_out / "{image_name}.png")]
         yield from _correr_mlx_video(cmd, dir_out, n_frames)
 
+        # Reensamblado robusto. mflux escribe {image_name}.png = frame_00000001.png…
+        # pero un vídeo real puede dar frames de dimensión impar o que varían entre
+        # sí (rotación/VFR) → libx264/yuv420p falla con «código 254». Forzamos que
+        # TODOS los frames tengan exactamente las mismas dimensiones pares (las del
+        # primer frame ya generado) y arrancamos en el primer número real.
+        hechas = sorted(dir_out.glob("frame_*.png"))
+        if not hechas:
+            raise RuntimeError(
+                "SeedVR2 (MLX) terminó pero no generó ningún frame de salida. "
+                "Revisa el log de mflux más arriba (memoria insuficiente, modelo no "
+                "descargado, o un frame de entrada inválido)."
+            )
+        if len(hechas) < n_frames:
+            yield (f"⚠️ Se generaron {len(hechas)} de {n_frames} frames; reensamblo "
+                   f"con los disponibles.")
+        from PIL import Image
+        w0, h0 = Image.open(hechas[0]).size
+        w0, h0 = (w0 // 2) * 2, (h0 // 2) * 2          # par → compatible con yuv420p
+        try:                                           # número del primer frame real
+            inicio = int("".join(filter(str.isdigit, hechas[0].stem)))
+        except ValueError:
+            inicio = 1
+
         salida = SALIDAS / f"{entrada.stem}_seedvr2mlx_{resolucion}p.mp4"
-        yield "🎞️ Reensamblando con el audio original…"
+        yield f"🎞️ Reensamblando {len(hechas)} frames ({w0}×{h0}) con el audio original…"
         fps_str = f"{info['fps_num']}/{info['fps_den']}"
-        yield from correr(ff.cmd_reensamblar(dir_out, "frame_%08d.png", fps_str, entrada, salida))
+        yield from correr(ff.cmd_reensamblar(
+            dir_out, "frame_%08d.png", fps_str, entrada, salida,
+            vf=f"scale={w0}:{h0}:flags=lanczos", start_number=inicio))
         return str(salida)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

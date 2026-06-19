@@ -165,16 +165,28 @@ def cmd_extraer_frames(video, dir_destino: Path):
     return [ffmpeg(), "-y", "-i", str(video), str(dir_destino / "frame_%08d.png")]
 
 
-def cmd_reensamblar(dir_frames: Path, patron: str, fps_str: str, video_origen, salida):
-    """Reconstruye el video desde frames y copia el audio del original (si existe)."""
-    return [
-        ffmpeg(), "-y",
-        "-framerate", fps_str,
-        "-i", str(dir_frames / patron),
-        "-i", str(video_origen),
-        "-map", "0:v:0", "-map", "1:a?",
+def cmd_reensamblar(dir_frames: Path, patron: str, fps_str: str, video_origen, salida,
+                    vf=None, start_number=None):
+    """Reconstruye el video desde frames y copia el audio del original (si existe).
+
+    `vf` (opcional): filtro de vídeo, p. ej. `scale=1920:1080` para forzar que TODOS
+    los frames tengan exactamente las mismas dimensiones pares (libx264/yuv420p
+    falla con código 254 si los frames varían de tamaño o son impares).
+    `start_number` (opcional): número del primer frame del patrón, por si la
+    secuencia no empieza en el que ffmpeg asume por defecto.
+    """
+    entrada = ["-framerate", fps_str]
+    if start_number is not None:
+        entrada += ["-start_number", str(start_number)]
+    entrada += ["-i", str(dir_frames / patron)]
+    cmd = [ffmpeg(), "-y", *entrada, "-i", str(video_origen),
+           "-map", "0:v:0", "-map", "1:a?"]
+    if vf:
+        cmd += ["-vf", vf]
+    cmd += [
         "-c:v", "libx264", "-crf", "17", "-preset", "medium",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k",
         "-shortest", str(salida),
     ]
+    return cmd
