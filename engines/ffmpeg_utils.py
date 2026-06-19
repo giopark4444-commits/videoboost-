@@ -174,6 +174,12 @@ def cmd_reensamblar(dir_frames: Path, patron: str, fps_str: str, video_origen, s
     falla con código 254 si los frames varían de tamaño o son impares).
     `start_number` (opcional): número del primer frame del patrón, por si la
     secuencia no empieza en el que ffmpeg asume por defecto.
+
+    Audio: si el audio del original es MÁS CORTO que el vídeo (muy común en clips
+    de redes), `-shortest` recortaría el vídeo al largo del audio y la salida
+    quedaría incompleta. Para evitarlo rellenamos el audio con silencio hasta
+    igualar el vídeo (`-af apad`) y dejamos que el vídeo mande la duración. Si no
+    hay pista de audio, `apad` no hace nada (no es error).
     """
     entrada = ["-framerate", fps_str]
     if start_number is not None:
@@ -187,6 +193,7 @@ def cmd_reensamblar(dir_frames: Path, patron: str, fps_str: str, video_origen, s
         "-c:v", "libx264", "-crf", "17", "-preset", "medium",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k",
+        "-af", "apad",          # rellena audio corto con silencio → no recorta el vídeo
         "-shortest", str(salida),
     ]
     return cmd

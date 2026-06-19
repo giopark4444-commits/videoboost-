@@ -213,11 +213,14 @@ def mejorar(entrada, es_video=False, resolucion=1080, softness=0.5,
             "--image-path", dir_in, "--output", str(dir_out / "{image_name}.png")]
         yield from _correr_mlx_video(cmd, dir_out, n_frames)
 
-        # Reensamblado robusto. mflux escribe {image_name}.png = frame_00000001.png…
-        # pero un vídeo real puede dar frames de dimensión impar o que varían entre
-        # sí (rotación/VFR) → libx264/yuv420p falla con «código 254». Forzamos que
-        # TODOS los frames tengan exactamente las mismas dimensiones pares (las del
-        # primer frame ya generado) y arrancamos en el primer número real.
+        # Reensamblado robusto. Dos fallos reales que dejaban el vídeo INCOMPLETO:
+        #  1) Dimensiones impares/variables (rotación/VFR) → libx264/yuv420p falla con
+        #     «código 254». Forzamos que TODOS los frames tengan las mismas dimensiones
+        #     pares (las del primer frame generado) con vf=scale.
+        #  2) Huecos en la numeración: si mflux saltó algún frame, el demuxer image2
+        #     (frame_%08d.png) se DETIENE en el primer número que falta y el vídeo sale
+        #     truncado. Lo evitamos RENUMERANDO los frames disponibles a una secuencia
+        #     contigua (1..N) en una carpeta aparte → image2 los lee todos.
         hechas = sorted(dir_out.glob("frame_*.png"))
         if not hechas:
             raise RuntimeError(
@@ -227,21 +230,22 @@ def mejorar(entrada, es_video=False, resolucion=1080, softness=0.5,
             )
         if len(hechas) < n_frames:
             yield (f"⚠️ Se generaron {len(hechas)} de {n_frames} frames; reensamblo "
-                   f"con los disponibles.")
+                   f"con los disponibles (secuencia contigua, sin huecos).")
         from PIL import Image
         w0, h0 = Image.open(hechas[0]).size
         w0, h0 = (w0 // 2) * 2, (h0 // 2) * 2          # par → compatible con yuv420p
-        try:                                           # número del primer frame real
-            inicio = int("".join(filter(str.isdigit, hechas[0].stem)))
-        except ValueError:
-            inicio = 1
+
+        dir_seq = tmp / "seq"                          # frames renumerados 1..N, sin huecos
+        dir_seq.mkdir()
+        for i, f in enumerate(hechas, start=1):
+            f.replace(dir_seq / f"frame_{i:08d}.png")
 
         salida = SALIDAS / f"{entrada.stem}_seedvr2mlx_{resolucion}p.mp4"
         yield f"🎞️ Reensamblando {len(hechas)} frames ({w0}×{h0}) con el audio original…"
         fps_str = f"{info['fps_num']}/{info['fps_den']}"
         yield from correr(ff.cmd_reensamblar(
-            dir_out, "frame_%08d.png", fps_str, entrada, salida,
-            vf=f"scale={w0}:{h0}:flags=lanczos", start_number=inicio))
+            dir_seq, "frame_%08d.png", fps_str, entrada, salida,
+            vf=f"scale={w0}:{h0}:flags=lanczos"))
         return str(salida)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
